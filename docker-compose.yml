@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/go/src/github.com/namely/broadway
+    command: go run main.go
+    environment:
+      GOOS: linux
+      GOARCH: amd64
+    ports:
+      - "3000:3000"
+
+  etcd:
+    image: gcr.io/google_containers/etcd:2.2.1
+    ports:
+      - "4001:4001"
+    command: ['/usr/local/bin/etcd', '--addr=127.0.0.1:4001', '--bind-addr=0.0.0.0:4001', '--data-dir=/var/etcd/data']
