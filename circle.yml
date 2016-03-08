@@ -1,0 +1,25 @@
+machine:
+  pre:
+    - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
+  services:
+    - docker
+
+dependencies:
+  pre:
+    - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - sudo mv docker-compose /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+  override:
+    - docker login -e="." -u=$DOCKER_USER -p=$DOCKER_PASSWORD registry.namely.tech
+    - docker-compose up -d
+
+test:
+  override:
+    - docker-compose run app go test -v ./...
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - docker-compose run -e CGO_ENABLED=0 app go build -a -installsuffix cgo -ldflags "-s"
+      - docker build -t registry.namely.tech/namely/broadway:`echo $CIRCLE_SHA1 | cut -c1-8` -f Dockerfile-build .
+      - docker push registry.namely.tech/namely/broadway:`echo $CIRCLE_SHA1 | cut -c1-8`
