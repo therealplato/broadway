@@ -5,8 +5,9 @@ import (
 	"testing"
 )
 
-const ManifestFilename = "test-manifest.yml"
-const Manifest string = `---
+const PlaybookFilename = "test-manifest.yml"
+const PlaybookContents string = `---
+
 name: The Project 
 meta:
   team: Project Devs
@@ -51,36 +52,45 @@ func TestFail(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	f, _ := os.Create(ManifestFilename)
-	f.Write([]byte(Manifest))
+	f, _ := os.Create(PlaybookFilename)
+	f.Write([]byte(PlaybookContents))
 	f.Close()
 	tres := m.Run()
 	teardown()
 	os.Exit(tres)
 }
 func teardown() {
-	os.Remove(ManifestFilename)
-}
-
-func TestValidateEmptyManifests(t *testing.T) {
-
-	TestTaskWithoutManifest := Task{
-		Name: ManifestFilename,
-	}
-	err := TestTaskWithoutManifest.ValidateManifests()
-	if err != nil {
-		t.Error(err)
-	}
+	os.Remove(PlaybookFilename)
 }
 
 func TestValidateManifests(t *testing.T) {
-
-	TestTaskWithManifest := Task{
-		Name:      ManifestFilename,
-		Manifests: []string{ManifestFilename},
+	testcases := []struct {
+		scenario    string
+		task        Task
+		expectedErr error
+	}{
+		{
+			"TestTaskWithoutPlaybooks",
+			Task{
+				Name: "task 0",
+			},
+			nil,
+		},
+		{
+			"TestTaskWithPlaybooks",
+			Task{
+				Name:      "task 1",
+				Manifests: []string{"pod0", "pod1"},
+			},
+			nil,
+		},
 	}
-	err := TestTaskWithManifest.ValidateManifests()
-	if err != nil {
-		t.Error(err)
+
+	for _, testcase := range testcases {
+		task := testcase.task
+		err := task.ValidateManifests()
+		if err != nil {
+			t.Errorf("Scenario %s failed with %s", testcase.scenario, err)
+		}
 	}
 }
