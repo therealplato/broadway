@@ -62,12 +62,24 @@ func teardown() {
 	os.Remove(ManifestFilename)
 }
 
-func TestValidateManifestCorrect(t *testing.T) {
+func TestValidateEmptyManifests(t *testing.T) {
 
-	TestTask := Task{
+	TestTaskWithoutManifest := Task{
 		Name: ManifestFilename,
 	}
-	err := TestTask.ValidateManifests()
+	err := TestTaskWithoutManifest.ValidateManifests()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestValidateManifests(t *testing.T) {
+
+	TestTaskWithManifest := Task{
+		Name:      ManifestFilename,
+		Manifests: []string{ManifestFilename},
+	}
+	err := TestTaskWithManifest.ValidateManifests()
 	if err != nil {
 		t.Error(err)
 	}
