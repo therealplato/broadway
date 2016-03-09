@@ -1,7 +1,52 @@
 {
 	"ImportPath": "github.com/namely/broadway",
 	"GoVersion": "go1.6",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
+		{
+			"ImportPath": "github.com/coreos/etcd/Godeps/_workspace/src/github.com/ugorji/go/codec",
+			"Comment": "v2.3.0-alpha.1-241-g19e39a3",
+			"Rev": "19e39a36f745bce0685ca5e0f4732240d2656ce5"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context",
+			"Comment": "v2.3.0-alpha.1-241-g19e39a3",
+			"Rev": "19e39a36f745bce0685ca5e0f4732240d2656ce5"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/client",
+			"Comment": "v2.3.0-alpha.1-241-g19e39a3",
+			"Rev": "19e39a36f745bce0685ca5e0f4732240d2656ce5"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/pathutil",
+			"Comment": "v2.3.0-alpha.1-241-g19e39a3",
+			"Rev": "19e39a36f745bce0685ca5e0f4732240d2656ce5"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/types",
+			"Comment": "v2.3.0-alpha.1-241-g19e39a3",
+			"Rev": "19e39a36f745bce0685ca5e0f4732240d2656ce5"
+		},
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.3-6-g6fe211e",
+			"Rev": "6fe211e493929a8aac0469b93f28b1d0688a9a3a"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "3e5cd1ed149001198e582f9d3f5bfd564cde2896"
+		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a83829b6f1293c91addabc89d0571c246397bbf4"
