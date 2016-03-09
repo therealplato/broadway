@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/namely/broadway/instance"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -67,5 +69,6 @@ func main() {
 		log.Fatalf("Task validation failed: %s", err)
 	}
 
+	fmt.Println(instance.InstanceStatusNew)
 	fmt.Printf("%+v", p)
 }

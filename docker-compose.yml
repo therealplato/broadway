@@ -9,8 +9,11 @@ services:
     environment:
       GOOS: linux
       GOARCH: amd64
+      ETCD_HOST: "http://etcd:4001"
     ports:
       - "3000:3000"
+    links:
+      - etcd
 
   etcd:
     image: gcr.io/google_containers/etcd:2.2.1
