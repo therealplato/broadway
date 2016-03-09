@@ -55,8 +55,7 @@ func ParsePlaybook(playbook []byte) (Playbook, error) {
 }
 
 func ReadPlaybookFromDisk(fd string) ([]byte, error) {
-	file, err := ioutil.ReadFile(fd)
-	return file, err
+	return ioutil.ReadFile(fd)
 }
 
 func main() {
