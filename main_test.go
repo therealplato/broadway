@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"testing"
@@ -47,9 +48,12 @@ tasks:
       - sidekiq-rc
 `
 
+var PlaybookBytes = []byte(PlaybookContents)
+
 func TestMain(m *testing.M) {
 	f, _ := os.Create(PlaybookFilename)
-	f.Write([]byte(PlaybookContents))
+	f.Write(PlaybookBytes)
+	//[]byte(PlaybookContents))
 	f.Close()
 	testresult := m.Run()
 	teardown()
@@ -64,13 +68,15 @@ func TestReadPlaybookFromDisk(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if playbook != PlaybookContents {
+	if !bytes.Equal(playbook, PlaybookBytes) {
+		//[]byte(PlaybookContents) {
 		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
 	}
 }
 
 func TestParsePlaybook(t *testing.T) {
-	ParsedPlaybook, err := ParsePlaybook(PlaybookContents)
+	var err error
+	ParsedPlaybook, err = ParsePlaybook(PlaybookBytes)
 	if err != nil {
 		t.Error(err)
 	}

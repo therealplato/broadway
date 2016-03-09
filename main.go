@@ -48,24 +48,34 @@ func (p Playbook) ValidateTasks() error {
 	return nil
 }
 
+func ParsePlaybook(playbook []byte) (Playbook, error) {
+	var p Playbook
+	err := yaml.Unmarshal(playbook, &p)
+	return p, err
+}
+
+func ReadPlaybookFromDisk(fd string) ([]byte, error) {
+	file, err := ioutil.ReadFile(fd)
+	return file, err
+}
+
 func main() {
 	args := os.Args
-	yamlFile := args[1:][0]
+	yamlFileDescriptor := args[1:][0]
 
-	file, err := ioutil.ReadFile(yamlFile)
+	playbookBytes, err := ReadPlaybookFromDisk(yamlFileDescriptor)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var p Playbook
-	err = yaml.Unmarshal(file, &p)
+	playbook, err := ParsePlaybook(playbookBytes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := p.ValidateTasks(); err != nil {
+	if err := playbook.ValidateTasks(); err != nil {
 		log.Fatalf("Task validation failed: %s", err)
 	}
 
-	fmt.Printf("%+v", p)
+	fmt.Printf("%+v", playbook)
 }
