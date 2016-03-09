@@ -65,32 +65,45 @@ func teardown() {
 
 func TestValidateManifests(t *testing.T) {
 	testcases := []struct {
-		scenario    string
-		task        Task
-		expectedErr error
+		scenario string
+		task     Task
+		//expectedErr error
+		errExpected bool
 	}{
 		{
-			"TestTaskWithoutPlaybooks",
+			"TestTaskWithoutManifests",
 			Task{
 				Name: "task 0",
 			},
-			nil,
+			false,
 		},
 		{
-			"TestTaskWithPlaybooks",
+			"TestTaskWithMissingManifests",
 			Task{
 				Name:      "task 1",
-				Manifests: []string{"pod0", "pod1"},
+				Manifests: []string{"pod0"},
 			},
-			nil,
+			true,
+		},
+		{
+			"TestTaskWithExistingManifests",
+			Task{
+				Name:      "task 2",
+				Manifests: []string{PlaybookFilename},
+			},
+			false,
 		},
 	}
 
 	for _, testcase := range testcases {
 		task := testcase.task
 		err := task.ValidateManifests()
-		if err != nil {
-			t.Errorf("Scenario %s failed with %s", testcase.scenario, err)
+		if testcase.errExpected {
+			if !os.IsNotExist(err) { // it was the wrong error!
+				t.Errorf("Scenario %s: Got %s, expected 'not found'", testcase.scenario, err)
+			}
+		} else if err != nil {
+			t.Errorf("Scenario %s: Got %s, expected success", testcase.scenario, err)
 		}
 	}
 }
