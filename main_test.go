@@ -85,7 +85,7 @@ func TestValidatePlaybook(t *testing.T) {
 	// Todo: Write and test ValidatePlaybook
 }
 
-func TestValidateTaskManifests(t *testing.T) {
+func TestTaskManifestsPresent(t *testing.T) {
 	testcases := []struct {
 		scenario    string
 		task        Task
@@ -118,7 +118,7 @@ func TestValidateTaskManifests(t *testing.T) {
 
 	for _, testcase := range testcases {
 		task := testcase.task
-		err := task.ValidateManifests()
+		err := task.ManifestsPresent()
 		if testcase.errExpected {
 			if !os.IsNotExist(err) { // it was the wrong error!
 				t.Errorf("Scenario %s: Got %s, expected 'not found'", testcase.scenario, err)

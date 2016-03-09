@@ -30,7 +30,7 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
-func (t Task) ValidateManifests() error {
+func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
 		if _, err := os.Stat(name); err != nil {
 			return err
@@ -41,7 +41,7 @@ func (t Task) ValidateManifests() error {
 
 func (p Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
-		if err := task.ValidateManifests(); err != nil {
+		if err := task.ManifestsPresent(); err != nil {
 			return err
 		}
 	}
