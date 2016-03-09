@@ -7,11 +7,8 @@ import (
 	"testing"
 )
 
-var ParsedPlaybook Playbook
-
 const PlaybookFilename = "test-manifest.yml"
 const PlaybookContents string = `---
-
 name: The Project 
 meta:
   team: Project Devs
@@ -50,6 +47,12 @@ tasks:
 
 var PlaybookBytes = []byte(PlaybookContents)
 
+const PlaybookContentsIncomplete = `---
+name: The Project 
+`
+
+var IncompletePlaybookBytes = []byte(PlaybookContentsIncomplete)
+
 func TestMain(m *testing.M) {
 	f, _ := os.Create(PlaybookFilename)
 	f.Write(PlaybookBytes)
@@ -74,19 +77,31 @@ func TestReadPlaybookFromDisk(t *testing.T) {
 
 func TestParsePlaybook(t *testing.T) {
 	var err error
-	ParsedPlaybook, err = ParsePlaybook(PlaybookBytes)
+	ParsedPlaybook, err := ParsePlaybook(PlaybookBytes)
 	if err != nil {
 		t.Error(err)
 	}
-	// Todo: Pass in malformed yaml
-	// Todo: Parse in well-formed yaml missing required fields
-}
-
-func TestValidatePlaybook(t *testing.T) {
 	if ParsedPlaybook.Name != "The Project" {
 		t.Error(errors.New("Parsed Playbook has incorrect Name field"))
 	}
-	// Todo: Write and test ValidatePlaybook
+}
+
+func TestParsePlaybookMalformed(t *testing.T) {
+	_, err := ParsePlaybook([]byte("asdf"))
+	if err == nil {
+		t.Error(errors.New("Parsing asdf succeeded, expected failure"))
+	}
+}
+
+func TestParsePlaybookIncomplete(t *testing.T) {
+	_, err := ParsePlaybook(IncompletePlaybookBytes)
+	if err != nil {
+		t.Error(errors.New("Parsing well-formed, incomplete playbook failed, expected success"))
+	}
+}
+
+func TestValidatePlaybook(t *testing.T) {
+	// Todo: Implement ValidatePlaybook, test complete and incomplete yamls
 }
 
 func TestTaskManifestsPresent(t *testing.T) {
