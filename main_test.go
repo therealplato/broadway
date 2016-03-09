@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"testing"
 )
+
+var ParsedPlaybook Playbook
 
 const PlaybookFilename = "test-manifest.yml"
 const PlaybookContents string = `---
@@ -44,41 +47,59 @@ tasks:
       - sidekiq-rc
 `
 
-func TestPass(t *testing.T) {
-	//t.Succeed()
-}
-func TestFail(t *testing.T) {
-	//t.Fail()
-}
-
 func TestMain(m *testing.M) {
 	f, _ := os.Create(PlaybookFilename)
 	f.Write([]byte(PlaybookContents))
 	f.Close()
-	tres := m.Run()
+	testresult := m.Run()
 	teardown()
-	os.Exit(tres)
+	os.Exit(testresult)
 }
 func teardown() {
 	os.Remove(PlaybookFilename)
 }
 
-func TestValidateManifests(t *testing.T) {
+func TestReadPlaybookFromDisk(t *testing.T) {
+	playbook, err := ReadPlaybookFromDisk(PlaybookFilename)
+	if err != nil {
+		t.Error(err)
+	}
+	if playbook != PlaybookContents {
+		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
+	}
+}
+
+func TestParsePlaybook(t *testing.T) {
+	ParsedPlaybook, err := ParsePlaybook(PlaybookContents)
+	if err != nil {
+		t.Error(err)
+	}
+	// Todo: Pass in malformed yaml
+	// Todo: Parse in well-formed yaml missing required fields
+}
+
+func TestValidatePlaybook(t *testing.T) {
+	if ParsedPlaybook.Name != "The Project" {
+		t.Error(errors.New("Parsed Playbook has incorrect Name field"))
+	}
+	// Todo: Write and test ValidatePlaybook
+}
+
+func TestValidateTaskManifests(t *testing.T) {
 	testcases := []struct {
-		scenario string
-		task     Task
-		//expectedErr error
+		scenario    string
+		task        Task
 		errExpected bool
 	}{
 		{
-			"TestTaskWithoutManifests",
+			"Validate Task Without Manifests",
 			Task{
 				Name: "task 0",
 			},
 			false,
 		},
 		{
-			"TestTaskWithMissingManifests",
+			"Validate Task With Missing Manifests",
 			Task{
 				Name:      "task 1",
 				Manifests: []string{"pod0"},
@@ -86,7 +107,7 @@ func TestValidateManifests(t *testing.T) {
 			true,
 		},
 		{
-			"TestTaskWithExistingManifests",
+			"Validate Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
 				Manifests: []string{PlaybookFilename},
