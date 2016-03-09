@@ -53,7 +53,6 @@ var PlaybookBytes = []byte(PlaybookContents)
 func TestMain(m *testing.M) {
 	f, _ := os.Create(PlaybookFilename)
 	f.Write(PlaybookBytes)
-	//[]byte(PlaybookContents))
 	f.Close()
 	testresult := m.Run()
 	teardown()
@@ -69,7 +68,6 @@ func TestReadPlaybookFromDisk(t *testing.T) {
 		t.Error(err)
 	}
 	if !bytes.Equal(playbook, PlaybookBytes) {
-		//[]byte(PlaybookContents) {
 		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
 	}
 }
