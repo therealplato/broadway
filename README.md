@@ -63,3 +63,44 @@ Instance Attributes:
 
 
 
+## API
+
+1. Create or update Instance
+
+User can post to `/instances` to create or update instances. We allow updates
+via POST request to simplify the http interface.
+
+
+Request:
+```
+POST /instances
+
+{
+  "playbook_id": "web",
+  "id": "master",
+  "vars": {
+    "version": "dc231ba",
+    "assets_version": "dc231ba",
+    "owner": "bill"
+  }
+}
+```
+
+Response:
+```
+Status: 201 Created
+
+
+{
+  "playbook_id": "web",
+  "id": "master",
+  "status": "new",
+  "vars": {
+    "version": "dc231ba",
+    "assets_version": "dc231ba",
+    "owner": "bill"
+  }
+}
+```
+
+
