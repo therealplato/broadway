@@ -44,7 +44,7 @@ tasks:
 
 ## Running Broadway
 
-To run the Broadway server with your playbooks, you can use `broadwayctl` to start it up.
+To run the Broadway server with your playbooks, you can use `broadwayctl` to start it up. The default directory for playbooks is `$(pwd)/playbooks`.
 
 ```sh
 $ broadwayctl server --playbooks=./playbooks --addr=0.0.0.0:8080
