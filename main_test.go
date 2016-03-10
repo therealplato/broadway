@@ -105,24 +105,63 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 }
 
 func TestValidatePlaybook(t *testing.T) {
-	ParsedPlaybook1, _ := ParsePlaybook(PlaybookBytes)
-	if err := ParsedPlaybook1.Validate(); err != nil {
-		t.Error(err)
+	ValidTask := Task{
+		Name:      "task",
+		Manifests: []string{ManifestFilename},
+	}
+	InvalidTask1 := Task{
+		Manifests: []string{ManifestFilename},
+	}
+	InvalidTask2 := Task{
+		Name: "task",
 	}
 
-	ParsedPlaybook2, _ := ParsePlaybook(IncompletePlaybookBytes)
-	if err := ParsedPlaybook2.Validate(); err == nil {
-		t.Errorf("Validation of incomplete playbook succeeded, expected error")
-	}
-
-	ParsedPlaybook3 := ParsedPlaybook1
-	ParsedPlaybook3.Tasks = []Task{
+	testcases := []struct {
+		scenario    string
+		playbook    Playbook
+		errExpected bool
+	}{
 		{
-			Manifests: []string{ManifestFilename},
+			"Validate Valid Playbook",
+			Playbook{
+				Name:  "playbook 1",
+				Tasks: []Task{ValidTask},
+			},
+			false,
+		},
+		{
+			"Validate Empty Playbook",
+			Playbook{},
+			true,
+		},
+		{
+			"Validate Playbook With Tasks Missing Names",
+			Playbook{
+				Name:  "playbook 1",
+				Tasks: []Task{InvalidTask1},
+			},
+			true,
+		},
+		{
+			"Validate Playbook With Tasks Missing Manifests",
+			Playbook{
+				Name:  "playbook 1",
+				Tasks: []Task{InvalidTask2},
+			},
+			true,
 		},
 	}
-	if err := ParsedPlaybook3.Validate(); err == nil {
-		t.Errorf("Validation of playbook with a task missing a name succeeded, expected error")
+
+	for _, testcase := range testcases {
+		playbook := testcase.playbook
+		err := playbook.Validate()
+		if testcase.errExpected && err != nil {
+			continue
+		} else if testcase.errExpected && err == nil {
+			t.Errorf("Scenario %s: Succeeded, expected failure", testcase.scenario)
+		} else if err != nil {
+			t.Errorf("Scenario %s: Failed with %s, expected success", testcase.scenario, err)
+		}
 	}
 }
 
