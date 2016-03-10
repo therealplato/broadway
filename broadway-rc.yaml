@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: broadway-app
+  namespace: broadway
+spec:
+  replicas: 1
+  selector:
+    app: broadway-app
+    version: latest
+  template:
+    metadata:
+      labels:
+        app: broadway-app
+        version: latest
+    spec:
+      containers:
+        - name: broadway-app
+          imagePullPolicy: IfNotPresent
+          image: "broadway-app:latest"
+          command: ["go", "run", "main.go", "playbook1.yml"]
+          env:
+            - name: GOOS
+              value: linux
+            - name: GOARCH
+              value: amd64
