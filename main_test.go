@@ -7,7 +7,8 @@ import (
 	"testing"
 )
 
-const PlaybookFilename = "test-manifest.yml"
+const PlaybookFilename = "test-playbook.yml"
+const ManifestFilename = "test-manifest.yml"
 const PlaybookContents string = `---
 name: The Project 
 meta:
@@ -21,28 +22,26 @@ vars:
 tasks:
   - name: Deploy Postgres
     manifests:
-      - postgres-rc
-      - postgres-service
+      - test-manifest.yml
+      - test-manifest.yml
   - name: Deploy Redis
     manifests:
-      - redis-rc
-      - redis-service
+      - test-manifest.yml
+      - test-manifest.yml
   - name: Database Setup
-    pod_manifest:
-      - createdb-pod
+    pod_manifest: test-manifest.yml
     wait_for:
       - success
     when: new_deployment
   - name: Database Migration
-    pod_manifest:
-      - migration-pod
+    pod_manifest: test-manifest.yml
     wait_for:
       - success
   - name: Deploy Project
     manifests:
-      - web-rc
-      - web-service
-      - sidekiq-rc
+      - test-manifest.yml
+      - test-manifest.yml
+      - test-manifest.yml
 `
 
 var PlaybookBytes = []byte(PlaybookContents)
@@ -57,12 +56,17 @@ func TestMain(m *testing.M) {
 	f, _ := os.Create(PlaybookFilename)
 	f.Write(PlaybookBytes)
 	f.Close()
+
+	f, _ = os.Create(ManifestFilename)
+	f.Close()
+
 	testresult := m.Run()
 	teardown()
 	os.Exit(testresult)
 }
 func teardown() {
 	os.Remove(PlaybookFilename)
+	os.Remove(ManifestFilename)
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {
@@ -101,7 +105,15 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 }
 
 func TestValidatePlaybook(t *testing.T) {
-	// Todo: Implement ValidatePlaybook, test complete and incomplete yamls
+	ParsedPlaybook1, _ := ParsePlaybook(PlaybookBytes)
+	if err := ParsedPlaybook1.Validate(); err != nil {
+		t.Error(err)
+	}
+
+	ParsedPlaybook2, _ := ParsePlaybook(IncompletePlaybookBytes)
+	if err := ParsedPlaybook2.Validate(); err == nil {
+		t.Errorf("Validation of incomplete playbook succeeded, expected error")
+	}
 }
 
 func TestTaskManifestsPresent(t *testing.T) {
