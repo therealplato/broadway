@@ -42,6 +42,18 @@ tasks:
       - worker-rc
 ```
 
+## Running Broadway
+
+To run the Broadway server with your playbooks, you can use `broadwayctl` to start it up. The default directory for playbooks is `$(pwd)/playbooks`.
+
+```sh
+$ broadwayctl server --playbooks=./playbooks --addr=0.0.0.0:8080
+=> starting broadway server...
+=> loading playbooks...
+```
+
+This will load the directory of playbooks and ensure that everything is hunky dory.
+
 ## Instance
 An instance represents a Broadway instance that may or may not be deployed.
 Good usecase is when a CI server creates an instance in Broadway sending the
