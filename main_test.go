@@ -176,7 +176,7 @@ func TestValidatePlaybook(t *testing.T) {
 		err := playbook.Validate()
 		if testcase.expectedErr == "" && err == nil { // expected success, got success
 		} else if testcase.expectedErr != err.Error() { // expected failure, got wrong failure
-			t.Errorf("Scenario %s\nExpected:\n%s\nActual:\n%s", testcase.scenario, err, testcase.expectedErr)
+			t.Errorf("Scenario %s\nExpected:\n%s\nActual:\n%s", testcase.scenario, testcase.expectedErr, err.Error())
 		}
 	}
 }
