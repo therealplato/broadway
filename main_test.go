@@ -111,7 +111,7 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 	}
 }
 
-func TestValidatePlaybook(t *testing.T) {
+func TestValidatePlaybookPasses(t *testing.T) {
 	ValidTask1 := Task{
 		Name:      "task",
 		Manifests: []string{ManifestFilename},
@@ -120,6 +120,28 @@ func TestValidatePlaybook(t *testing.T) {
 		Name:        "task",
 		PodManifest: ManifestFilename,
 	}
+	testcases := []struct {
+		scenario string
+		playbook Playbook
+	}{
+		{
+			"Validate Valid Playbook",
+			Playbook{
+				Name:  "playbook 1",
+				Tasks: []Task{ValidTask1, ValidTask2},
+			},
+		},
+	}
+	for _, testcase := range testcases {
+		playbook := testcase.playbook
+		err := playbook.Validate()
+		if err != nil {
+			t.Errorf("Scenario %s\nExpected: No error\nActual:\n%s", testcase.scenario, err.Error())
+		}
+	}
+}
+
+func TestValidatePlaybookFailures(t *testing.T) {
 	InvalidTask1 := Task{
 		Manifests: []string{ManifestFilename},
 	}
@@ -132,14 +154,6 @@ func TestValidatePlaybook(t *testing.T) {
 		playbook    Playbook
 		expectedErr string
 	}{
-		{
-			"Validate Valid Playbook",
-			Playbook{
-				Name:  "playbook 1",
-				Tasks: []Task{ValidTask1, ValidTask2},
-			},
-			"",
-		},
 		{
 			"Validate Empty Playbook",
 			Playbook{},
@@ -174,34 +188,23 @@ func TestValidatePlaybook(t *testing.T) {
 	for _, testcase := range testcases {
 		playbook := testcase.playbook
 		err := playbook.Validate()
-		if testcase.expectedErr == "" && err == nil { // expected success, got success
-		} else if testcase.expectedErr != err.Error() { // expected failure, got wrong failure
+		if testcase.expectedErr != err.Error() {
 			t.Errorf("Scenario %s\nExpected:\n%s\nActual:\n%s", testcase.scenario, testcase.expectedErr, err.Error())
 		}
 	}
 }
 
-func TestTaskManifestsPresent(t *testing.T) {
+func TestTaskManifestsPresentPasses(t *testing.T) {
 	testcases := []struct {
-		scenario    string
-		task        Task
-		errExpected bool
+		scenario string
+		task     Task
 	}{
-		{
-			"Task With Missing Manifests",
-			Task{
-				Name:      "task 1",
-				Manifests: []string{"pod0"},
-			},
-			true,
-		},
 		{
 			"Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
 				Manifests: []string{ManifestFilename},
 			},
-			false,
 		},
 		{
 			"Task With Only Pod Manifest",
@@ -209,19 +212,45 @@ func TestTaskManifestsPresent(t *testing.T) {
 				Name:        "task 2",
 				PodManifest: ManifestFilename,
 			},
-			false,
+		},
+		{
+			"Task With Both Manifests And Pod Manifest",
+			Task{
+				Name:        "task 2",
+				PodManifest: ManifestFilename,
+				Manifests:   []string{ManifestFilename},
+			},
+		},
+	}
+	for _, testcase := range testcases {
+		task := testcase.task
+		err := task.ManifestsPresent()
+		if err != nil {
+			t.Errorf("Scenario %s\nExpected: Success\nActual:\n%s", testcase.scenario, err.Error())
+		}
+	}
+}
+func TestTaskManifestsPresentFailures(t *testing.T) {
+	testcases := []struct {
+		scenario string
+		task     Task
+	}{
+		{
+			"Task With Missing Manifests",
+			Task{
+				Name:      "task 1",
+				Manifests: []string{"pod0"},
+			},
 		},
 	}
 
 	for _, testcase := range testcases {
 		task := testcase.task
 		err := task.ManifestsPresent()
-		if testcase.errExpected {
-			if !os.IsNotExist(err) { // it was the wrong error!
-				t.Errorf("Scenario %s: Got %s, expected 'not found'", testcase.scenario, err)
-			}
-		} else if err != nil {
-			t.Errorf("Scenario %s: Got %s, expected success", testcase.scenario, err)
+		if err == nil {
+			t.Errorf("Scenario %s\nExpected: File does not exist\nActual: Success%s", testcase.scenario)
+		} else if !os.IsNotExist(err) { // it was the wrong error!
+			t.Errorf("Scenario %s\nExpected: File does not exist\nActual:\n%s", testcase.scenario, err.Error())
 		}
 	}
 }
