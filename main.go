@@ -2,12 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
-	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/server"
+	"github.com/namely/broadway/store"
 
 	"gopkg.in/yaml.v2"
 )
@@ -83,23 +82,27 @@ func ReadPlaybookFromDisk(fd string) ([]byte, error) {
 }
 
 func main() {
-	args := os.Args
-	yamlFileDescriptor := args[1:][0]
+	//args := os.Args
+	//yamlFileDescriptor := args[1:][0]
 
-	playbookBytes, err := ReadPlaybookFromDisk(yamlFileDescriptor)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//playbookBytes, err := ReadPlaybookFromDisk(yamlFileDescriptor)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
-	playbook, err := ParsePlaybook(playbookBytes)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//playbook, err := ParsePlaybook(playbookBytes)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
-	if err := playbook.ValidateTasks(); err != nil {
-		log.Fatalf("Task validation failed: %s", err)
-	}
+	//if err := playbook.ValidateTasks(); err != nil {
+	//	log.Fatalf("Task validation failed: %s", err)
+	//}
 
-	fmt.Println(instance.InstanceStatusNew)
-	fmt.Printf("%+v", playbook)
+	//fmt.Println(instance.InstanceStatusNew)
+	//fmt.Printf("%+v", playbook)
+
+	server := server.New(store.New())
+	server.Run(os.Getenv("HOST"))
+
 }

@@ -13,7 +13,7 @@ const (
 )
 
 type InstanceAttributes struct {
-	PlaybookId string            `json:"playbook_id"`
+	PlaybookId string            `json:"playbook_id" binding:"required"`
 	Id         string            `json:"id"`
 	Created    string            `json:"created"`
 	Vars       map[string]string `json:"vars"`
