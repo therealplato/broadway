@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"log"
 	"os"
 	"testing"
 )
@@ -53,11 +54,17 @@ name: The Project
 var IncompletePlaybookBytes = []byte(PlaybookContentsIncomplete)
 
 func TestMain(m *testing.M) {
-	f, _ := os.Create(PlaybookFilename)
+	f, err := os.Create(PlaybookFilename)
+	if err != nil {
+		log.Fatalf("Failed to write mock test playbook: %s", err)
+	}
 	f.Write(PlaybookBytes)
 	f.Close()
 
-	f, _ = os.Create(ManifestFilename)
+	f, err = os.Create(ManifestFilename)
+	if err != nil {
+		log.Fatalf("Failed to write mock test manifest: %s", err)
+	}
 	f.Close()
 
 	testresult := m.Run()
@@ -123,7 +130,7 @@ func TestValidatePlaybook(t *testing.T) {
 	testcases := []struct {
 		scenario    string
 		playbook    Playbook
-		errExpected bool
+		expectedErr string
 	}{
 		{
 			"Validate Valid Playbook",
@@ -131,12 +138,12 @@ func TestValidatePlaybook(t *testing.T) {
 				Name:  "playbook 1",
 				Tasks: []Task{ValidTask1, ValidTask2},
 			},
-			false,
+			"",
 		},
 		{
 			"Validate Empty Playbook",
 			Playbook{},
-			true,
+			"Playbook missing required Name",
 		},
 		{
 			"Validate Playbook With Zero Tasks",
@@ -144,7 +151,7 @@ func TestValidatePlaybook(t *testing.T) {
 				Name:  "playbook 1",
 				Tasks: []Task{},
 			},
-			true,
+			"Playbook requires at least 1 task",
 		},
 		{
 			"Validate Playbook With Tasks Missing Names",
@@ -152,7 +159,7 @@ func TestValidatePlaybook(t *testing.T) {
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask1},
 			},
-			true,
+			"Task missing required Name",
 		},
 		{
 			"Validate Playbook With Tasks Missing Manifests",
@@ -160,19 +167,16 @@ func TestValidatePlaybook(t *testing.T) {
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask2},
 			},
-			true,
+			"Task requires at least one manifest or a pod manifest",
 		},
 	}
 
 	for _, testcase := range testcases {
 		playbook := testcase.playbook
 		err := playbook.Validate()
-		if testcase.errExpected && err != nil {
-			continue
-		} else if testcase.errExpected && err == nil {
-			t.Errorf("Scenario %s: Succeeded, expected failure", testcase.scenario)
-		} else if err != nil {
-			t.Errorf("Scenario %s: Failed with %s, expected success", testcase.scenario, err)
+		if testcase.expectedErr == "" && err == nil { // expected success, got success
+		} else if testcase.expectedErr != err.Error() { // expected failure, got wrong failure
+			t.Errorf("Scenario %s\nExpected:\n%s\nActual:\n%s", testcase.scenario, err, testcase.expectedErr)
 		}
 	}
 }
