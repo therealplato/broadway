@@ -114,6 +114,16 @@ func TestValidatePlaybook(t *testing.T) {
 	if err := ParsedPlaybook2.Validate(); err == nil {
 		t.Errorf("Validation of incomplete playbook succeeded, expected error")
 	}
+
+	ParsedPlaybook3 := ParsedPlaybook1
+	ParsedPlaybook3.Tasks = []Task{
+		{
+			Manifests: []string{ManifestFilename},
+		},
+	}
+	if err := ParsedPlaybook3.Validate(); err == nil {
+		t.Errorf("Validation of playbook with a task missing a name succeeded, expected error")
+	}
 }
 
 func TestTaskManifestsPresent(t *testing.T) {
@@ -123,14 +133,7 @@ func TestTaskManifestsPresent(t *testing.T) {
 		errExpected bool
 	}{
 		{
-			"Validate Task Without Manifests",
-			Task{
-				Name: "task 0",
-			},
-			false,
-		},
-		{
-			"Validate Task With Missing Manifests",
+			"Task With Missing Manifests",
 			Task{
 				Name:      "task 1",
 				Manifests: []string{"pod0"},
@@ -138,10 +141,18 @@ func TestTaskManifestsPresent(t *testing.T) {
 			true,
 		},
 		{
-			"Validate Task With Existing Manifests",
+			"Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
-				Manifests: []string{PlaybookFilename},
+				Manifests: []string{ManifestFilename},
+			},
+			false,
+		},
+		{
+			"Task With Only Pod Manifest",
+			Task{
+				Name:        "task 2",
+				PodManifest: ManifestFilename,
 			},
 			false,
 		},
