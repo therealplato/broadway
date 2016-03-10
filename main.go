@@ -32,7 +32,7 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
-func (t Task) ValidateManifests() error {
+func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
 		if _, err := os.Stat(name); err != nil {
 			return err
@@ -43,32 +43,41 @@ func (t Task) ValidateManifests() error {
 
 func (p Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
-		if err := task.ValidateManifests(); err != nil {
+		if err := task.ManifestsPresent(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+func ParsePlaybook(playbook []byte) (Playbook, error) {
+	var p Playbook
+	err := yaml.Unmarshal(playbook, &p)
+	return p, err
+}
+
+func ReadPlaybookFromDisk(fd string) ([]byte, error) {
+	return ioutil.ReadFile(fd)
+}
+
 func main() {
 	args := os.Args
-	yamlFile := args[1:][0]
+	yamlFileDescriptor := args[1:][0]
 
-	file, err := ioutil.ReadFile(yamlFile)
+	playbookBytes, err := ReadPlaybookFromDisk(yamlFileDescriptor)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var p Playbook
-	err = yaml.Unmarshal(file, &p)
+	playbook, err := ParsePlaybook(playbookBytes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := p.ValidateTasks(); err != nil {
+	if err := playbook.ValidateTasks(); err != nil {
 		log.Fatalf("Task validation failed: %s", err)
 	}
 
 	fmt.Println(instance.InstanceStatusNew)
-	fmt.Printf("%+v", p)
+	fmt.Printf("%+v", playbook)
 }
