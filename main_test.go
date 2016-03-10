@@ -105,9 +105,13 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 }
 
 func TestValidatePlaybook(t *testing.T) {
-	ValidTask := Task{
+	ValidTask1 := Task{
 		Name:      "task",
 		Manifests: []string{ManifestFilename},
+	}
+	ValidTask2 := Task{
+		Name:        "task",
+		PodManifest: ManifestFilename,
 	}
 	InvalidTask1 := Task{
 		Manifests: []string{ManifestFilename},
@@ -125,13 +129,21 @@ func TestValidatePlaybook(t *testing.T) {
 			"Validate Valid Playbook",
 			Playbook{
 				Name:  "playbook 1",
-				Tasks: []Task{ValidTask},
+				Tasks: []Task{ValidTask1, ValidTask2},
 			},
 			false,
 		},
 		{
 			"Validate Empty Playbook",
 			Playbook{},
+			true,
+		},
+		{
+			"Validate Playbook With Zero Tasks",
+			Playbook{
+				Name:  "playbook 1",
+				Tasks: []Task{},
+			},
 			true,
 		},
 		{
