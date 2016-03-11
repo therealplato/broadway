@@ -3,13 +3,15 @@ package playbook
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
-const MockPlaybookFilename = "test-playbook.yml"
-const MockManifestFilename = "test-manifest.yml"
+const MockPlaybookFilename = "playbooks/test-playbook.yml"
+const MockManifestFilename = "manifests/test-manifest.yml"
 const MockPlaybookContents string = `---
 id: project-playbook
 name: The Project 
@@ -55,6 +57,24 @@ name: The Project
 var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
 
 func TestMain(m *testing.M) {
+	// Switch to project root. The mock files are relative to there.
+	cwd, _ := os.Getwd()
+	newCwd := filepath.Join(cwd, "..")
+	os.Chdir(newCwd)
+	fmt.Println(os.Getwd())
+
+	// Ensure playbooks and manifests folders to write mock data
+	pDir := filepath.Join(newCwd, "playbooks")
+	mDir := filepath.Join(newCwd, "manifests")
+	err := os.MkdirAll(pDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create broadway/playbooks folder: %s", err)
+	}
+	err = os.MkdirAll(mDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
+	}
+
 	f, err := os.Create(MockPlaybookFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)

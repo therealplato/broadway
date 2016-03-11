@@ -13,7 +13,7 @@ func main() {
 		args := os.Args
 		yamlFileDescriptor := args[1:][0]
 	*/
-	playbooks, err := loadPlaybookFolder("playbooks/")
+	playbooks, err := LoadPlaybookFolder("playbooks/")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func main() {
 	fmt.Println(instance.InstanceStatusNew)
 }
 
-func loadPlaybookFolder(dir string) ([]playbook.Playbook, error) {
+func LoadPlaybookFolder(dir string) ([]playbook.Playbook, error) {
 	var AllPlaybooks []playbook.Playbook
 	paths, err := filepath.Glob(dir + "/*")
 	if err != nil {
