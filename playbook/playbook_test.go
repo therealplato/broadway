@@ -8,9 +8,9 @@ import (
 	"testing"
 )
 
-const PlaybookFilename = "test-playbook.yml"
-const ManifestFilename = "test-manifest.yml"
-const PlaybookContents string = `---
+const MockPlaybookFilename = "test-playbook.yml"
+const MockManifestFilename = "test-manifest.yml"
+const MockPlaybookContents string = `---
 id: project-playbook
 name: The Project 
 meta:
@@ -46,23 +46,23 @@ tasks:
       - test-manifest.yml
 `
 
-var PlaybookBytes = []byte(PlaybookContents)
+var MockPlaybookBytes = []byte(MockPlaybookContents)
 
-const PlaybookContentsIncomplete = `---
+const MockPlaybookContentsIncomplete = `---
 name: The Project 
 `
 
-var IncompletePlaybookBytes = []byte(PlaybookContentsIncomplete)
+var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
 
 func TestMain(m *testing.M) {
-	f, err := os.Create(PlaybookFilename)
+	f, err := os.Create(MockPlaybookFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)
 	}
-	f.Write(PlaybookBytes)
+	f.Write(MockPlaybookBytes)
 	f.Close()
 
-	f, err = os.Create(ManifestFilename)
+	f, err = os.Create(MockManifestFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test manifest: %s", err)
 	}
@@ -73,23 +73,23 @@ func TestMain(m *testing.M) {
 	os.Exit(testresult)
 }
 func teardown() {
-	os.Remove(PlaybookFilename)
-	os.Remove(ManifestFilename)
+	os.Remove(MockPlaybookFilename)
+	os.Remove(MockManifestFilename)
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {
-	playbook, err := ReadPlaybookFromDisk(PlaybookFilename)
+	playbook, err := ReadPlaybookFromDisk(MockPlaybookFilename)
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(playbook, PlaybookBytes) {
+	if !bytes.Equal(playbook, MockPlaybookBytes) {
 		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
 	}
 }
 
 func TestParsePlaybook(t *testing.T) {
 	var err error
-	ParsedPlaybook, err := ParsePlaybook(PlaybookBytes)
+	ParsedPlaybook, err := ParsePlaybook(MockPlaybookBytes)
 	if err != nil {
 		t.Error(err)
 	}
@@ -106,7 +106,7 @@ func TestParsePlaybookMalformed(t *testing.T) {
 }
 
 func TestParsePlaybookIncomplete(t *testing.T) {
-	_, err := ParsePlaybook(IncompletePlaybookBytes)
+	_, err := ParsePlaybook(MockIncompletePlaybookBytes)
 	if err != nil {
 		t.Error(errors.New("Parsing well-formed, incomplete playbook failed, expected success"))
 	}
@@ -115,13 +115,13 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 func TestValidatePlaybookPasses(t *testing.T) {
 	ValidTask1 := Task{
 		Name:      "task",
-		Manifests: []string{ManifestFilename},
+		Manifests: []string{MockManifestFilename},
 	}
 	ValidTask2 := Task{
 		Name:        "task",
-		PodManifest: ManifestFilename,
+		PodManifest: MockManifestFilename,
 	}
-	ParsedPlaybook, _ := ParsePlaybook(PlaybookBytes) // already checked err in previous test
+	ParsedPlaybook, _ := ParsePlaybook(MockPlaybookBytes) // already checked err in previous test
 
 	testcases := []struct {
 		scenario string
@@ -151,7 +151,7 @@ func TestValidatePlaybookPasses(t *testing.T) {
 
 func TestValidatePlaybookFailures(t *testing.T) {
 	InvalidTask1 := Task{
-		Manifests: []string{ManifestFilename},
+		Manifests: []string{MockManifestFilename},
 	}
 	InvalidTask2 := Task{
 		Name: "task",
@@ -221,22 +221,22 @@ func TestTaskManifestsPresentPasses(t *testing.T) {
 			"Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
-				Manifests: []string{ManifestFilename},
+				Manifests: []string{MockManifestFilename},
 			},
 		},
 		{
 			"Task With Only Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: ManifestFilename,
+				PodManifest: MockManifestFilename,
 			},
 		},
 		{
 			"Task With Both Manifests And Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: ManifestFilename,
-				Manifests:   []string{ManifestFilename},
+				PodManifest: MockManifestFilename,
+				Manifests:   []string{MockManifestFilename},
 			},
 		},
 	}
