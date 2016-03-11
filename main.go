@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,7 +21,7 @@ type Meta struct {
 type Task struct {
 	Name        string   `yaml:"name"`
 	Manifests   []string `yaml:"manifests,omitempty"`
-	PodManifest []string `yaml:"pod_manifest,omitempty"`
+	PodManifest string   `yaml:"pod_manifest,omitempty"`
 	WaitFor     []string `yaml:"wait_for,omitempty"`
 	When        string   `yaml:"when,omitempty"`
 }
@@ -38,11 +39,32 @@ func (t Task) ManifestsPresent() error {
 			return err
 		}
 	}
+	if len(t.PodManifest) > 0 {
+		if _, err := os.Stat(t.PodManifest); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (p Playbook) Validate() error {
+	if len(p.Name) == 0 {
+		return errors.New("Playbook missing required Name")
+	}
+	if len(p.Tasks) == 0 {
+		return errors.New("Playbook requires at least 1 task")
+	}
+	return p.ValidateTasks()
 }
 
 func (p Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
+		if len(task.Name) == 0 {
+			return errors.New("Task missing required Name")
+		}
+		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
+			return errors.New("Task requires at least one manifest or a pod manifest")
+		}
 		if err := task.ManifestsPresent(); err != nil {
 			return err
 		}
