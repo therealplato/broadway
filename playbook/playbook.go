@@ -23,6 +23,7 @@ type Task struct {
 }
 
 type Playbook struct {
+	Id    string   `yaml:"id"`
 	Name  string   `yaml:"name"`
 	Meta  Meta     `yaml:"meta"`
 	Vars  []string `yaml:"vars"`
@@ -44,6 +45,9 @@ func (t Task) ManifestsPresent() error {
 }
 
 func (p Playbook) Validate() error {
+	if len(p.Id) == 0 {
+		return errors.New("Playbook missing required Id")
+	}
 	if len(p.Name) == 0 {
 		return errors.New("Playbook missing required Name")
 	}

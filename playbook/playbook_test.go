@@ -11,6 +11,7 @@ import (
 const PlaybookFilename = "test-playbook.yml"
 const ManifestFilename = "test-manifest.yml"
 const PlaybookContents string = `---
+id: project-playbook
 name: The Project 
 meta:
   team: Project Devs
@@ -120,6 +121,8 @@ func TestValidatePlaybookPasses(t *testing.T) {
 		Name:        "task",
 		PodManifest: ManifestFilename,
 	}
+	ParsedPlaybook, _ := ParsePlaybook(PlaybookBytes) // already checked err in previous test
+
 	testcases := []struct {
 		scenario string
 		playbook Playbook
@@ -127,9 +130,14 @@ func TestValidatePlaybookPasses(t *testing.T) {
 		{
 			"Validate Valid Playbook",
 			Playbook{
+				Id:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{ValidTask1, ValidTask2},
 			},
+		},
+		{
+			"Parse And Validate Test Playbook",
+			ParsedPlaybook,
 		},
 	}
 	for _, testcase := range testcases {
@@ -155,13 +163,21 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			"Validate Empty Playbook",
+			"Validate Playbook Without Id",
 			Playbook{},
+			"Playbook missing required Id",
+		},
+		{
+			"Validate Playbook Without Name",
+			Playbook{
+				Id: "playbook id 1",
+			},
 			"Playbook missing required Name",
 		},
 		{
 			"Validate Playbook With Zero Tasks",
 			Playbook{
+				Id:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{},
 			},
@@ -170,6 +186,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		{
 			"Validate Playbook With Tasks Missing Names",
 			Playbook{
+				Id:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask1},
 			},
@@ -178,6 +195,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		{
 			"Validate Playbook With Tasks Missing Manifests",
 			Playbook{
+				Id:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask2},
 			},
