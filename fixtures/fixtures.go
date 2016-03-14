@@ -3,6 +3,7 @@
 package fixtures
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -104,10 +105,11 @@ func SetupTestFixtures() {
 }
 
 func TeardownTestFixtures() {
-
 	pPath := filepath.Join(rootPath, "playbooks", MockPlaybookFilename)
 	mPath := filepath.Join(rootPath, "manifests", MockManifestFilename)
-	os.Remove(pPath)
-	os.Remove(mPath)
-
+	err1 := os.Remove(pPath)
+	err2 := os.Remove(mPath)
+	if err1 != nil || err2 != nil {
+		fmt.Println(err1, err2)
+	}
 }

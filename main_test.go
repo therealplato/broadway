@@ -9,8 +9,8 @@ import (
 func TestMain(m *testing.M) {
 	fixtures.SetupTestFixtures()
 	testresult := m.Run()
-	os.Exit(testresult)
 	fixtures.TeardownTestFixtures()
+	os.Exit(testresult)
 }
 
 func TestLoadPlaybookFolder(t *testing.T) {
