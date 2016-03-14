@@ -25,7 +25,6 @@ services:
     image: gcr.io/google_containers/hyperkube:v1.1.2
     network_mode: host
     pid: host
-    privileged: true
     volumes:
       - /:/rootfs:ro
       - /sys:/sys:ro
@@ -39,7 +38,6 @@ services:
     image: gcr.io/google_containers/hyperkube:v1.1.2
     network_mode: host
     pid: host
-    privileged: true
     command: ['/hyperkube', 'proxy', '--master=http://127.0.0.1:8080', '--v=2']
 
   kube2sky:
