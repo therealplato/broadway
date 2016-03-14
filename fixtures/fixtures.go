@@ -1,5 +1,9 @@
 // Test fixtures shared throughout Broadway tests
 // Do not import this except from tests
+// SetupTestFixtures will write broadway/playbooks/test-playbook.yml
+// and broadway/playbooks/test-manifest.yml, creating folders if necessary
+// TeardownTestFixtures will remove these files but leave the folders
+
 package fixtures
 
 import (
@@ -46,7 +50,6 @@ tasks:
       - test-manifest.yml
       - test-manifest.yml
 `
-
 const MockPlaybookContentsIncomplete = `---
 name: The Project 
 `
@@ -65,7 +68,7 @@ func SetupTestFixtures() {
 		log.Fatalf("Failed to setup test fixtures; expected cwd 'broadway/', actual cwd %s", cwd)
 	}
 	rootPath = cwd
-	// Ensure playbooks and manifests folders to write mock data
+	// Write mock playbook:
 	pDir := filepath.Join(rootPath, "playbooks")
 	err = os.MkdirAll(pDir, os.ModePerm)
 	if err != nil {
@@ -82,7 +85,8 @@ func SetupTestFixtures() {
 	f.Write(MockPlaybookBytes)
 	f.Close()
 
-	mDir := filepath.Join(rootPath, "manifests") // from broadway/playbooks folder
+	// Write mock manifest:
+	mDir := filepath.Join(rootPath, "manifests")
 	err = os.MkdirAll(mDir, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Failed to create broadway/manifests folder: %s", err)

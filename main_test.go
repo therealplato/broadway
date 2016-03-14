@@ -12,13 +12,3 @@ func TestMain(m *testing.M) {
 	fixtures.TeardownTestFixtures()
 	os.Exit(testresult)
 }
-
-func TestLoadPlaybookFolder(t *testing.T) {
-	pbs, err := LoadPlaybookFolder("playbooks/")
-	if err != nil {
-		t.Errorf("LoadPlaybookFolder failed to load playbooks: %s\n", err)
-	}
-	if len(pbs) == 0 {
-		t.Error("LoadPlaybookFolder failed to load mock playbook")
-	}
-}
