@@ -13,10 +13,10 @@ type baseInstance struct {
 	store store.Store
 }
 
-func New(attrs *InstanceAttributes) Instance {
+func New(s store.Store, attrs *InstanceAttributes) Instance {
 	instance := &baseInstance{
 		attributes: attrs,
-		store:      store.New(),
+		store:      s,
 	}
 
 	return instance

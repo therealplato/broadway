@@ -3,11 +3,13 @@ package instance
 import (
 	"testing"
 
+	"github.com/namely/broadway/store"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSavingInstance(t *testing.T) {
-	i := New(&InstanceAttributes{PlaybookId: "test", Id: "222"})
+	i := New(store.New(), &InstanceAttributes{PlaybookId: "test", Id: "222"})
 	err := i.Save()
 	assert.Nil(t, err)
 
@@ -24,7 +26,7 @@ func TestGettingUnsavedInstance(t *testing.T) {
 }
 
 func TestDestroy(t *testing.T) {
-	i := New(&InstanceAttributes{PlaybookId: "test", Id: "422"})
+	i := New(store.New(), &InstanceAttributes{PlaybookId: "test", Id: "422"})
 	assert.Nil(t, i.Save())
 
 	assert.Nil(t, i.Destroy())
