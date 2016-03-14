@@ -11,10 +11,19 @@ services:
       GOARCH: amd64
       ETCD_HOST: "http://localhost:4001"
       HOST: ":3000"
-    ports:
-      - "3000:3000"
-    links:
-      - etcd
+    network_mode: host
+
+  test:
+    build: .
+    volumes:
+      - .:/go/src/github.com/namely/broadway
+    command: echo "hello"
+    environment:
+      GOOS: linux
+      GOARCH: amd64
+      ETCD_HOST: "http://localhost:4001"
+      HOST: ":3000"
+    network_mode: host
 
   etcd:
     image: gcr.io/google_containers/etcd:2.2.1
