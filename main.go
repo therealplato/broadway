@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/playbook"
-	"log"
 )
 
 func main() {
