@@ -10,8 +10,6 @@ import (
 	"testing"
 )
 
-const MockPlaybookFilename = "test-playbook.yml"
-const MockManifestFilename = "test-manifest.yml"
 const MockPlaybookContents string = `---
 id: project-playbook
 name: The Project 
@@ -50,83 +48,67 @@ tasks:
 const MockPlaybookContentsIncomplete = `---
 name: The Project 
 `
+const MockPlaybookFilename = "test-playbook.yml"
+const MockManifestFilename = "test-manifest.yml"
 
 var MockPlaybookBytes = []byte(MockPlaybookContents)
 var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
-var rootPath string
+var rootDir string
+var playbookDir string
+var manifestDir string
+var mockPlaybookPath string
+var mockManifestPath string
 
-// SetupTestFixtures will write broadway/playbooks/test-playbook.yml
-// and broadway/playbooks/test-manifest.yml, creating folders if necessary
 func SetupTestFixtures() {
-	// Ensure we are in project root:
+	// Find project root:
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	if filepath.Base(cwd) != "broadway" {
-		log.Fatalf("Failed to setup test fixtures; expected cwd 'broadway/', actual cwd %s", cwd)
-	}
-	rootPath = cwd
-	// Write mock playbook:
-	pDir := filepath.Join(rootPath, "playbooks")
-	err = os.MkdirAll(pDir, os.ModePerm)
+	rootDir = filepath.Join(cwd, "..")
+
+	// Set path variables:
+	playbookDir = filepath.Join(rootDir, "playbooks")
+	mockPlaybookPath = filepath.Join(rootDir, "playbooks", MockPlaybookFilename)
+	manifestDir := filepath.Join(rootDir, "manifests")
+	mockManifestPath = filepath.Join(rootDir, "manifests", MockManifestFilename)
+
+	// Create folders:
+	err = os.MkdirAll(playbookDir, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Failed to create broadway/playbooks folder: %s", err)
 	}
-	err = os.Chdir(pDir)
+	err = os.MkdirAll(manifestDir, os.ModePerm)
 	if err != nil {
-		log.Fatalf("Failed to cd to broadway/playbooks folder: %s", err)
+		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
 	}
-	f, err := os.Create(MockPlaybookFilename)
+
+	// Write mock playbook and manifest::
+	f, err := os.Create(mockPlaybookPath)
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)
 	}
 	f.Write(MockPlaybookBytes)
 	f.Close()
 
-	// Write mock manifest:
-	mDir := filepath.Join(rootPath, "manifests")
-	err = os.MkdirAll(mDir, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
-	}
-	err = os.Chdir(mDir)
-	if err != nil {
-		log.Fatalf("Failed to cd to broadway/manifests folder: %s", err)
-	}
-
-	f, err = os.Create(MockManifestFilename)
+	f, err = os.Create(mockManifestPath)
 	if err != nil {
 		log.Fatalf("Failed to write mock test manifest: %s", err)
 	}
 	f.Close()
 
-	err = os.Chdir(rootPath)
-	if err != nil {
-		log.Fatalf("Failed to cd to broadway/ folder: %s", err)
-	}
 }
 
 // TeardownTestFixtures will remove the mock files but leave the folders
 func TeardownTestFixtures() {
-	pPath := filepath.Join(rootPath, "playbooks", MockPlaybookFilename)
-	mPath := filepath.Join(rootPath, "manifests", MockManifestFilename)
-	err1 := os.Remove(pPath)
-	err2 := os.Remove(mPath)
+	err1 := os.Remove(mockPlaybookPath)
+	err2 := os.Remove(mockManifestPath)
 	if err1 != nil || err2 != nil {
 		fmt.Println(err1, err2)
 	}
 }
 
 func TestMain(m *testing.M) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Switch cwd to project root before creating fixtures:
-	newCwd := filepath.Join(cwd, "..")
-	os.Chdir(newCwd)
-
 	SetupTestFixtures()
 	testresult := m.Run()
 	TeardownTestFixtures()
@@ -134,7 +116,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {
-	playbook, err := ReadPlaybookFromDisk("playbooks/" + MockPlaybookFilename)
+	playbook, err := ReadPlaybookFromDisk(mockPlaybookPath)
 	if err != nil {
 		t.Error(err)
 	}
@@ -269,7 +251,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 }
 
 func TestLoadPlaybookFolder(t *testing.T) {
-	pbs, err := LoadPlaybookFolder("playbooks/")
+	pbs, err := LoadPlaybookFolder("../playbooks/")
 	if err != nil {
 		t.Errorf("LoadPlaybookFolder failed to load playbooks: %s\n", err)
 	}

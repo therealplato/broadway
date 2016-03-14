@@ -32,7 +32,7 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
-var ManifestRoot = "manifests/"
+var ManifestRoot = "../manifests/"
 var ManifestExtension = ".yml"
 
 func SetManifestRoot(newRoot string) error {
@@ -103,6 +103,9 @@ func LoadPlaybookFolder(dir string) ([]Playbook, error) {
 	paths, err := filepath.Glob(dir + "/*")
 	if err != nil {
 		return AllPlaybooks, err
+	}
+	if len(paths) == 0 {
+		return AllPlaybooks, errors.New("Found zero files in directory " + dir)
 	}
 	for _, path := range paths {
 		playbookBytes, err := ReadPlaybookFromDisk(path)
