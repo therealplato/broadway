@@ -2,10 +2,10 @@ package playbook
 
 import (
 	"errors"
-	"os"
-
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 type Meta struct {
@@ -30,14 +30,34 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
+var PlaybookRoot = "playbooks/"
+var ManifestRoot = "manifests/"
+
+func SetPlaybookRoot(newRoot string) error {
+	if _, err := os.Stat(newRoot); err != nil {
+		return err
+	}
+	PlaybookRoot = newRoot
+	return nil
+}
+func SetManifestRoot(newRoot string) error {
+	if _, err := os.Stat(newRoot); err != nil {
+		return err
+	}
+	ManifestRoot = newRoot
+	return nil
+}
+
 func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
-		if _, err := os.Stat(name); err != nil {
+		path := filepath.Join(ManifestRoot, name)
+		if _, err := os.Stat(path); err != nil {
 			return err
 		}
 	}
 	if len(t.PodManifest) > 0 {
-		if _, err := os.Stat(t.PodManifest); err != nil {
+		path := filepath.Join(ManifestRoot, t.PodManifest)
+		if _, err := os.Stat(path); err != nil {
 			return err
 		}
 	}

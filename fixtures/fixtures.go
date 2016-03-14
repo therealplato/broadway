@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-const MockPlaybookFilename = "playbooks/test-playbook.yml"
-const MockManifestFilename = "manifests/test-manifest.yml"
+const MockPlaybookFilename = "test-playbook.yml"
+const MockManifestFilename = "test-manifest.yml"
 const MockPlaybookContents string = `---
 id: project-playbook
 name: The Project 
@@ -52,6 +52,7 @@ name: The Project
 
 var MockPlaybookBytes = []byte(MockPlaybookContents)
 var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
+var rootPath string
 
 func SetupTestFixtures() {
 	// Ensure we are in project root:
@@ -62,18 +63,17 @@ func SetupTestFixtures() {
 	if filepath.Base(cwd) != "broadway" {
 		log.Fatalf("Failed to setup test fixtures; expected cwd 'broadway/', actual cwd %s", cwd)
 	}
+	rootPath = cwd
 	// Ensure playbooks and manifests folders to write mock data
-	pDir := filepath.Join(cwd, "playbooks")
-	mDir := filepath.Join(cwd, "manifests")
+	pDir := filepath.Join(rootPath, "playbooks")
 	err = os.MkdirAll(pDir, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Failed to create broadway/playbooks folder: %s", err)
 	}
-	err = os.MkdirAll(mDir, os.ModePerm)
+	err = os.Chdir(pDir)
 	if err != nil {
-		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
+		log.Fatalf("Failed to cd to broadway/playbooks folder: %s", err)
 	}
-
 	f, err := os.Create(MockPlaybookFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)
@@ -81,14 +81,33 @@ func SetupTestFixtures() {
 	f.Write(MockPlaybookBytes)
 	f.Close()
 
+	mDir := filepath.Join(rootPath, "manifests") // from broadway/playbooks folder
+	err = os.MkdirAll(mDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
+	}
+	err = os.Chdir(mDir)
+	if err != nil {
+		log.Fatalf("Failed to cd to broadway/manifests folder: %s", err)
+	}
+
 	f, err = os.Create(MockManifestFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test manifest: %s", err)
 	}
 	f.Close()
+
+	err = os.Chdir(rootPath)
+	if err != nil {
+		log.Fatalf("Failed to cd to broadway/ folder: %s", err)
+	}
 }
 
 func TeardownTestFixtures() {
-	os.Remove(MockPlaybookFilename)
-	os.Remove(MockManifestFilename)
+
+	pPath := filepath.Join(rootPath, "playbooks", MockPlaybookFilename)
+	mPath := filepath.Join(rootPath, "manifests", MockManifestFilename)
+	os.Remove(pPath)
+	os.Remove(mPath)
+
 }

@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {
-	playbook, err := ReadPlaybookFromDisk(fixtures.MockPlaybookFilename)
+	playbook, err := ReadPlaybookFromDisk("playbooks/" + fixtures.MockPlaybookFilename)
 	if err != nil {
 		t.Error(err)
 	}
