@@ -63,11 +63,11 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 func TestValidatePlaybookPasses(t *testing.T) {
 	ValidTask1 := Task{
 		Name:      "task",
-		Manifests: []string{fixtures.MockManifestFilename},
+		Manifests: []string{"test-manifest"},
 	}
 	ValidTask2 := Task{
 		Name:        "task",
-		PodManifest: fixtures.MockManifestFilename,
+		PodManifest: "test-manifest",
 	}
 	ParsedPlaybook, _ := ParsePlaybook(fixtures.MockPlaybookBytes) // already checked err in previous test
 
@@ -178,22 +178,22 @@ func TestTaskManifestsPresentPasses(t *testing.T) {
 			"Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
-				Manifests: []string{fixtures.MockManifestFilename},
+				Manifests: []string{"test-manifest"},
 			},
 		},
 		{
 			"Task With Only Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: fixtures.MockManifestFilename,
+				PodManifest: "test-manifest",
 			},
 		},
 		{
 			"Task With Both Manifests And Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: fixtures.MockManifestFilename,
-				Manifests:   []string{fixtures.MockManifestFilename},
+				PodManifest: "test-manifest",
+				Manifests:   []string{"test-manifest"},
 			},
 		},
 	}

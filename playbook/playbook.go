@@ -31,16 +31,9 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
-var PlaybookRoot = "playbooks/"
 var ManifestRoot = "manifests/"
+var ManifestExtension = ".yml"
 
-func SetPlaybookRoot(newRoot string) error {
-	if _, err := os.Stat(newRoot); err != nil {
-		return err
-	}
-	PlaybookRoot = newRoot
-	return nil
-}
 func SetManifestRoot(newRoot string) error {
 	if _, err := os.Stat(newRoot); err != nil {
 		return err
@@ -51,13 +44,15 @@ func SetManifestRoot(newRoot string) error {
 
 func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
-		path := filepath.Join(ManifestRoot, name)
+		filename := name + ManifestExtension
+		path := filepath.Join(ManifestRoot, filename)
 		if _, err := os.Stat(path); err != nil {
 			return err
 		}
 	}
 	if len(t.PodManifest) > 0 {
-		path := filepath.Join(ManifestRoot, t.PodManifest)
+		filename := t.PodManifest + ManifestExtension
+		path := filepath.Join(ManifestRoot, filename)
 		if _, err := os.Stat(path); err != nil {
 			return err
 		}

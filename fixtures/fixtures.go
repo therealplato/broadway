@@ -29,26 +29,26 @@ vars:
 tasks:
   - name: Deploy Postgres
     manifests:
-      - test-manifest.yml
-      - test-manifest.yml
+      - test-manifest
+      - test-manifest
   - name: Deploy Redis
     manifests:
-      - test-manifest.yml
-      - test-manifest.yml
+      - test-manifest
+      - test-manifest
   - name: Database Setup
-    pod_manifest: test-manifest.yml
+    pod_manifest: test-manifest
     wait_for:
       - success
     when: new_deployment
   - name: Database Migration
-    pod_manifest: test-manifest.yml
+    pod_manifest: test-manifest
     wait_for:
       - success
   - name: Deploy Project
     manifests:
-      - test-manifest.yml
-      - test-manifest.yml
-      - test-manifest.yml
+      - test-manifest
+      - test-manifest
+      - test-manifest
 `
 const MockPlaybookContentsIncomplete = `---
 name: The Project 
