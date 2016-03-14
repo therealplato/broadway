@@ -3,70 +3,26 @@ package playbook
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	"github.com/namely/broadway/fixtures"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-const MockPlaybookFilename = "playbooks/test-playbook.yml"
-const MockManifestFilename = "manifests/test-manifest.yml"
-const MockPlaybookContents string = `---
-id: project-playbook
-name: The Project 
-meta:
-  team: Project Devs
-  email: devs@project.com
-  slack: devs
-vars:
-  - version
-  - assets_version
-  - owner
-tasks:
-  - name: Deploy Postgres
-    manifests:
-      - test-manifest.yml
-      - test-manifest.yml
-  - name: Deploy Redis
-    manifests:
-      - test-manifest.yml
-      - test-manifest.yml
-  - name: Database Setup
-    pod_manifest: test-manifest.yml
-    wait_for:
-      - success
-    when: new_deployment
-  - name: Database Migration
-    pod_manifest: test-manifest.yml
-    wait_for:
-      - success
-  - name: Deploy Project
-    manifests:
-      - test-manifest.yml
-      - test-manifest.yml
-      - test-manifest.yml
-`
-
-var MockPlaybookBytes = []byte(MockPlaybookContents)
-
-const MockPlaybookContentsIncomplete = `---
-name: The Project 
-`
-
-var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
-
-func TestMain(m *testing.M) {
-	// Switch to project root. The mock files are relative to there.
-	cwd, _ := os.Getwd()
-	newCwd := filepath.Join(cwd, "..")
-	os.Chdir(newCwd)
-	fmt.Println(os.Getwd())
-
+func SetupTestFixtures() {
+	// Ensure we are in project root:
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if filepath.Base(cwd) != "broadway" {
+		log.Fatalf("Failed to setup test fixtures; expected cwd 'broadway/', actual cwd %s", cwd)
+	}
 	// Ensure playbooks and manifests folders to write mock data
-	pDir := filepath.Join(newCwd, "playbooks")
-	mDir := filepath.Join(newCwd, "manifests")
-	err := os.MkdirAll(pDir, os.ModePerm)
+	pDir := filepath.Join(cwd, "playbooks")
+	mDir := filepath.Join(cwd, "manifests")
+	err = os.MkdirAll(pDir, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Failed to create broadway/playbooks folder: %s", err)
 	}
@@ -75,41 +31,53 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
 	}
 
-	f, err := os.Create(MockPlaybookFilename)
+	f, err := os.Create(fixtures.MockPlaybookFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)
 	}
-	f.Write(MockPlaybookBytes)
+	f.Write(fixtures.MockPlaybookBytes)
 	f.Close()
 
-	f, err = os.Create(MockManifestFilename)
+	f, err = os.Create(fixtures.MockManifestFilename)
 	if err != nil {
 		log.Fatalf("Failed to write mock test manifest: %s", err)
 	}
 	f.Close()
+}
 
+func TestMain(m *testing.M) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print(cwd)
+	// Switch cwd to project root before creating fixtures:
+	newCwd := filepath.Join(cwd, "..")
+	os.Chdir(newCwd)
+
+	SetupTestFixtures()
 	testresult := m.Run()
-	teardown()
+	TeardownTestFixtures()
 	os.Exit(testresult)
 }
-func teardown() {
-	os.Remove(MockPlaybookFilename)
-	os.Remove(MockManifestFilename)
+func TeardownTestFixtures() {
+	os.Remove(fixtures.MockPlaybookFilename)
+	os.Remove(fixtures.MockManifestFilename)
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {
-	playbook, err := ReadPlaybookFromDisk(MockPlaybookFilename)
+	playbook, err := ReadPlaybookFromDisk(fixtures.MockPlaybookFilename)
 	if err != nil {
 		t.Error(err)
 	}
-	if !bytes.Equal(playbook, MockPlaybookBytes) {
+	if !bytes.Equal(playbook, fixtures.MockPlaybookBytes) {
 		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
 	}
 }
 
 func TestParsePlaybook(t *testing.T) {
 	var err error
-	ParsedPlaybook, err := ParsePlaybook(MockPlaybookBytes)
+	ParsedPlaybook, err := ParsePlaybook(fixtures.MockPlaybookBytes)
 	if err != nil {
 		t.Error(err)
 	}
@@ -126,7 +94,7 @@ func TestParsePlaybookMalformed(t *testing.T) {
 }
 
 func TestParsePlaybookIncomplete(t *testing.T) {
-	_, err := ParsePlaybook(MockIncompletePlaybookBytes)
+	_, err := ParsePlaybook(fixtures.MockIncompletePlaybookBytes)
 	if err != nil {
 		t.Error(errors.New("Parsing well-formed, incomplete playbook failed, expected success"))
 	}
@@ -135,13 +103,13 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 func TestValidatePlaybookPasses(t *testing.T) {
 	ValidTask1 := Task{
 		Name:      "task",
-		Manifests: []string{MockManifestFilename},
+		Manifests: []string{fixtures.MockManifestFilename},
 	}
 	ValidTask2 := Task{
 		Name:        "task",
-		PodManifest: MockManifestFilename,
+		PodManifest: fixtures.MockManifestFilename,
 	}
-	ParsedPlaybook, _ := ParsePlaybook(MockPlaybookBytes) // already checked err in previous test
+	ParsedPlaybook, _ := ParsePlaybook(fixtures.MockPlaybookBytes) // already checked err in previous test
 
 	testcases := []struct {
 		scenario string
@@ -171,7 +139,7 @@ func TestValidatePlaybookPasses(t *testing.T) {
 
 func TestValidatePlaybookFailures(t *testing.T) {
 	InvalidTask1 := Task{
-		Manifests: []string{MockManifestFilename},
+		Manifests: []string{fixtures.MockManifestFilename},
 	}
 	InvalidTask2 := Task{
 		Name: "task",
@@ -241,22 +209,22 @@ func TestTaskManifestsPresentPasses(t *testing.T) {
 			"Task With Existing Manifests",
 			Task{
 				Name:      "task 2",
-				Manifests: []string{MockManifestFilename},
+				Manifests: []string{fixtures.MockManifestFilename},
 			},
 		},
 		{
 			"Task With Only Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: MockManifestFilename,
+				PodManifest: fixtures.MockManifestFilename,
 			},
 		},
 		{
 			"Task With Both Manifests And Pod Manifest",
 			Task{
 				Name:        "task 2",
-				PodManifest: MockManifestFilename,
-				Manifests:   []string{MockManifestFilename},
+				PodManifest: fixtures.MockManifestFilename,
+				Manifests:   []string{fixtures.MockManifestFilename},
 			},
 		},
 	}
