@@ -10,59 +10,19 @@ import (
 	"testing"
 )
 
-func SetupTestFixtures() {
-	// Ensure we are in project root:
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if filepath.Base(cwd) != "broadway" {
-		log.Fatalf("Failed to setup test fixtures; expected cwd 'broadway/', actual cwd %s", cwd)
-	}
-	// Ensure playbooks and manifests folders to write mock data
-	pDir := filepath.Join(cwd, "playbooks")
-	mDir := filepath.Join(cwd, "manifests")
-	err = os.MkdirAll(pDir, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Failed to create broadway/playbooks folder: %s", err)
-	}
-	err = os.MkdirAll(mDir, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Failed to create broadway/manifests folder: %s", err)
-	}
-
-	f, err := os.Create(fixtures.MockPlaybookFilename)
-	if err != nil {
-		log.Fatalf("Failed to write mock test playbook: %s", err)
-	}
-	f.Write(fixtures.MockPlaybookBytes)
-	f.Close()
-
-	f, err = os.Create(fixtures.MockManifestFilename)
-	if err != nil {
-		log.Fatalf("Failed to write mock test manifest: %s", err)
-	}
-	f.Close()
-}
-
 func TestMain(m *testing.M) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Print(cwd)
 	// Switch cwd to project root before creating fixtures:
 	newCwd := filepath.Join(cwd, "..")
 	os.Chdir(newCwd)
 
-	SetupTestFixtures()
+	fixtures.SetupTestFixtures()
 	testresult := m.Run()
-	TeardownTestFixtures()
+	fixtures.TeardownTestFixtures()
 	os.Exit(testresult)
-}
-func TeardownTestFixtures() {
-	os.Remove(fixtures.MockPlaybookFilename)
-	os.Remove(fixtures.MockManifestFilename)
 }
 
 func TestReadPlaybookFromDisk(t *testing.T) {

@@ -1,43 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"github.com/namely/broadway/playbook"
-	//"os"
+	"github.com/namely/broadway/fixtures"
+	"os"
 	"testing"
 )
 
 func TestMain(m *testing.M) {
-	fmt.Println(playbook.MockPlaybookFilename)
-	/*
-			fmt.Println(playbook.MockPlaybookFilename)
-				f, err := os.Create(playbook.MockPlaybookFilename)
-				if err != nil {
-					log.Fatalf("Failed to write mock test playbook: %s", err)
-				}
-				f.Write(playbook.MockPlaybookBytes)
-				f.Close()
-
-				f, err = os.Create(playbook.MockManifestFilename)
-				if err != nil {
-					log.Fatalf("Failed to write mock test manifest: %s", err)
-				}
-				f.Close()
-
-		cwd, _ := os.Getwd()
-		playbook.SetupTestFixtures()
-		testresult := m.Run()
-		os.Exit(testresult)
-		playbook.TeardownTestFixtures()
-	*/
+	fixtures.SetupTestFixtures()
+	testresult := m.Run()
+	os.Exit(testresult)
+	fixtures.TeardownTestFixtures()
 }
-
-/*
-func teardown() {
-	os.Remove(playbook.MockPlaybookFilename)
-	os.Remove(playbook.MockManifestFilename)
-}
-*/
 
 func TestLoadPlaybookFolder(t *testing.T) {
+	pbs, err := LoadPlaybookFolder("playbooks/")
+	if err != nil {
+		t.Errorf("LoadPlaybookFolder failed to load playbooks: %s\n", err)
+	}
+	if len(pbs) == 0 {
+		t.Error("LoadPlaybookFolder failed to load mock playbook")
+	}
 }
