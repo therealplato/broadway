@@ -9,7 +9,7 @@ services:
     environment:
       GOOS: linux
       GOARCH: amd64
-      ETCD_HOST: "http://etcd:4001"
+      ETCD_HOST: "http://localhost:4001"
       HOST: ":3000"
     ports:
       - "3000:3000"
