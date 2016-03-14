@@ -14,7 +14,7 @@ dependencies:
 
 test:
   override:
-    - docker-compose run app go test -v ./...
+    - docker-compose run test go test -v ./...
 
 deployment:
   production:
