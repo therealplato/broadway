@@ -8,11 +8,8 @@ docker-machine ssh "$dm" -f -N -L "8080:localhost:8080"
 
 echo "waiting"
 
-until /usr/local/bin/kubectl get pods &> /dev/null; do
+until kubectl -s http://localhost:8080 get pods &> /dev/null; do
    printf "."
 done
 
-echo
-
-kubectl create -f broadway-namespace.yaml
-kubectl create -f broadway-rc.yaml
+kubectl create -s http://localhost:8080 -f broadway-namespace.yaml
