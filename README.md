@@ -9,6 +9,15 @@ Kubernetes and allowing users to interact with it through various interfaces
 ## Playbook
 A Broadway Playbook is a YAML file for defining a project's deployment tasks.
 
+`id`, `name`, and at least one item in `tasks` are mandatory fields.
+
+Each task item must have one or more of: a `manifests` array, a `pod_manifest`
+item.
+
+These manifest items must match .yml files in the `manifests` directory, e.g.
+the "Deploy Postgres" task below expects files `manifests/postgres-rc.yml` and
+`manifests/postgres-service.yml`.
+
 ```yaml
 ---
 id: web
@@ -31,8 +40,7 @@ tasks:
       - redis-rc
       - redis-service
   - name: Database Migration
-    pod_manifest:
-      - migration-pod
+    pod_manifest: migration-pod
     wait_for:
       - success
   - name: Deploy Web
@@ -41,6 +49,38 @@ tasks:
       - web-service
       - worker-rc
 ```
+
+## Setup
+You should have prerequisites
+[Kubernetes](http://kubernetes.io/docs/getting-started-guides/binary_release/)
+and [Docker](https://docs.docker.com/engine/installation/) installed already.
+You should have a running, active Docker machine in this terminal:
+
+    $ kubectl version
+      > "Client Version... Server Version..."
+    $ docker-machine status default
+      > "Running"
+
+If you have an inactive docker machine, start it:
+
+    $ eval $(docker-machine env default)
+
+Clone the broadway repo and run the startup script:
+
+    $ git clone https://github.com/namely/broadway; cd broadway
+    $ ./broadway-dev-up.sh
+
+After lots of docker container setup, you should see output:
+
+    > ...
+    > namespace "broadway" created
+
+Now you should have a running Broadway server:
+    $ curl localhost:8080
+      > {
+      >   "paths": [
+      >     "/api",
+      > ...
 
 ## Running Broadway
 
