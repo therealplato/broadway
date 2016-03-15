@@ -237,6 +237,6 @@ func TestGetInstancesWithEmptyPlaybook(t *testing.T) {
 		return
 	}
 	if len(okResponse) != 0 {
-		t.Errorf("Expected 0 instances matching playbook testPlaybookEmpty, actual %s\n", len(okResponse))
+		t.Errorf("Expected 0 instances matching playbook testPlaybookEmpty, actual %v\n", len(okResponse))
 	}
 }

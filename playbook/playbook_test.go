@@ -328,7 +328,7 @@ func TestTaskManifestsPresentFailures(t *testing.T) {
 		task := testcase.task
 		err := task.ManifestsPresent()
 		if err == nil {
-			t.Errorf("Scenario %s\nExpected: File does not exist\nActual: Success%s", testcase.scenario)
+			t.Errorf("Scenario %s\nExpected: File does not exist\nActual: Success", testcase.scenario)
 		} else if !os.IsNotExist(err) { // it was the wrong error!
 			t.Errorf("Scenario %s\nExpected: File does not exist\nActual:\n%s", testcase.scenario, err.Error())
 		}
