@@ -25,6 +25,8 @@ func InvalidError(message string) ErrorResponse {
 	return ErrorResponse{"error": "Unprocessable Entity: " + message}
 }
 
+var NotFoundError ErrorResponse = ErrorResponse{"error": "Not Found"}
+
 func New(s store.Store) *Server {
 	srvr := &Server{store: s}
 	srvr.setupHandlers()
@@ -34,6 +36,7 @@ func New(s store.Store) *Server {
 func (s *Server) setupHandlers() {
 	s.engine = gin.Default()
 	s.engine.POST("/instances", s.createInstance)
+	s.engine.GET("/instance/:playbookId/:instanceId", s.getInstance)
 }
 
 func (s *Server) Handler() http.Handler {
@@ -60,4 +63,19 @@ func (s *Server) createInstance(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, i.Attributes())
+}
+
+func (s *Server) getInstance(c *gin.Context) {
+	playbookId := c.Param("playbookId")
+	instanceId := c.Param("instanceId")
+	i, err := instance.Get(playbookId, instanceId)
+	if err != nil && err.Error() == "Instance does not exist." {
+		c.JSON(http.StatusNotFound, NotFoundError)
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, InternalError)
+		return
+	}
+
+	c.JSON(http.StatusOK, i.Attributes())
 }

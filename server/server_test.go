@@ -49,7 +49,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 
 }
 
-func TestCreateInstanceWithInvalidAttribtes(t *testing.T) {
+func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	invalidRequests := map[string]map[string]interface{}{
@@ -87,4 +87,25 @@ func TestCreateInstanceWithInvalidAttribtes(t *testing.T) {
 		//assert.Contains(t, errorResponse["error"], field)
 	}
 
+}
+
+func TestGetInstanceWithInvalidPath(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/instance/foo/bar", nil)
+
+	mem := store.New()
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, w.Code, 404)
+
+	var errorResponse map[string]string
+
+	err := json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	if err != nil {
+		panic(err)
+	}
+	assert.Contains(t, errorResponse["error"], "Not Found")
 }
