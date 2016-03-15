@@ -46,8 +46,9 @@ func Get(playbookId, id string) (Instance, error) {
 }
 
 func List(playbookId string) ([]Instance, error) {
-	return "/broadway/instances/" + instance.PlaybookID() + "/" + instance.ID()
-	//return nil, errors.New("Unimplemented")
+	instances := []Instance{}
+	//"/broadway/instances/" + PlaybookId + "/" + instance.ID()
+	return instances, nil
 }
 
 func (instance *baseInstance) ID() string {

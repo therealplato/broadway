@@ -120,15 +120,15 @@ func TestGetInstancesWithUnknownPath(t *testing.T) {
 	server := New(mem).Handler()
 	server.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusNotImplemented, w.Code, "Response code should be 501 Unimplemented")
-	//assert.Equal(t, http.StatusNoContent, w.Code, "Response code should be 204 No Content")
+	assert.Equal(t, http.StatusNoContent, w.Code, "Response code should be 204 No Content")
 
-	/* Test for json [] here
-	var okResponse []string
+	var okResponse []instance.Instance
 
 	err := json.Unmarshal(w.Body.Bytes(), &okResponse)
 	if err != nil {
 		panic(err)
 	}
-	*/
+	if len(okResponse) != 0 {
+		t.Errorf("Expected 0 instances matching playbook foo, actual %s\n", len(okResponse))
+	}
 }

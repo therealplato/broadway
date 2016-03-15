@@ -82,9 +82,15 @@ func (s *Server) getInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstances(c *gin.Context) {
-	//var instances []string
-	//playbookId := c.Param("playbookId")
-	//c.JSON(http.StatusNoContent, instances)
-	c.AbortWithStatus(http.StatusNotImplemented)
-	return
+	instances, err := instance.List(c.Param("playbookId"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, InternalError)
+		return
+	} else if len(instances) == 0 {
+		c.JSON(http.StatusNoContent, instances)
+		return
+	} else {
+		c.JSON(http.StatusOK, instances)
+		return
+	}
 }
