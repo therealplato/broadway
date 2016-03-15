@@ -10,12 +10,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Meta contains optional metadata keys associated with this playbook
 type Meta struct {
 	Team  string `yaml:"team"`
 	Email string `yaml:"email"`
 	Slack string `yaml:"slack"`
 }
 
+// Task represents a step in the playbook, for example, running migrations
+// or deploying services.
 type Task struct {
 	Name        string   `yaml:"name"`
 	Manifests   []string `yaml:"manifests,omitempty"`
@@ -24,6 +27,7 @@ type Task struct {
 	When        string   `yaml:"when,omitempty"`
 }
 
+// Playbook configures a set of tasks to be automated
 type Playbook struct {
 	Id    string   `yaml:"id"`
 	Name  string   `yaml:"name"`
@@ -32,9 +36,15 @@ type Playbook struct {
 	Tasks []Task   `yaml:"tasks"`
 }
 
+// ManifestRoot points to the folder where manifests are found, relative to
+// playbooks/
 var ManifestRoot = "../manifests/"
+
+// ManifestExtension is added to each task manifest item to make a filename
 var ManifestExtension = ".yml"
 
+// SetManifestRoot ensures a folder exists, then sets ManifestRoot to that
+// folder.
 func SetManifestRoot(newRoot string) error {
 	if _, err := os.Stat(newRoot); err != nil {
 		return err
@@ -43,6 +53,8 @@ func SetManifestRoot(newRoot string) error {
 	return nil
 }
 
+// ManifestsPresent iterates through the Manifests and PodManifest items on a
+// task, and checks that each represents a file on disk
 func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
 		filename := name + ManifestExtension
@@ -61,6 +73,7 @@ func (t Task) ManifestsPresent() error {
 	return nil
 }
 
+// Validate checks for Id, Name, and Tasks on a playbook
 func (p Playbook) Validate() error {
 	if len(p.Id) == 0 {
 		return errors.New("Playbook missing required Id")
@@ -74,6 +87,8 @@ func (p Playbook) Validate() error {
 	return p.ValidateTasks()
 }
 
+// ValidateTasks checks a task for fields Name, and one or both of Manifests and
+// PodManifests
 func (p Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
 		if len(task.Name) == 0 {
@@ -89,15 +104,21 @@ func (p Playbook) ValidateTasks() error {
 	return nil
 }
 
+// ParsePlaybook unmarshalls a YAML byte sequence into a Playbook struct
 func ParsePlaybook(playbook []byte) (Playbook, error) {
 	var p Playbook
 	err := yaml.Unmarshal(playbook, &p)
 	return p, err
 }
 
+// ReadPlaybookFromDisk takes a filename and returns a byte array. Alias for
+// ioutil.ReadFile
 func ReadPlaybookFromDisk(fd string) ([]byte, error) {
 	return ioutil.ReadFile(fd)
 }
+
+// LoadPlaybookFolder takes a directory and attempts to parse every file in that
+// directory into a Playbook struct
 func LoadPlaybookFolder(dir string) ([]Playbook, error) {
 	var AllPlaybooks []Playbook
 	paths, err := filepath.Glob(dir + "/*")
