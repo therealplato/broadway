@@ -90,6 +90,32 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 
 }
 
+func TestGetInstanceWithValidPath(t *testing.T) {
+	w := httptest.NewRecorder()
+	mem := store.New()
+
+	i := instance.New(mem, &instance.InstanceAttributes{
+		PlaybookId: "foo",
+		Id:         "doesExist",
+	})
+	i.Save()
+
+	req, _ := http.NewRequest("GET", "/instance/foo/doesExist", nil)
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, w.Code, http.StatusOK)
+
+	var iResponse map[string]string
+
+	err := json.Unmarshal(w.Body.Bytes(), &iResponse)
+	if err != nil {
+		panic(err)
+	}
+	assert.Contains(t, iResponse["id"], "doesExist")
+}
+
 func TestGetInstanceWithInvalidPath(t *testing.T) {
 	w := httptest.NewRecorder()
 
@@ -100,7 +126,7 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 	server := New(mem).Handler()
 	server.ServeHTTP(w, req)
 
-	assert.Equal(t, w.Code, 404)
+	assert.Equal(t, w.Code, http.StatusNotFound)
 
 	var errorResponse map[string]string
 
