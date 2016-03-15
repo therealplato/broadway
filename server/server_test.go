@@ -182,7 +182,7 @@ func TestGetInstancesWithEmptyPlaybook(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, w.Code, "Response code should be 204 No Content")
 
-	var okResponse []instance.Instance
+	var okResponse []instance.InstanceAttributes
 
 	err := json.Unmarshal(w.Body.Bytes(), &okResponse)
 	if err != nil {
