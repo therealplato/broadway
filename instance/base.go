@@ -82,7 +82,7 @@ func (instance *baseInstance) Attributes() *InstanceAttributes {
 func (instance *baseInstance) MarshalJSON() ([]byte, error) {
 	o, err := instance.Attributes().JSON()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 	return []byte(o), nil
 }
@@ -96,8 +96,11 @@ func (instance *baseInstance) Save() (err error) {
 	if err != nil {
 		return err
 	}
-	instance.store.SetValue(instance.path(), encoded)
-	return err
+	err = instance.store.SetValue(instance.path(), encoded)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (instance *baseInstance) Destroy() error {

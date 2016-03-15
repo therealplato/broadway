@@ -88,14 +88,23 @@ func SetupTestFixtures() {
 	if err != nil {
 		log.Fatalf("Failed to write mock test playbook: %s", err)
 	}
-	f.Write(MockPlaybookBytes)
-	f.Close()
+	_, err = f.Write(MockPlaybookBytes)
+	if err != nil {
+		panic(err)
+	}
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
 
 	f, err = os.Create(mockManifestPath)
 	if err != nil {
 		log.Fatalf("Failed to write mock test manifest: %s", err)
 	}
-	f.Close()
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
 
 }
 
@@ -119,9 +128,11 @@ func TestReadPlaybookFromDisk(t *testing.T) {
 	playbook, err := ReadPlaybookFromDisk(mockPlaybookPath)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	if !bytes.Equal(playbook, MockPlaybookBytes) {
 		t.Error(errors.New("Playbook read from disk differs from Playbook written to disk"))
+		return
 	}
 }
 
@@ -130,9 +141,11 @@ func TestParsePlaybook(t *testing.T) {
 	ParsedPlaybook, err := ParsePlaybook(MockPlaybookBytes)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	if ParsedPlaybook.Name != "The Project" {
 		t.Error(errors.New("Parsed Playbook has incorrect Name field"))
+		return
 	}
 }
 
@@ -140,6 +153,7 @@ func TestParsePlaybookMalformed(t *testing.T) {
 	_, err := ParsePlaybook([]byte("asdf"))
 	if err == nil {
 		t.Error(errors.New("Parsing asdf succeeded, expected failure"))
+		return
 	}
 }
 
@@ -147,6 +161,7 @@ func TestParsePlaybookIncomplete(t *testing.T) {
 	_, err := ParsePlaybook(MockIncompletePlaybookBytes)
 	if err != nil {
 		t.Error(errors.New("Parsing well-formed, incomplete playbook failed, expected success"))
+		return
 	}
 }
 
