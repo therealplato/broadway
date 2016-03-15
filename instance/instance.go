@@ -29,6 +29,7 @@ func (attrs *InstanceAttributes) JSON() (string, error) {
 }
 
 type Instance interface {
+	json.Marshaler
 	PlaybookID() string
 	ID() string
 	Save() error

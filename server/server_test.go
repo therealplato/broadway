@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -110,10 +111,43 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 	assert.Contains(t, errorResponse["error"], "Not Found")
 }
 
-func TestGetInstancesWithUnknownPath(t *testing.T) {
+func TestGetInstancesWithFullPlaybook(t *testing.T) {
+	w := httptest.NewRecorder()
+	mem := store.New()
+
+	testInstance1 := instance.New(mem, &instance.InstanceAttributes{
+		PlaybookId: "testPlaybookFull",
+		Id:         "testInstance1",
+	})
+	testInstance1.Save()
+	testInstance2 := instance.New(mem, &instance.InstanceAttributes{
+		PlaybookId: "testPlaybookFull",
+		Id:         "testInstance2",
+	})
+	testInstance2.Save()
+	req, _ := http.NewRequest("GET", "/instances/testPlaybookFull", nil)
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code, "Response code should be 200 OK")
+
+	log.Println(w.Body.String())
+	var okResponse []instance.InstanceAttributes
+
+	err := json.Unmarshal(w.Body.Bytes(), &okResponse)
+	if err != nil {
+		panic(err)
+	}
+	if len(okResponse) != 2 {
+		t.Errorf("Expected 2 instances matching playbook testPlaybookFull, actual %v\n", len(okResponse))
+	}
+}
+
+func TestGetInstancesWithEmptyPlaybook(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("GET", "/instances/foo", nil)
+	req, _ := http.NewRequest("GET", "/instances/testPlaybookEmpty", nil)
 
 	mem := store.New()
 
@@ -129,6 +163,6 @@ func TestGetInstancesWithUnknownPath(t *testing.T) {
 		panic(err)
 	}
 	if len(okResponse) != 0 {
-		t.Errorf("Expected 0 instances matching playbook foo, actual %s\n", len(okResponse))
+		t.Errorf("Expected 0 instances matching playbook testPlaybookEmpty, actual %s\n", len(okResponse))
 	}
 }

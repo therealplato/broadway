@@ -82,7 +82,7 @@ func (s *Server) getInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstances(c *gin.Context) {
-	instances, err := instance.List(c.Param("playbookId"))
+	instances, err := instance.List(s.store, c.Param("playbookId"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return

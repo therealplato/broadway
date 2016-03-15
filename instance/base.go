@@ -45,9 +45,21 @@ func Get(playbookId, id string) (Instance, error) {
 	return instance, nil
 }
 
-func List(playbookId string) ([]Instance, error) {
+func List(s store.Store, playbookId string) ([]Instance, error) {
 	instances := []Instance{}
-	//"/broadway/instances/" + PlaybookId + "/" + instance.ID()
+	instanceKeysValues := s.Values("/broadway/instances/" + playbookId)
+	for _, v := range instanceKeysValues {
+		var attrs InstanceAttributes
+		err := json.Unmarshal([]byte(v), &attrs)
+		if err != nil {
+			return nil, err
+		}
+		i := &baseInstance{
+			attributes: &attrs,
+			store:      s,
+		}
+		instances = append(instances, i)
+	}
 	return instances, nil
 }
 
@@ -65,6 +77,14 @@ func (instance *baseInstance) Status() InstanceStatus {
 
 func (instance *baseInstance) Attributes() *InstanceAttributes {
 	return instance.attributes
+}
+
+func (instance *baseInstance) MarshalJSON() ([]byte, error) {
+	o, err := instance.Attributes().JSON()
+	if err != nil {
+		return []byte{}, err
+	}
+	return []byte(o), nil
 }
 
 func (instance *baseInstance) path() string {
