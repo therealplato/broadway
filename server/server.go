@@ -37,6 +37,7 @@ func (s *Server) setupHandlers() {
 	s.engine = gin.Default()
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookId/:instanceId", s.getInstance)
+	s.engine.GET("/instances/:playbookId", s.getInstances)
 }
 
 func (s *Server) Handler() http.Handler {
@@ -78,4 +79,12 @@ func (s *Server) getInstance(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, i.Attributes())
+}
+
+func (s *Server) getInstances(c *gin.Context) {
+	//var instances []string
+	//playbookId := c.Param("playbookId")
+	//c.JSON(http.StatusNoContent, instances)
+	c.AbortWithStatus(http.StatusNotImplemented)
+	return
 }

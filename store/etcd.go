@@ -52,7 +52,7 @@ func (*etcdStore) Values(path string) (values map[string]string) {
 	}
 	if resp.Node != nil && len(resp.Node.Nodes) > 0 {
 		for _, node := range resp.Node.Nodes {
-			values[nameFromKey(node.Key)] = node.Value
+			values[lastKeyItem(node.Key)] = node.Value
 		}
 	} else {
 		log.Println("No values found here: " + path)
@@ -65,7 +65,7 @@ func (*etcdStore) Delete(path string) error {
 	return err
 }
 
-func nameFromKey(key string) string {
+func lastKeyItem(key string) string {
 	keyItems := strings.Split(key, "/")
 	return keyItems[len(keyItems)-1]
 }

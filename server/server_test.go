@@ -109,3 +109,26 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 	}
 	assert.Contains(t, errorResponse["error"], "Not Found")
 }
+
+func TestGetInstancesWithUnknownPath(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/instances/foo", nil)
+
+	mem := store.New()
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotImplemented, w.Code, "Response code should be 501 Unimplemented")
+	//assert.Equal(t, http.StatusNoContent, w.Code, "Response code should be 204 No Content")
+
+	/* Test for json [] here
+	var okResponse []string
+
+	err := json.Unmarshal(w.Body.Bytes(), &okResponse)
+	if err != nil {
+		panic(err)
+	}
+	*/
+}
