@@ -45,7 +45,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 
 	assert.Equal(t, 201, w.Code, "Response code should be 201")
 
-	var response instance.InstanceAttributes
+	var response instance.Attributes
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Error(err)
@@ -110,9 +110,9 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 	w := httptest.NewRecorder()
 	mem := store.New()
 
-	i := instance.New(mem, &instance.InstanceAttributes{
+	i := instance.New(mem, &instance.Attributes{
 		PlaybookID: "foo",
-		Id:         "doesExist",
+		ID:         "doesExist",
 	})
 	err := i.Save()
 	if err != nil {
@@ -171,18 +171,18 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	w := httptest.NewRecorder()
 	mem := store.New()
 
-	testInstance1 := instance.New(mem, &instance.InstanceAttributes{
+	testInstance1 := instance.New(mem, &instance.Attributes{
 		PlaybookID: "testPlaybookFull",
-		Id:         "testInstance1",
+		ID:         "testInstance1",
 	})
 	err := testInstance1.Save()
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	testInstance2 := instance.New(mem, &instance.InstanceAttributes{
+	testInstance2 := instance.New(mem, &instance.Attributes{
 		PlaybookID: "testPlaybookFull",
-		Id:         "testInstance2",
+		ID:         "testInstance2",
 	})
 	err = testInstance2.Save()
 	if err != nil {
@@ -201,7 +201,7 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code, "Response code should be 200 OK")
 
 	log.Println(w.Body.String())
-	var okResponse []instance.InstanceAttributes
+	var okResponse []instance.Attributes
 
 	err = json.Unmarshal(w.Body.Bytes(), &okResponse)
 	if err != nil {
@@ -229,7 +229,7 @@ func TestGetInstancesWithEmptyPlaybook(t *testing.T) {
 
 	assert.Equal(t, http.StatusNoContent, w.Code, "Response code should be 204 No Content")
 
-	var okResponse []instance.InstanceAttributes
+	var okResponse []instance.Attributes
 
 	err = json.Unmarshal(w.Body.Bytes(), &okResponse)
 	if err != nil {

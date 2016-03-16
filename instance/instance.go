@@ -2,28 +2,33 @@ package instance
 
 import "encoding/json"
 
-// InstanceStatus represents the lifecycle state of one instance
-type InstanceStatus string
+// Status represents the lifecycle state of one instance
+type Status string
 
 const (
-	InstanceStatusNew       InstanceStatus = ""
-	InstanceStatusDeploying                = "deploying"
-	InstanceStatusDeployed                 = "deployed"
-	InstanceStatusDeleting                 = "deleting"
-	InstanceStatusError                    = "error"
+	// StatusNew represents a newly created instance
+	StatusNew Status = ""
+	// StatusDeploying represents an instance that has begun deployment
+	StatusDeploying = "deploying"
+	// StatusDeployed represents an instance that has been deployed successfully
+	StatusDeployed = "deployed"
+	// StatusDeleting represents an instance that has begun deltion
+	StatusDeleting = "deleting"
+	// StatusError represents an instance that broke
+	StatusError = "error"
 )
 
-// InstanceAttributes contains metadata about an instance
-type InstanceAttributes struct {
+// Attributes contains metadata about an instance
+type Attributes struct {
 	PlaybookID string            `json:"playbook_id" binding:"required"`
-	Id         string            `json:"id"`
+	ID         string            `json:"id"`
 	Created    string            `json:"created"`
 	Vars       map[string]string `json:"vars"`
-	Status     InstanceStatus    `json:"status"`
+	Status     Status            `json:"status"`
 }
 
 // JSON serializes a set of instance attributes
-func (attrs *InstanceAttributes) JSON() (string, error) {
+func (attrs *Attributes) JSON() (string, error) {
 	encoded, err := json.Marshal(attrs)
 	if err != nil {
 		return "", err
@@ -40,6 +45,6 @@ type Instance interface {
 	Save() error
 	Destroy() error
 
-	Attributes() *InstanceAttributes
-	Status() InstanceStatus
+	Attributes() *Attributes
+	Status() Status
 }

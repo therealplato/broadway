@@ -7,15 +7,15 @@ import (
 	"github.com/namely/broadway/store"
 )
 
-type baseInstance struct {
-	attributes *InstanceAttributes
+type defaultInstance struct {
+	attributes *Attributes
 
 	store store.Store
 }
 
 // New constructs an Instance from a store and attributes
-func New(s store.Store, attrs *InstanceAttributes) Instance {
-	instance := &baseInstance{
+func New(s store.Store, attrs *Attributes) Instance {
+	instance := &defaultInstance{
 		attributes: attrs,
 		store:      s,
 	}
@@ -25,12 +25,12 @@ func New(s store.Store, attrs *InstanceAttributes) Instance {
 
 // Get looks up an Instance by playbookID and instance id
 func Get(playbookID, id string) (Instance, error) {
-	attrs := &InstanceAttributes{
+	attrs := &Attributes{
 		PlaybookID: playbookID,
-		Id:         id,
+		ID:         id,
 	}
 
-	instance := &baseInstance{
+	instance := &defaultInstance{
 		attributes: attrs,
 		store:      store.New(),
 	}
@@ -52,12 +52,12 @@ func List(s store.Store, playbookID string) ([]Instance, error) {
 	instances := []Instance{}
 	instanceKeysValues := s.Values("/broadway/instances/" + playbookID)
 	for _, v := range instanceKeysValues {
-		var attrs InstanceAttributes
+		var attrs Attributes
 		err := json.Unmarshal([]byte(v), &attrs)
 		if err != nil {
 			return nil, err
 		}
-		i := &baseInstance{
+		i := &defaultInstance{
 			attributes: &attrs,
 			store:      s,
 		}
@@ -67,28 +67,28 @@ func List(s store.Store, playbookID string) ([]Instance, error) {
 }
 
 // ID returns the instance id
-func (instance *baseInstance) ID() string {
-	return instance.Attributes().Id
+func (instance *defaultInstance) ID() string {
+	return instance.Attributes().ID
 }
 
 // PlaybookID returns the instance's playbook id
-func (instance *baseInstance) PlaybookID() string {
+func (instance *defaultInstance) PlaybookID() string {
 	return instance.Attributes().PlaybookID
 }
 
 // Status returns the instance status
-func (instance *baseInstance) Status() InstanceStatus {
+func (instance *defaultInstance) Status() Status {
 	return instance.Attributes().Status
 }
 
 // Attributes returns the instance attributes
-func (instance *baseInstance) Attributes() *InstanceAttributes {
+func (instance *defaultInstance) Attributes() *Attributes {
 	return instance.attributes
 }
 
 // MarshalJSON implements the json.Marshaler interface. Only the instance's
 // attributes are serialized.
-func (instance *baseInstance) MarshalJSON() ([]byte, error) {
+func (instance *defaultInstance) MarshalJSON() ([]byte, error) {
 	o, err := instance.Attributes().JSON()
 	if err != nil {
 		return nil, err
@@ -96,12 +96,12 @@ func (instance *baseInstance) MarshalJSON() ([]byte, error) {
 	return []byte(o), nil
 }
 
-func (instance *baseInstance) path() string {
+func (instance *defaultInstance) path() string {
 	return "/broadway/instances/" + instance.PlaybookID() + "/" + instance.ID()
 }
 
 // Save sets or updates the stored instance, keyed on playbookID and instance id
-func (instance *baseInstance) Save() (err error) {
+func (instance *defaultInstance) Save() (err error) {
 	encoded, err := instance.Attributes().JSON()
 	if err != nil {
 		return err
@@ -114,6 +114,6 @@ func (instance *baseInstance) Save() (err error) {
 }
 
 // Destroy removes the stored instance
-func (instance *baseInstance) Destroy() error {
+func (instance *defaultInstance) Destroy() error {
 	return instance.store.Delete(instance.path())
 }

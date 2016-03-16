@@ -9,7 +9,7 @@ import (
 )
 
 func TestSavingInstance(t *testing.T) {
-	i := New(store.New(), &InstanceAttributes{PlaybookID: "test", Id: "222"})
+	i := New(store.New(), &Attributes{PlaybookID: "test", ID: "222"})
 	err := i.Save()
 	assert.Nil(t, err)
 
@@ -26,7 +26,7 @@ func TestGettingUnsavedInstance(t *testing.T) {
 }
 
 func TestDestroy(t *testing.T) {
-	i := New(store.New(), &InstanceAttributes{PlaybookID: "test", Id: "422"})
+	i := New(store.New(), &Attributes{PlaybookID: "test", ID: "422"})
 	assert.Nil(t, i.Save())
 
 	assert.Nil(t, i.Destroy())
