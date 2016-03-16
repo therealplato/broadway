@@ -23,10 +23,10 @@ func New(s store.Store, attrs *InstanceAttributes) Instance {
 	return instance
 }
 
-// Get looks up an Instance by playbookId and instance id
-func Get(playbookId, id string) (Instance, error) {
+// Get looks up an Instance by playbookID and instance id
+func Get(playbookID, id string) (Instance, error) {
 	attrs := &InstanceAttributes{
-		PlaybookId: playbookId,
+		PlaybookID: playbookID,
 		Id:         id,
 	}
 
@@ -47,10 +47,10 @@ func Get(playbookId, id string) (Instance, error) {
 	return instance, nil
 }
 
-// List looks up all Instances stored under a given playbookId
-func List(s store.Store, playbookId string) ([]Instance, error) {
+// List looks up all Instances stored under a given playbookID
+func List(s store.Store, playbookID string) ([]Instance, error) {
 	instances := []Instance{}
-	instanceKeysValues := s.Values("/broadway/instances/" + playbookId)
+	instanceKeysValues := s.Values("/broadway/instances/" + playbookID)
 	for _, v := range instanceKeysValues {
 		var attrs InstanceAttributes
 		err := json.Unmarshal([]byte(v), &attrs)
@@ -73,7 +73,7 @@ func (instance *baseInstance) ID() string {
 
 // PlaybookID returns the instance's playbook id
 func (instance *baseInstance) PlaybookID() string {
-	return instance.Attributes().PlaybookId
+	return instance.Attributes().PlaybookID
 }
 
 // Status returns the instance status
@@ -100,7 +100,7 @@ func (instance *baseInstance) path() string {
 	return "/broadway/instances/" + instance.PlaybookID() + "/" + instance.ID()
 }
 
-// Save sets or updates the stored instance, keyed on playbookId and instance id
+// Save sets or updates the stored instance, keyed on playbookID and instance id
 func (instance *baseInstance) Save() (err error) {
 	encoded, err := instance.Attributes().JSON()
 	if err != nil {

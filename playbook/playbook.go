@@ -29,7 +29,7 @@ type Task struct {
 
 // Playbook configures a set of tasks to be automated
 type Playbook struct {
-	Id    string   `yaml:"id"`
+	ID    string   `yaml:"id"`
 	Name  string   `yaml:"name"`
 	Meta  Meta     `yaml:"meta"`
 	Vars  []string `yaml:"vars"`
@@ -73,10 +73,10 @@ func (t Task) ManifestsPresent() error {
 	return nil
 }
 
-// Validate checks for Id, Name, and Tasks on a playbook
+// Validate checks for ID, Name, and Tasks on a playbook
 func (p Playbook) Validate() error {
-	if len(p.Id) == 0 {
-		return errors.New("Playbook missing required Id")
+	if len(p.ID) == 0 {
+		return errors.New("Playbook missing required ID")
 	}
 	if len(p.Name) == 0 {
 		return errors.New("Playbook missing required Name")

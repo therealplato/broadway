@@ -183,7 +183,7 @@ func TestValidatePlaybookPasses(t *testing.T) {
 		{
 			"Validate Valid Playbook",
 			Playbook{
-				Id:    "playbook id 1",
+				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{ValidTask1, ValidTask2},
 			},
@@ -216,21 +216,21 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			"Validate Playbook Without Id",
+			"Validate Playbook Without ID",
 			Playbook{},
-			"Playbook missing required Id",
+			"Playbook missing required ID",
 		},
 		{
 			"Validate Playbook Without Name",
 			Playbook{
-				Id: "playbook id 1",
+				ID: "playbook id 1",
 			},
 			"Playbook missing required Name",
 		},
 		{
 			"Validate Playbook With Zero Tasks",
 			Playbook{
-				Id:    "playbook id 1",
+				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{},
 			},
@@ -239,7 +239,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		{
 			"Validate Playbook With Tasks Missing Names",
 			Playbook{
-				Id:    "playbook id 1",
+				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask1},
 			},
@@ -248,7 +248,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		{
 			"Validate Playbook With Tasks Missing Manifests",
 			Playbook{
-				Id:    "playbook id 1",
+				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask2},
 			},

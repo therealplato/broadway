@@ -51,7 +51,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	assert.Equal(t, response.PlaybookId, "test")
+	assert.Equal(t, response.PlaybookID, "test")
 
 	ii, err := instance.Get("test", "test")
 	assert.Nil(t, err)
@@ -111,7 +111,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 	mem := store.New()
 
 	i := instance.New(mem, &instance.InstanceAttributes{
-		PlaybookId: "foo",
+		PlaybookID: "foo",
 		Id:         "doesExist",
 	})
 	err := i.Save()
@@ -172,7 +172,7 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	mem := store.New()
 
 	testInstance1 := instance.New(mem, &instance.InstanceAttributes{
-		PlaybookId: "testPlaybookFull",
+		PlaybookID: "testPlaybookFull",
 		Id:         "testInstance1",
 	})
 	err := testInstance1.Save()
@@ -181,7 +181,7 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 		return
 	}
 	testInstance2 := instance.New(mem, &instance.InstanceAttributes{
-		PlaybookId: "testPlaybookFull",
+		PlaybookID: "testPlaybookFull",
 		Id:         "testInstance2",
 	})
 	err = testInstance2.Save()
