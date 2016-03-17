@@ -8,7 +8,7 @@ import (
 // Manifest represents a kubernetes manifest file
 // Filename is used as identifier in the current implementation.
 type Manifest struct {
-	Id       string
+	ID       string
 	template *template.Template
 }
 
@@ -19,7 +19,7 @@ func New(id, content string) (*Manifest, error) {
 		return nil, err
 	}
 
-	return &Manifest{Id: id, template: t}, nil
+	return &Manifest{ID: id, template: t}, nil
 }
 
 // Execute executes template with variables
