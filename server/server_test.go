@@ -240,3 +240,87 @@ func TestGetInstancesWithEmptyPlaybook(t *testing.T) {
 		t.Errorf("Expected 0 instances matching playbook testPlaybookEmpty, actual %v\n", len(okResponse))
 	}
 }
+
+func TestGetStatusFailures(t *testing.T) {
+	invalidRequests := []struct {
+		method  string
+		path    string
+		errCode int
+		errMsg  string
+	}{
+		{
+			"GET",
+			"/status",
+			400,
+			"Use GET /status/yourPlaybookId/yourInstanceId",
+		},
+		{
+			"GET",
+			"/status/goodPlaybook",
+			400,
+			"Use GET /status/yourPlaybookId/yourInstanceId",
+		},
+		/* TODO: Store and look up playbooks
+		{
+			"GET",
+			"/status/badPlaybook/goodInstance",
+			404,
+			"Playbook badPlaybook not found",
+		},
+		*/
+		{
+			"GET",
+			"/status/goodPlaybook/badInstance",
+			404,
+			"Instance badInstance not found",
+		},
+	}
+
+	mem := store.New()
+	server := New(mem).Handler()
+
+	for _, i := range invalidRequests {
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", i.path, nil)
+		assert.Nil(t, err)
+
+		server.ServeHTTP(w, req)
+
+		assert.Equal(t, w.Code, i.errCode)
+
+		var errorResponse map[string]string
+
+		err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
+		assert.Nil(t, err)
+		assert.Contains(t, errorResponse["error"], i.errMsg)
+	}
+
+}
+func TestGetStatusWithGoodPath(t *testing.T) {
+	mem := store.New()
+	testInstance1 := instance.New(mem, &instance.Attributes{
+		PlaybookID: "goodPlaybook",
+		ID:         "goodInstance",
+		Status:     instance.StatusDeployed,
+	})
+	err := testInstance1.Save()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("GET", "/instances/goodPlaybook/goodInstance", nil)
+	assert.Nil(t, err)
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, w.Code, http.StatusOK)
+
+	var statusResponse map[string]string
+
+	err = json.Unmarshal(w.Body.Bytes(), &statusResponse)
+	assert.Nil(t, err)
+	assert.Contains(t, statusResponse["status"], "deployed")
+}
