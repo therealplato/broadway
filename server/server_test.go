@@ -272,7 +272,7 @@ func TestGetStatusFailures(t *testing.T) {
 			"GET",
 			"/status/goodPlaybook/badInstance",
 			404,
-			"Instance badInstance not found",
+			"Instance does not exist.",
 		},
 	}
 
@@ -286,7 +286,7 @@ func TestGetStatusFailures(t *testing.T) {
 
 		server.ServeHTTP(w, req)
 
-		assert.Equal(t, w.Code, i.errCode)
+		assert.Equal(t, i.errCode, w.Code)
 
 		var errorResponse map[string]string
 
@@ -310,7 +310,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	}
 	w := httptest.NewRecorder()
 
-	req, err := http.NewRequest("GET", "/instances/goodPlaybook/goodInstance", nil)
+	req, err := http.NewRequest("GET", "/status/goodPlaybook/goodInstance", nil)
 	assert.Nil(t, err)
 
 	server := New(mem).Handler()
