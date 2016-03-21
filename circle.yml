@@ -15,6 +15,24 @@ dependencies:
 test:
   override:
     - docker-compose run test go test -v ./...
+    - docker-compose run test golint
+    - docker-compose run test golint ./instance
+    - docker-compose run test golint ./manifest
+    - docker-compose run test golint ./playbook
+    - docker-compose run test golint ./server
+    - docker-compose run test golint ./store
+    - docker-compose run test go vet
+    - docker-compose run test go vet ./instance
+    - docker-compose run test go vet ./manifest
+    - docker-compose run test go vet ./playbook
+    - docker-compose run test go vet ./server
+    - docker-compose run test go vet ./store
+    - docker-compose run test errcheck
+    - docker-compose run test errcheck ./instance
+    - docker-compose run test errcheck ./manifest
+    - docker-compose run test errcheck ./playbook
+    - docker-compose run test errcheck ./server
+    - docker-compose run test errcheck ./store
 
 deployment:
   production:
