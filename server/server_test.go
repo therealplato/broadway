@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/namely/broadway/instance"
@@ -13,6 +14,39 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestServerNew(t *testing.T) {
+	_, exists := os.LookupEnv(slackTokenENV)
+	if exists {
+		t.Fatalf("Found existing $%s. Skipping tests to avoid changing it...", slackTokenENV)
+	}
+
+	testToken := "BroadwayTestToken"
+
+	err := os.Setenv(slackTokenENV, testToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualToken, exists := os.LookupEnv(slackTokenENV)
+	assert.True(t, exists, "Expected ENV to exist")
+	assert.Equal(t, testToken, actualToken, "Unexpected ENV value")
+
+	mem := store.New()
+
+	s := New(mem)
+	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
+
+	err = os.Unsetenv(slackTokenENV)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualToken, exists = os.LookupEnv(slackTokenENV)
+	assert.False(t, exists, "Expected ENV to not exist")
+	assert.Equal(t, "", actualToken, "Unexpected ENV value")
+	s = New(mem)
+	assert.Equal(t, "", s.slackToken, "Expected server.slackToken to be empty string for missing ENV value")
+
+}
 
 func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	w := httptest.NewRecorder()

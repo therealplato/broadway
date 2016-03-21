@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store"
@@ -11,10 +12,12 @@ import (
 
 // Server provides an HTTP interface to manipulate Playbooks and Instances
 type Server struct {
-	store store.Store
-
-	engine *gin.Engine
+	store      store.Store
+	slackToken string
+	engine     *gin.Engine
 }
+
+const slackTokenENV string = "SLACK_VERIFICATION_TOKEN"
 
 // ErrorResponse represents a JSON response to be returned in failure cases
 type ErrorResponse map[string]string
@@ -36,7 +39,10 @@ var NotFoundError = ErrorResponse{"error": "Not Found"}
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
 func New(s store.Store) *Server {
-	srvr := &Server{store: s}
+	srvr := &Server{
+		store:      s,
+		slackToken: os.Getenv(slackTokenENV),
+	}
 	srvr.setupHandlers()
 	return srvr
 }
