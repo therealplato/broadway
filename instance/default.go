@@ -35,7 +35,7 @@ func Get(playbookID, id string) (Instance, error) {
 		store:      store.New(),
 	}
 
-	value := instance.store.Value(instance.path())
+	value := instance.store.Value(instance.Path())
 	if value == "" {
 		return nil, errors.New("Instance does not exist.")
 	}
@@ -96,7 +96,7 @@ func (instance *defaultInstance) MarshalJSON() ([]byte, error) {
 	return []byte(o), nil
 }
 
-func (instance *defaultInstance) path() string {
+func (instance *defaultInstance) Path() string {
 	return "/broadway/instances/" + instance.PlaybookID() + "/" + instance.ID()
 }
 
@@ -106,7 +106,7 @@ func (instance *defaultInstance) Save() (err error) {
 	if err != nil {
 		return err
 	}
-	err = instance.store.SetValue(instance.path(), encoded)
+	err = instance.store.SetValue(instance.Path(), encoded)
 	if err != nil {
 		return err
 	}
@@ -115,5 +115,5 @@ func (instance *defaultInstance) Save() (err error) {
 
 // Destroy removes the stored instance
 func (instance *defaultInstance) Destroy() error {
-	return instance.store.Delete(instance.path())
+	return instance.store.Delete(instance.Path())
 }
