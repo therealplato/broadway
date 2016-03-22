@@ -10,7 +10,7 @@ type Instance struct {
 	Vars       map[string]string `json:"vars"`
 }
 
-// Instance json representation
+// JSON instance representation
 func (i *Instance) JSON() (string, error) {
 	encoded, err := json.Marshal(i)
 	if err != nil {

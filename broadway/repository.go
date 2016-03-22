@@ -2,17 +2,17 @@ package broadway
 
 import "github.com/namely/broadway/store"
 
-// Instance repository interface
+// InstanceRepository interface
 type InstanceRepository interface {
 	Save(instance Instance) error
 }
 
-// Instance repository to handle persistence logic
+// InstanceRepo handles persistence logic
 type InstanceRepo struct {
 	store store.Store
 }
 
-// Create a new instance repo
+// NewInstanceRepo constructor
 func NewInstanceRepo(s store.Store) *InstanceRepo {
 	return &InstanceRepo{store: s}
 }
