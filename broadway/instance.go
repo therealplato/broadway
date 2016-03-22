@@ -1,4 +1,4 @@
-package domain
+package broadway
 
 import (
 	"encoding/json"
