@@ -62,8 +62,7 @@ func (s *Server) Run(addr ...string) error {
 
 func (s *Server) createInstance(c *gin.Context) {
 	var i domain.Instance
-	var err = c.BindJSON(&i)
-	if err != nil {
+	if err := c.BindJSON(&i); err != nil {
 		c.JSON(422, InvalidError("Missing: "+err.Error()))
 		return
 	}
