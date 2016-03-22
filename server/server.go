@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 	"os"
 
@@ -52,6 +53,8 @@ func (s *Server) setupHandlers() {
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
+	s.engine.GET("/command", s.getCommand)
+	s.engine.POST("/command", s.postCommand)
 }
 
 // Handler returns a reference to the Gin engine that powers Server
@@ -109,4 +112,49 @@ func (s *Server) getInstances(c *gin.Context) {
 		c.JSON(http.StatusOK, instances)
 		return
 	}
+}
+
+func (s *Server) getCommand(c *gin.Context) {
+	ssl := c.Query("ssl_check")
+	log.Println(ssl)
+	if ssl == "1" {
+		c.String(http.StatusOK, "")
+	} else {
+		c.String(http.StatusBadRequest, "Use POST /command")
+	}
+}
+
+func (s *Server) postCommand(c *gin.Context) {
+	type slackCommand struct {
+		token       string `form:"token"`
+		teamID      string `form:"team_id"`
+		teamDomain  string `form:"team_domain"`
+		channelID   string `form:"channel_id"`
+		channelName string `form:"channel_name"`
+		userID      string `form:"user_id"`
+		userName    string `form:"user_name"`
+		command     string `form:"command"`
+		text        string `form:"text"`
+		responseUrl string `form:"response_url"`
+	}
+	form := &slackCommand{}
+	c.Bind(form)
+	if form.token != s.slackToken {
+		c.JSON(http.StatusUnauthorized, InternalError)
+	}
+	if form.command != "/broadway" {
+		c.JSON(http.StatusBadRequest, InternalError)
+	}
+	if form.text == "help" {
+		c.String(http.StatusOK, "/broadway status playbook1 instance1: Check the status of instance1\n /broadway deploy playbook1 instance1: Deploy instance1")
+	}
+	output, err := helperRunCommand(form.text)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, InternalError)
+	}
+	c.String(http.StatusOK, output)
+}
+
+func helperRunCommand(text string) (string, error) {
+	return "unimplemented :sadpanda:", nil
 }
