@@ -1,6 +1,10 @@
 package instance
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/namely/broadway/store"
+)
 
 // Status represents the lifecycle state of one instance
 type Status string
@@ -47,4 +51,13 @@ type Instance interface {
 
 	Attributes() *Attributes
 	Status() Status
+}
+
+// GetStatus retrieves the status of an instance
+func GetStatus(s store.Store, pID string, iID string) (Status, error) {
+	i, err := Get(pID, iID)
+	if err != nil {
+		return StatusNew, err
+	}
+	return i.Status(), nil
 }
