@@ -53,6 +53,9 @@ func (s *Server) setupHandlers() {
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
+	s.engine.GET("/status", s.getStatus400)
+	s.engine.GET("/status/:playbookID", s.getStatus400)
+	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
 	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
 }
@@ -112,6 +115,31 @@ func (s *Server) getInstances(c *gin.Context) {
 		c.JSON(http.StatusOK, instances)
 		return
 	}
+}
+
+func (s *Server) getStatus400(c *gin.Context) {
+	c.JSON(http.StatusBadRequest, ErrorResponse{
+		"error": "Use GET /status/yourPlaybookId/yourInstanceId",
+	})
+}
+
+func (s *Server) getStatus(c *gin.Context) {
+	status, err := instance.GetStatus(s.store, c.Param("playbookID"), c.Param("instanceID"))
+	if err != nil {
+		if err.Error() == "Instance does not exist." {
+			c.JSON(http.StatusNotFound, ErrorResponse{
+				"error": err.Error(),
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{
+				"error": err.Error(),
+			})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{
+		"status": string(status),
+	})
 }
 
 func (s *Server) getCommand(c *gin.Context) {
