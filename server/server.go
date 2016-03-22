@@ -3,7 +3,9 @@ package server
 import (
 	"net/http"
 
+	"github.com/namely/broadway/domain"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
 	"github.com/gin-gonic/gin"
@@ -59,21 +61,23 @@ func (s *Server) Run(addr ...string) error {
 }
 
 func (s *Server) createInstance(c *gin.Context) {
-	var ia instance.Attributes
-	var err = c.BindJSON(&ia)
+	var i domain.Instance
+	var err = c.BindJSON(&i)
 	if err != nil {
 		c.JSON(422, InvalidError("Missing: "+err.Error()))
 		return
 	}
 
-	i := instance.New(s.store, &ia)
-	err = i.Save()
+	repo := domain.NewInstanceRepo(store.New())
+	service := services.NewInstanceService(repo)
+	err = service.Create(i)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
 
-	c.JSON(http.StatusCreated, i.Attributes())
+	c.JSON(http.StatusCreated, i)
 }
 
 func (s *Server) getInstance(c *gin.Context) {
