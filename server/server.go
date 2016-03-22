@@ -163,10 +163,12 @@ func (s *Server) postCommand(c *gin.Context) {
 		userName    string `form:"user_name"`
 		command     string `form:"command"`
 		text        string `form:"text"`
-		responseUrl string `form:"response_url"`
+		responseURL string `form:"response_url"`
 	}
 	form := &slackCommand{}
-	c.Bind(form)
+	if err := c.Bind(form); err != nil {
+		c.JSON(http.StatusInternalServerError, InternalError)
+	}
 	if form.token != s.slackToken {
 		c.JSON(http.StatusUnauthorized, InternalError)
 	}
