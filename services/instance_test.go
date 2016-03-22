@@ -16,4 +16,6 @@ func TestCreateInstance(t *testing.T) {
 	i := broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	assert.Nil(t, err)
+	createdInstance, _ := repo.FindByPath(i.Path())
+	assert.Equal(t, "test", createdInstance.PlaybookID)
 }
