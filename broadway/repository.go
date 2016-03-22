@@ -1,6 +1,6 @@
 package broadway
 
-import "github.com/coreos/etcd/store"
+import "github.com/namely/broadway/store"
 
 // Instance repository interface
 type InstanceRepository interface {

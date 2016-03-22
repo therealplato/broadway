@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/namely/broadway/domain"
+	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
@@ -61,15 +61,15 @@ func (s *Server) Run(addr ...string) error {
 }
 
 func (s *Server) createInstance(c *gin.Context) {
-	var i domain.Instance
+	var i broadway.Instance
 	if err := c.BindJSON(&i); err != nil {
 		c.JSON(422, InvalidError("Missing: "+err.Error()))
 		return
 	}
 
-	repo := domain.NewInstanceRepo(store.New())
+	repo := broadway.NewInstanceRepo(store.New())
 	service := services.NewInstanceService(repo)
-	err = service.Create(i)
+	err := service.Create(i)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
