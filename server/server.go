@@ -9,6 +9,7 @@ import (
 	"github.com/namely/broadway/store"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 // Server provides an HTTP interface to manipulate Playbooks and Instances
@@ -40,10 +41,12 @@ var NotFoundError = ErrorResponse{"error": "Not Found"}
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
 func New(s store.Store) *Server {
+	actualToken := os.Getenv(slackTokenENV)
 	srvr := &Server{
 		store:      s,
-		slackToken: os.Getenv(slackTokenENV),
+		slackToken: actualToken,
 	}
+	log.Printf("Started new server with token %s", actualToken)
 	srvr.setupHandlers()
 	return srvr
 }
@@ -152,37 +155,47 @@ func (s *Server) getCommand(c *gin.Context) {
 	}
 }
 
+// SlackCommand ...
+type SlackCommand struct {
+	Token       string `form:"token" binding:"required"`
+	TeamID      string `form:"team_id"`
+	TeamDomain  string `form:"team_domain"`
+	ChannelID   string `form:"channel_id"`
+	ChannelName string `form:"channel_name"`
+	UserID      string `form:"user_id"`
+	UserName    string `form:"user_name"`
+	Command     string `form:"command"`
+	Text        string `form:"text"`
+	ResponseURL string `form:"response_url"`
+}
+
 func (s *Server) postCommand(c *gin.Context) {
-	type slackCommand struct {
-		token       string `form:"token"`
-		teamID      string `form:"team_id"`
-		teamDomain  string `form:"team_domain"`
-		channelID   string `form:"channel_id"`
-		channelName string `form:"channel_name"`
-		userID      string `form:"user_id"`
-		userName    string `form:"user_name"`
-		command     string `form:"command"`
-		text        string `form:"text"`
-		responseURL string `form:"response_url"`
-	}
-	form := &slackCommand{}
-	if err := c.Bind(form); err != nil {
+	var form SlackCommand
+	if err := c.BindWith(&form, binding.Form); err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
+		return
 	}
-	if form.token != s.slackToken {
+	log.Println(form.Token)
+	if form.Token != s.slackToken {
+		log.Printf("Expected token %s. Actual token %s.", s.slackToken, form.Token)
 		c.JSON(http.StatusUnauthorized, InternalError)
+		return
 	}
-	if form.command != "/broadway" {
+	if form.Command != "/broadway" {
 		c.JSON(http.StatusBadRequest, InternalError)
+		return
 	}
-	if form.text == "help" {
+	if form.Text == "help" {
 		c.String(http.StatusOK, "/broadway status playbook1 instance1: Check the status of instance1\n /broadway deploy playbook1 instance1: Deploy instance1")
+		return
 	}
-	output, err := helperRunCommand(form.text)
+	output, err := helperRunCommand(form.Text)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
+		return
 	}
 	c.String(http.StatusOK, output)
+	return
 }
 
 func helperRunCommand(text string) (string, error) {
