@@ -1,34 +1,6 @@
 package instance
 
-import (
-	"encoding/json"
-
-	"github.com/namely/broadway/store"
-)
-
-type InstanceRepository interface {
-	Save(instance Instance) error
-}
-
-type InstanceRepo struct {
-	store store.Store
-}
-
-func NewInstanceRepo(s store.Store) *InstanceRepo {
-	return &InstanceRepo{store: s}
-}
-
-func (ir *InstanceRepo) Save(i Instance) error {
-	encoded, err := i.Attributes().JSON()
-	if err != nil {
-		return err
-	}
-	err = ir.store.SetValue(i.Path(), encoded)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+import "encoding/json"
 
 // Status represents the lifecycle state of one instance
 type Status string

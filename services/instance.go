@@ -1,12 +1,12 @@
 package services
 
-import "github.com/namely/broadway/instance"
+import "github.com/namely/broadway/domain"
 
 type InstanceService struct {
-	repo instance.InstanceRepository
+	repo domain.InstanceRepository
 }
 
-func NewInstanceService(r instance.InstanceRepository) *InstanceService {
+func NewInstanceService(r domain.InstanceRepository) *InstanceService {
 	return &InstanceService{repo: r}
 }
 
