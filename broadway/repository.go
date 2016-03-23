@@ -10,7 +10,7 @@ import (
 // InstanceRepository interface
 type InstanceRepository interface {
 	Save(instance Instance) error
-	FindByPath(path string) (*Instance, error)
+	FindByPath(path string) (Instance, error)
 }
 
 // InstanceRepo handles persistence logic
