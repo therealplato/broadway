@@ -56,3 +56,13 @@ func TestFindByPathWhenMalformedData(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "Saved data for this instance is malformed", err.Error())
 }
+
+func TestFindById(t *testing.T) {
+	repo := NewInstanceRepo(store.New())
+	i := Instance{PlaybookID: "created", ID: "222"}
+
+	repo.Save(i)
+	instance, err := repo.FindById(i.PlaybookID, i.ID)
+	assert.Nil(t, err)
+	assert.Equal(t, "created", instance.PlaybookID)
+}

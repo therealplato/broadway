@@ -11,6 +11,7 @@ import (
 type InstanceRepository interface {
 	Save(instance Instance) error
 	FindByPath(path string) (Instance, error)
+	FindById(playbookId, id string) (Instance, error)
 }
 
 // InstanceRepo handles persistence logic
@@ -65,4 +66,9 @@ func (ir *InstanceRepo) FindByPath(path string) (Instance, error) {
 		return instance, &InstanceMalformedError{}
 	}
 	return instance, nil
+}
+
+func (ir *InstanceRepo) FindById(playbookId, id string) (Instance, error) {
+	path := "/broadway/instances/" + playbookId + "/" + id
+	return ir.FindByPath(path)
 }

@@ -45,6 +45,7 @@ func New(s store.Store) *Server {
 
 func (s *Server) setupHandlers() {
 	s.engine = gin.Default()
+	gin.SetMode(gin.ReleaseMode)
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
@@ -117,7 +118,8 @@ func (s *Server) getStatus400(c *gin.Context) {
 }
 
 func (s *Server) getStatus(c *gin.Context) {
-	status, err := instance.GetStatus(s.store, c.Param("playbookID"), c.Param("instanceID"))
+	service := services.NewInstanceService(s.store)
+	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
 		if err.Error() == "Instance does not exist." {
 			c.JSON(http.StatusNotFound, ErrorResponse{
@@ -131,6 +133,6 @@ func (s *Server) getStatus(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, map[string]string{
-		"status": string(status),
+		"status": string(instance.Status),
 	})
 }

@@ -15,39 +15,28 @@ func TestCreateInstance(t *testing.T) {
 	i := broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	assert.Nil(t, err)
-	createdInstance, _ := service.Repo.FindByPath(i.Path())
+	createdInstance, _ := service.Show(i.PlaybookID, i.ID)
 	assert.Equal(t, "test", createdInstance.PlaybookID)
 	assert.Equal(t, broadway.StatusNew, createdInstance.Status)
 }
 
-func TestGetStatus(t *testing.T) {
+func TestShow(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	testcases := []broadway.Instance{
-		broadway.Instance{PlaybookID: "test", ID: "present", Status: broadway.StatusDeployed},
-		broadway.Instance{PlaybookID: "test", ID: "present", Status: broadway.StatusDeploying},
-		broadway.Instance{PlaybookID: "test", ID: "present", Status: broadway.StatusError},
-		broadway.Instance{PlaybookID: "test", ID: "present", Status: broadway.StatusDeleting},
-	}
-
-	for _, i := range testcases {
-		err := service.Create(i)
-		assert.Nil(t, err)
-
-		status, err := service.GetStatus(i.Path())
-		assert.Nil(t, err, "err of GetStatus with good arguments should be nil")
-		assert.Equal(t, i.Status, status, "GetStatus returned unexpected Status")
-	}
+	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	err := service.Create(i)
+	instance, err := service.Show(i.PlaybookID, i.ID)
+	assert.Nil(t, err)
+	assert.Equal(t, "test", instance.PlaybookID)
+	assert.Equal(t, "222", instance.ID)
 }
 
-func TestGetStatusFailure(t *testing.T) {
+func TestShowMissingInstance(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "notcreated", ID: "222"}
-
-	status, err := service.GetStatus(i.Path())
+	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	_, err := service.Show(i.PlaybookID, i.ID)
 	assert.NotNil(t, err)
-	assert.Equal(t, broadway.StatusNew, status, "status of GetStatus(missing) should be StatusNew")
 }

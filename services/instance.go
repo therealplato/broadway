@@ -7,24 +7,23 @@ import (
 
 // InstanceService definition
 type InstanceService struct {
-	Repo broadway.InstanceRepository
+	repo broadway.InstanceRepository
 }
 
 // NewInstanceService creates a new instance service
 func NewInstanceService(s store.Store) *InstanceService {
 	r := broadway.NewInstanceRepo(s)
-	return &InstanceService{Repo: r}
+	return &InstanceService{repo: r}
 }
 
 // Create a new instance
 func (is *InstanceService) Create(i broadway.Instance) error {
-	return is.Repo.Save(i)
+	return is.repo.Save(i)
 }
 
-func (is *InstanceService) GetStatus(path string) (broadway.Status, error) {
-	instance, err := is.Repo.FindByPath(path)
+func (is *InstanceService) Show(playbookId, id string) (broadway.Instance, error) {
+	instance, err := is.repo.FindById(playbookId, id)
 	if err != nil {
-		return broadway.StatusNew, err
 	}
-	return instance.Status, nil
+	return instance, nil
 }
