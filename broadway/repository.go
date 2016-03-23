@@ -2,6 +2,7 @@ package broadway
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/namely/broadway/store"
 )
@@ -9,7 +10,7 @@ import (
 // InstanceRepository interface
 type InstanceRepository interface {
 	Save(instance Instance) error
-	FindByPath(path string) (Instance, error)
+	FindByPath(path string) (*Instance, error)
 }
 
 // InstanceRepo handles persistence logic
@@ -17,7 +18,13 @@ type InstanceRepo struct {
 	store store.Store
 }
 
-type NotFound error
+type InstanceNotFound struct {
+	path string
+}
+
+func (e *InstanceNotFound) Error() string {
+	return fmt.Sprintf("Instance with path: %s was not found", e.path)
+}
 
 // NewInstanceRepo constructor
 func NewInstanceRepo(s store.Store) *InstanceRepo {
@@ -38,12 +45,14 @@ func (ir *InstanceRepo) Save(instance Instance) error {
 }
 
 func (ir *InstanceRepo) FindByPath(path string) (Instance, error) {
-	instance := Instance{}
+	var instance Instance
 
 	i := ir.store.Value(path)
+	if i == "" {
+		return instance, &InstanceNotFound{path}
+	}
 	err := json.Unmarshal([]byte(i), &instance)
 	if err != nil {
-		return Instance{}, err
 	}
 	return instance, nil
 }
