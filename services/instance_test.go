@@ -10,12 +10,11 @@ import (
 
 func TestCreateInstance(t *testing.T) {
 	store := store.New()
-	repo := broadway.NewInstanceRepo(store)
-	service := NewInstanceService(repo)
+	service := NewInstanceService(store)
 
 	i := broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	assert.Nil(t, err)
-	createdInstance, _ := repo.FindByPath(i.Path())
+	createdInstance, _ := service.Repo.FindByPath(i.Path())
 	assert.Equal(t, "test", createdInstance.PlaybookID)
 }

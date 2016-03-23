@@ -67,8 +67,7 @@ func (s *Server) createInstance(c *gin.Context) {
 		return
 	}
 
-	repo := broadway.NewInstanceRepo(store.New())
-	service := services.NewInstanceService(repo)
+	service := services.NewInstanceService(store.New())
 	err := service.Create(i)
 
 	if err != nil {
