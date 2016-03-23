@@ -26,7 +26,7 @@ func (is *InstanceService) Create(i broadway.Instance) error {
 func (is *InstanceService) Show(playbookID, ID string) (broadway.Instance, error) {
 	instance, err := is.repo.FindByID(playbookID, ID)
 	if err != nil {
-		return broadway.Instance{}, err
+		return instance, err
 	}
 	return instance, nil
 }

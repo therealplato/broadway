@@ -83,18 +83,20 @@ func (s *Server) createInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstance(c *gin.Context) {
-	playbookID := c.Param("playbookID")
-	instanceID := c.Param("instanceID")
-	i, err := instance.Get(playbookID, instanceID)
-	if err != nil && err.Error() == "Instance does not exist." {
-		c.JSON(http.StatusNotFound, NotFoundError)
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, InternalError)
-		return
-	}
+	service := services.NewInstanceService(s.store)
+	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
-	c.JSON(http.StatusOK, i.Attributes())
+	if err != nil {
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, i)
 }
 
 func (s *Server) getInstances(c *gin.Context) {
@@ -120,17 +122,16 @@ func (s *Server) getStatus400(c *gin.Context) {
 func (s *Server) getStatus(c *gin.Context) {
 	service := services.NewInstanceService(s.store)
 	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+
 	if err != nil {
-		if err.Error() == "Instance does not exist." {
-			c.JSON(http.StatusNotFound, ErrorResponse{
-				"error": err.Error(),
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
-				"error": err.Error(),
-			})
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
 		}
-		return
 	}
 	c.JSON(http.StatusOK, map[string]string{
 		"status": string(instance.Status),

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
 	"github.com/stretchr/testify/assert"
@@ -53,14 +54,14 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	}
 	assert.Equal(t, response.PlaybookID, "test")
 
-	ii, err := instance.Get("test", "test")
+	service := services.NewInstanceService(mem)
+	ii, err := service.Show("test", "test")
 	assert.Nil(t, err)
-	assert.Equal(t, "test", ii.ID(), "New instance was created")
+	assert.Equal(t, "test", ii.ID, "New instance was created")
 
 }
 
 func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
-	w := httptest.NewRecorder()
 
 	invalidRequests := map[string]map[string]interface{}{
 		"playbook_id": {
@@ -72,6 +73,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 	}
 
 	for _, i := range invalidRequests {
+		w := httptest.NewRecorder()
 		rbody, err := json.Marshal(i)
 		if err != nil {
 			t.Error(err)
@@ -155,7 +157,7 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 	server := New(mem).Handler()
 	server.ServeHTTP(w, req)
 
-	assert.Equal(t, w.Code, http.StatusNotFound)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	var errorResponse map[string]string
 
@@ -271,8 +273,8 @@ func TestGetStatusFailures(t *testing.T) {
 		{
 			"GET",
 			"/status/goodPlaybook/badInstance",
-			500,
-			"not found",
+			404,
+			"Not Found",
 		},
 	}
 
@@ -316,7 +318,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	server := New(mem).Handler()
 	server.ServeHTTP(w, req)
 
-	assert.Equal(t, w.Code, http.StatusOK)
+	assert.Equal(t, http.StatusOK, w.Code)
 
 	var statusResponse map[string]string
 

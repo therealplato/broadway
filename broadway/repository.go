@@ -24,14 +24,14 @@ type InstanceNotFoundError struct {
 	path string
 }
 
-func (e *InstanceNotFoundError) Error() string {
+func (e InstanceNotFoundError) Error() string {
 	return fmt.Sprintf("Instance with path: %s was not found", e.path)
 }
 
 // InstanceMalformedError instance saved with malformed data
 type InstanceMalformedError struct{}
 
-func (e *InstanceMalformedError) Error() string {
+func (e InstanceMalformedError) Error() string {
 	return "Saved data for this instance is malformed"
 }
 
@@ -59,11 +59,11 @@ func (ir *InstanceRepo) FindByPath(path string) (Instance, error) {
 
 	i := ir.store.Value(path)
 	if i == "" {
-		return instance, &InstanceNotFoundError{path}
+		return instance, InstanceNotFoundError{path}
 	}
 	err := json.Unmarshal([]byte(i), &instance)
 	if err != nil {
-		return instance, &InstanceMalformedError{}
+		return instance, InstanceMalformedError{}
 	}
 	return instance, nil
 }
