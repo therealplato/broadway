@@ -78,7 +78,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	server := New(mem).Handler()
 	server.ServeHTTP(w, req)
 
-	assert.Equal(t, 201, w.Code, "Response code should be 201")
+	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
 
 	var response instance.Attributes
 	err = json.Unmarshal(w.Body.Bytes(), &response)
@@ -126,7 +126,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 		server := New(mem).Handler()
 		server.ServeHTTP(w, req)
 
-		assert.Equal(t, w.Code, 422)
+		assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /instances with wrong attributes to be 400")
 
 		var errorResponse map[string]string
 
@@ -373,25 +373,23 @@ func TestGetCommand400(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected GET /command to be 400")
 }
 func TestGetCommand200(t *testing.T) {
 	w, server := helperSetupServer()
-	req, err := http.NewRequest("GET", "/command?ssl_check=1", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	req, _ := http.NewRequest("GET", "/command?ssl_check=1", nil)
+
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected GET /command?ssl_check=1 to be 200")
 }
 func TestPostCommandMalformedBody(t *testing.T) {
 	w, server := helperSetupServer()
 	formBytes := bytes.NewBufferString("not a form")
-	req, err := http.NewRequest("POST", "/command", formBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	req, _ := http.NewRequest("POST", "/command", formBytes)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /command with bad body to be 400")
 }
@@ -399,18 +397,13 @@ func TestPostCommandWrongToken(t *testing.T) {
 	if err := os.Setenv(slackTokenENV, testToken); err != nil {
 		t.Fatal(err)
 	}
-	actualToken := os.Getenv(slackTokenENV)
-	assert.Equal(t, actualToken, testToken, "Expected ENV value to match test value")
 	w, server := helperSetupServer()
-	formValues := url.Values{
-		"token": {"wrongtoken"},
-	}
-	formBody := formValues.Encode()
-	formBytes := bytes.NewBufferString(formBody)
-	req, err := http.NewRequest("POST", "/command", formBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	req, _ := http.NewRequest("POST", "/command", nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	form := url.Values{}
+	form.Set("token", "wrongtoken")
+	req.PostForm = form
+
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with wrong token to be 500")
 }
@@ -419,57 +412,32 @@ func TestPostCommandWrongCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 	w, server := helperSetupServer()
-	/*
-		formValues := url.Values{
-			"token":   {testToken},
-			"command": {"/wrongcommand"},
-		}
-	*/
+	req, _ := http.NewRequest("POST", "/command", nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
 	form.Set("token", testToken)
 	form.Set("command", "/wrongcommand")
-	//log.Println(formBody)
-	//formBytes := bytes.NewBufferString(formBody)
-	req, _ := http.NewRequest("POST", "/command", nil)
 	req.PostForm = form
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /command with wrong command to be 400")
 }
 func TestPostCommandHelp(t *testing.T) {
+	if err := os.Setenv(slackTokenENV, testToken); err != nil {
+		t.Fatal(err)
+	}
+	w, server := helperSetupServer()
+	req, _ := http.NewRequest("POST", "/command", nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	form := url.Values{}
+	form.Set("token", testToken)
+	form.Set("command", "/broadway")
+	form.Set("text", "help")
+	req.PostForm = form
+
+	server.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway help to be 200")
+	assert.Contains(t, w.Body.String(), "/broadway", "Expected help message to contain /broadway")
 }
 func TestPostCommand(t *testing.T) {
 }
-
-/*
-	testToken := "Hg97ATvDxqgjtO"
-
-	formValues := url.Values{
-		"token":        {testToken},
-		"command":      {"/broadway"},
-		"text":         {"not a real command"},
-		"response_url": {"https://hooks.slack.com/commands/1234/5678"},
-	}
-	formBody := formValues.Encode()
-	formBytes := bytes.NewBufferString(formBody)
-
-	req, err := http.NewRequest("POST", "/command", formBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-
-	parsedToken, err := testCtx.Get("token")
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, testToken, parsedToken, "Expected context to have POSTed token")
-}
-
-func TestCommandRoutePongs (t *testing.T){
-	req, err := http.NewRequest("POST", "/command", url.Values{
-		"ssl_check":{"1"},
-	})
-  assert(t, http.StatusOK, w.Code, "/command should return 200 on ssl_check=1")
-}
-*/
