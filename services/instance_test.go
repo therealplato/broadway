@@ -17,6 +17,7 @@ func TestCreateInstance(t *testing.T) {
 	assert.Nil(t, err)
 	createdInstance, _ := service.Repo.FindByPath(i.Path())
 	assert.Equal(t, "test", createdInstance.PlaybookID)
+	assert.Equal(t, broadway.StatusNew, createdInstance.Status)
 }
 
 func TestGetStatusFailure(t *testing.T) {
@@ -28,4 +29,7 @@ func TestGetStatusFailure(t *testing.T) {
 	status, err := service.GetStatus(i.Path())
 	assert.NotNil(t, err)
 	assert.Equal(t, broadway.StatusNew, status, "status of GetStatus(missing) should be StatusNew")
+}
+
+func TestGetStatus(t *testing.T) {
 }
