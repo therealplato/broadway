@@ -21,9 +21,12 @@ func (is *InstanceService) Create(i broadway.Instance) error {
 	return is.repo.Save(i)
 }
 
-func (is *InstanceService) Show(playbookId, id string) (broadway.Instance, error) {
-	instance, err := is.repo.FindById(playbookId, id)
+// Show takes playbookID and instanceID and returns the matching Instance, if
+// any
+func (is *InstanceService) Show(playbookID, ID string) (broadway.Instance, error) {
+	instance, err := is.repo.FindByID(playbookID, ID)
 	if err != nil {
+		return instance, err
 	}
 	return instance, nil
 }
