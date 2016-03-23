@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type DummyStore struct{}
+
+func (ds *DummyStore) Value(path string) string {
+	return "malformed_json"
+}
+
+func (ds *DummyStore) SetValue(path, value string) error {
+	return nil
+}
+
+func (ds *DummyStore) Values(path string) map[string]string {
+	return map[string]string{"foo": "foo"}
+}
+
+func (ds *DummyStore) Delete(path string) error {
+	return nil
+}
+
 func TestFindByPath(t *testing.T) {
 	repo := NewInstanceRepo(store.New())
 	i := Instance{PlaybookID: "test", ID: "222"}
@@ -27,4 +45,13 @@ func TestFindByPathWhenTheInstanceDoesNotExist(t *testing.T) {
 	assert.Equal(t, "Instance with path: "+i.Path()+" was not found", err.Error())
 	assert.Equal(t, "", instance.PlaybookID)
 	assert.Equal(t, "", instance.ID)
+}
+
+func TestFindByPathWhenMalformedData(t *testing.T) {
+	repo := NewInstanceRepo(&DummyStore{})
+	i := Instance{PlaybookID: "notcreated", ID: "222"}
+
+	_, err := repo.FindByPath(i.Path())
+	assert.NotNil(t, err)
+	assert.Equal(t, "Saved data for this instance is malformed", err.Error())
 }
