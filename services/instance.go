@@ -20,3 +20,11 @@ func NewInstanceService(s store.Store) *InstanceService {
 func (is *InstanceService) Create(i broadway.Instance) error {
 	return is.Repo.Save(i)
 }
+
+func (is *InstanceService) GetStatus(path string) (broadway.Status, error) {
+	instance, err := is.Repo.FindByPath(path)
+	if err != nil {
+		return broadway.StatusNew, err
+	}
+	return instance.Status, nil
+}
