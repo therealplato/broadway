@@ -135,8 +135,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		assert.Contains(t, errorResponse["error"], "Unprocessable Entity")
-		//assert.Contains(t, errorResponse["error"], field)
+		assert.Contains(t, errorResponse["error"], "Missing")
 	}
 
 }
