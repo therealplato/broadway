@@ -27,6 +27,7 @@ func (e *InstanceNotFoundError) Error() string {
 	return fmt.Sprintf("Instance with path: %s was not found", e.path)
 }
 
+// InstanceMalformedError instance saved with malformed data
 type InstanceMalformedError struct{}
 
 func (e *InstanceMalformedError) Error() string {
