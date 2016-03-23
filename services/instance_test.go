@@ -36,7 +36,7 @@ func TestShowMissingInstance(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	i := broadway.Instance{PlaybookID: "test", ID: "broken"}
 	_, err := service.Show(i.PlaybookID, i.ID)
 	assert.NotNil(t, err)
 }

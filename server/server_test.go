@@ -271,8 +271,8 @@ func TestGetStatusFailures(t *testing.T) {
 		{
 			"GET",
 			"/status/goodPlaybook/badInstance",
-			404,
-			"Instance does not exist.",
+			500,
+			"not found",
 		},
 	}
 
