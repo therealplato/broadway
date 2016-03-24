@@ -3,7 +3,9 @@ package server
 import (
 	"net/http"
 
+	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +45,7 @@ func New(s store.Store) *Server {
 
 func (s *Server) setupHandlers() {
 	s.engine = gin.Default()
+	gin.SetMode(gin.ReleaseMode)
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
@@ -62,36 +65,38 @@ func (s *Server) Run(addr ...string) error {
 }
 
 func (s *Server) createInstance(c *gin.Context) {
-	var ia instance.Attributes
-	var err = c.BindJSON(&ia)
-	if err != nil {
+	var i broadway.Instance
+	if err := c.BindJSON(&i); err != nil {
 		c.JSON(422, InvalidError("Missing: "+err.Error()))
 		return
 	}
 
-	i := instance.New(s.store, &ia)
-	err = i.Save()
+	service := services.NewInstanceService(store.New())
+	err := service.Create(i)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
 
-	c.JSON(http.StatusCreated, i.Attributes())
+	c.JSON(http.StatusCreated, i)
 }
 
 func (s *Server) getInstance(c *gin.Context) {
-	playbookID := c.Param("playbookID")
-	instanceID := c.Param("instanceID")
-	i, err := instance.Get(playbookID, instanceID)
-	if err != nil && err.Error() == "Instance does not exist." {
-		c.JSON(http.StatusNotFound, NotFoundError)
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, InternalError)
-		return
-	}
+	service := services.NewInstanceService(s.store)
+	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
-	c.JSON(http.StatusOK, i.Attributes())
+	if err != nil {
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, i)
 }
 
 func (s *Server) getInstances(c *gin.Context) {
@@ -115,20 +120,20 @@ func (s *Server) getStatus400(c *gin.Context) {
 }
 
 func (s *Server) getStatus(c *gin.Context) {
-	status, err := instance.GetStatus(s.store, c.Param("playbookID"), c.Param("instanceID"))
+	service := services.NewInstanceService(s.store)
+	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+
 	if err != nil {
-		if err.Error() == "Instance does not exist." {
-			c.JSON(http.StatusNotFound, ErrorResponse{
-				"error": err.Error(),
-			})
-		} else {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{
-				"error": err.Error(),
-			})
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
 		}
-		return
 	}
 	c.JSON(http.StatusOK, map[string]string{
-		"status": string(status),
+		"status": string(instance.Status),
 	})
 }
