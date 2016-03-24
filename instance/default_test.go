@@ -3,35 +3,23 @@ package instance
 import (
 	"testing"
 
+	"github.com/namely/broadway/broadway"
+	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSavingInstance(t *testing.T) {
-	i := New(store.New(), &Attributes{PlaybookID: "test", ID: "222"})
-	err := i.Save()
+	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	store := store.New()
+	service := services.NewInstanceService(store)
+
+	err := service.Create(i)
 	assert.Nil(t, err)
 
-	ni, err := Get("test", "222")
+	instance, err := service.Show(i.PlaybookID, i.ID)
 	assert.Nil(t, err)
 
-	assert.Equal(t, "test", ni.PlaybookID())
-}
-
-func TestGettingUnsavedInstance(t *testing.T) {
-	inst, err := Get("test", "none")
-	assert.Nil(t, inst)
-	assert.Equal(t, "Instance does not exist.", err.Error())
-}
-
-func TestDestroy(t *testing.T) {
-	i := New(store.New(), &Attributes{PlaybookID: "test", ID: "422"})
-	assert.Nil(t, i.Save())
-
-	assert.Nil(t, i.Destroy())
-
-	inst, err := Get("test", "422")
-	assert.Nil(t, inst)
-	assert.Equal(t, "Instance does not exist.", err.Error())
+	assert.Equal(t, "test", instance.PlaybookID)
 }

@@ -2,7 +2,6 @@ package instance
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/namely/broadway/store"
 )
@@ -21,30 +20,6 @@ func New(s store.Store, attrs *Attributes) Instance {
 	}
 
 	return instance
-}
-
-// Get looks up an Instance by playbookID and instance id
-func Get(playbookID, id string) (Instance, error) {
-	attrs := &Attributes{
-		PlaybookID: playbookID,
-		ID:         id,
-	}
-
-	instance := &defaultInstance{
-		attributes: attrs,
-		store:      store.New(),
-	}
-
-	value := instance.store.Value(instance.path())
-	if value == "" {
-		return nil, errors.New("Instance does not exist.")
-	}
-	err := json.Unmarshal([]byte(value), instance.attributes)
-	if err != nil {
-		return nil, err
-	}
-
-	return instance, nil
 }
 
 // List looks up all Instances stored under a given playbookID
