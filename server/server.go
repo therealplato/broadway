@@ -52,6 +52,7 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/status", s.getStatus400)
 	s.engine.GET("/status/:playbookID", s.getStatus400)
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
+	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
 }
 
 // Handler returns a reference to the Gin engine that powers Server
@@ -136,4 +137,22 @@ func (s *Server) getStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]string{
 		"status": string(instance.Status),
 	})
+}
+
+func (s *Server) deployInstance(c *gin.Context) {
+	service := services.NewInstanceService(s.store)
+	_, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+
+	if err != nil {
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
+	}
+	// instance, err = service.Deploy(instance)
+	// c.JSON(http.StatusOK, instance)
 }

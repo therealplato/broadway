@@ -326,3 +326,23 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, statusResponse["status"], "deployed")
 }
+
+func TestDeployMissing(t *testing.T) {
+	mem := store.New()
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("POST", "/deploy/missingPlaybook/missingInstance", nil)
+	assert.Nil(t, err)
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	var errorResponse map[string]string
+	log.Println(w.Body.String())
+	err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	assert.Nil(t, err)
+	assert.Contains(t, errorResponse["error"], "Not Found")
+
+}
