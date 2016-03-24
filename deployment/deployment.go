@@ -12,16 +12,19 @@ import (
 
 	// Install API
 	_ "k8s.io/kubernetes/pkg/api/install"
-)
 
-var client coreclient.CoreClient
-var deserializer runtime.Decoder
+	"github.com/namely/broadway/manifest"
+	"github.com/namely/broadway/playbook"
+)
 
 var groupVersionKind = unversioned.GroupVersionKind{
 	Group:   api.GroupName,
 	Version: runtime.APIVersionInternal,
 	Kind:    meta.AnyKind,
 }
+
+var client coreclient.CoreInterface
+var deserializer runtime.Decoder
 
 func init() {
 
@@ -34,45 +37,38 @@ func init() {
 		Host:     "http://localhost:8080",
 		Insecure: true,
 	}
-	client, err := coreclient.NewForConfig(kcfg)
+	var err error
+	client, err = coreclient.NewForConfig(kcfg)
 	if err != nil {
 		panic(err)
 	}
 }
 
-// Step represents a deployment step
-type Step interface {
-	Deploy() error
+// Deployment represents a deployment of an instance
+type Deployment struct {
+	Playbook  playbook.Playbook
+	Variables map[string]string
+	Manifests map[string]*manifest.Manifest
 }
 
-// DefaultStep implements a deployment step
-type DefaultStep struct {
-	object runtime.Object
-}
-
-var _ Step = &DefaultStep{}
-
-// NewDefaultStep creates a default step
-func NewDefaultStep(manifest string) (*DefaultStep, error) {
-	object, _, err := deserializer.Decode([]byte(manifest), &groupVersionKind, nil)
-	if err != nil {
-		return nil, err
-	}
-	s := &DefaultStep{
-		object: object,
-	}
-	return s, nil
-}
-
-// Deploy executes the deployment of a step
-func (s *DefaultStep) Deploy() error {
-	oGVK := s.object.GetObjectKind().GroupVersionKind()
-
-	if oGVK.Kind == "ReplicationController" {
-		rc, err := client.ReplicationControllers("default").Create(object.(*v1.ReplicationController))
-		if err != nil {
-			return err
+// Deploy executes the deployment
+func (d *Deployment) Deploy() error {
+	for _, task := range d.Playbook.Tasks {
+		if len(task.Manifests) > 0 {
+			for _, name := range task.Manifests {
+				m := d.Manifests[name]
+				rendered := m.Execute(d.Variables)
+				step, err := NewDefaultStep(task, rendered)
+				if err != nil {
+					return err
+				}
+				err = step.Deploy()
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
+
 	return nil
 }
