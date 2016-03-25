@@ -367,7 +367,9 @@ func TestDeployGood(t *testing.T) {
 	// Setup server
 	mem := store.New()
 	server := New(mem)
-	server.SetPlaybooks([]playbook.Playbook{p})
+	pbs := make(map[string]playbook.Playbook)
+	pbs[p.ID] = p
+	server.SetPlaybooks(pbs)
 	// engine := server.Handler()
 
 	// Ensure instance present in etcd

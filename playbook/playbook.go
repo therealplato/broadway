@@ -119,8 +119,8 @@ func ReadPlaybookFromDisk(fd string) ([]byte, error) {
 
 // LoadPlaybookFolder takes a directory and attempts to parse every file in that
 // directory into a Playbook struct
-func LoadPlaybookFolder(dir string) ([]Playbook, error) {
-	var AllPlaybooks []Playbook
+func LoadPlaybookFolder(dir string) (map[string]Playbook, error) {
+	var AllPlaybooks = make(map[string]Playbook)
 	paths, err := filepath.Glob(dir + "/*")
 	if err != nil {
 		return AllPlaybooks, err
@@ -144,7 +144,7 @@ func LoadPlaybookFolder(dir string) ([]Playbook, error) {
 			fmt.Printf("Warning: Playbook %s invalid: %s\n", path, err)
 			continue
 		}
-		AllPlaybooks = append(AllPlaybooks, parsed)
+		AllPlaybooks[parsed.ID] = parsed
 	}
 	return AllPlaybooks, nil
 }

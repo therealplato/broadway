@@ -15,7 +15,7 @@ import (
 // Server provides an HTTP interface to manipulate Playbooks and Instances
 type Server struct {
 	store     store.Store
-	playbooks []playbook.Playbook
+	playbooks map[string]playbook.Playbook
 	engine    *gin.Engine
 }
 
@@ -57,7 +57,7 @@ func (s *Server) setupHandlers() {
 }
 
 // SetPlaybooks passes playbooks to the server (from main.go)
-func (s *Server) SetPlaybooks(pbs []playbook.Playbook) {
+func (s *Server) SetPlaybooks(pbs map[string]playbook.Playbook) {
 	s.playbooks = pbs
 }
 
