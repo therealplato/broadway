@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/namely/broadway/broadway"
+	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
@@ -16,6 +17,7 @@ import (
 type Server struct {
 	store     store.Store
 	playbooks map[string]playbook.Playbook
+	deployer  deployment.Deployer
 	engine    *gin.Engine
 }
 

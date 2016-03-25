@@ -44,6 +44,11 @@ func init() {
 	}
 }
 
+// Deployer declares something that can Deploy Deployments
+type Deployer interface {
+	Deploy(playbook.Playbook, map[string]string) error
+}
+
 // Deployment represents a deployment of an instance
 type Deployment struct {
 	Playbook  playbook.Playbook

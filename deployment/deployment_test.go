@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"testing"
+	"text/template"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/kubernetes/pkg/client/testing/core"
@@ -35,7 +36,12 @@ func TestDeploy(t *testing.T) {
 		"test": "ok",
 	}
 
-	m, _ := manifest.New("test", mtemplate)
+	//m, _ := manifest.New("test", mtemplate)
+
+	id := "test"
+	tp, err := template.New(id).Parse(mtemplate)
+	assert.Nil(t, err)
+	m := &manifest.Manifest{ID: id, Template: tp}
 
 	ms := map[string]*manifest.Manifest{
 		"test": m,
@@ -47,7 +53,7 @@ func TestDeploy(t *testing.T) {
 		Manifests: ms,
 	}
 
-	err := d.Deploy()
+	err = d.Deploy()
 	assert.Nil(t, err)
 	f := client.(*fake.FakeCore).Fake
 	assert.Equal(t, 1, len(f.Actions()))
