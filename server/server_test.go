@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -344,5 +345,34 @@ func TestDeployMissing(t *testing.T) {
 	err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
 	assert.Nil(t, err)
 	assert.Contains(t, errorResponse["error"], "Not Found")
+}
+
+func TestDeployGood(t *testing.T) {
+	task := playbook.Task{
+		Name: "First step",
+		Manifests: []string{
+			"test",
+		},
+	}
+	// Ensure playbook is in memory
+	p := playbook.Playbook{
+		ID:    "test",
+		Name:  "Test deployment",
+		Meta:  playbook.Meta{},
+		Vars:  []string{"test"},
+		Tasks: []playbook.Task{task},
+	}
+
+	// Ensure manifest "test.yml" present in manifests folder
+	// Setup server
+	mem := store.New()
+	server := New(mem)
+	server.SetPlaybooks([]playbook.Playbook{p})
+	// engine := server.Handler()
+
+	// Ensure instance present in etcd
+	// Call endpoint
+	// Assert successful deploy
+	// Teardown kubernetes topography
 
 }

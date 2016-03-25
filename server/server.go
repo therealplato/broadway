@@ -5,6 +5,7 @@ import (
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -13,9 +14,9 @@ import (
 
 // Server provides an HTTP interface to manipulate Playbooks and Instances
 type Server struct {
-	store store.Store
-
-	engine *gin.Engine
+	store     store.Store
+	playbooks []playbook.Playbook
+	engine    *gin.Engine
 }
 
 // ErrorResponse represents a JSON response to be returned in failure cases
@@ -53,6 +54,11 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/status/:playbookID", s.getStatus400)
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
 	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
+}
+
+// SetPlaybooks passes playbooks to the server (from main.go)
+func (s *Server) SetPlaybooks(pbs []playbook.Playbook) {
+	s.playbooks = pbs
 }
 
 // Handler returns a reference to the Gin engine that powers Server
