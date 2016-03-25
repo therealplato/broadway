@@ -9,16 +9,11 @@ type PodmanifestStep struct {
 
 var _ Step = &ManifestStep{}
 
-// NewPodManifestStep creates a podmanifest step and returns a Step
-func NewPodmanifestStep(podmanifest string) (Step, error) {
-	object, _, err := deserializer.Decode([]byte(podmanifest), &groupVersionKind, nil)
-	if err != nil {
-		return nil, err
-	}
-	s := &ManifestStep{
+// NewPodmanifestStep creates a podmanifest step and returns a Step
+func NewPodmanifestStep(object runtime.Object) Step {
+	return &ManifestStep{
 		object: object,
 	}
-	return s, nil
 }
 
 // Deploy executes the deployment step

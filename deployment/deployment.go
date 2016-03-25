@@ -1,6 +1,8 @@
 package deployment
 
 import (
+	"os"
+
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -25,6 +27,7 @@ var groupVersionKind = unversioned.GroupVersionKind{
 
 var client coreclient.CoreInterface
 var deserializer runtime.Decoder
+var namespace string
 
 // Step represents a deployment step
 type Step interface {
@@ -52,6 +55,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	namespace = os.Getenv("KUBERNETES_NAMESPACE")
 }
 
 // Deployment represents a deployment of an instance
@@ -85,22 +90,32 @@ func (d *Deployment) collectSteps() ([]TaskStep, error) {
 		if task.PodManifest != "" {
 			m := d.Manifests[task.PodManifest]
 			rendered := m.Execute(d.Variables)
-			step, err := NewPodmanifestStep(rendered)
+			object, err := deserialize(rendered)
 			if err != nil {
 				return steps, err
 			}
+			step := NewPodmanifestStep(object)
 			steps = append(steps, TaskStep{&task, step})
 		} else {
 			for _, name := range task.Manifests {
 				m := d.Manifests[name]
 				rendered := m.Execute(d.Variables)
-				step, err := NewManifestStep(rendered)
+				object, err := deserialize(rendered)
 				if err != nil {
 					return steps, err
 				}
+				step := NewManifestStep(object)
 				steps = append(steps, TaskStep{&task, step})
 			}
 		}
 	}
 	return steps, nil
+}
+
+func deserialize(manifest string) (runtime.Object, error) {
+	object, _, err := deserializer.Decode([]byte(manifest), &groupVersionKind, nil)
+	if err != nil {
+		return nil, err
+	}
+	return object, nil
 }
