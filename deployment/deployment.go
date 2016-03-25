@@ -26,8 +26,18 @@ var groupVersionKind = unversioned.GroupVersionKind{
 var client coreclient.CoreInterface
 var deserializer runtime.Decoder
 
-func init() {
+// Step represents a deployment step
+type Step interface {
+	Deploy() error
+}
 
+// TaskStep combines a task and a step
+type TaskStep struct {
+	task *playbook.Task
+	step Step
+}
+
+func init() {
 	scheme := runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)
@@ -53,22 +63,44 @@ type Deployment struct {
 
 // Deploy executes the deployment
 func (d *Deployment) Deploy() error {
-	for _, task := range d.Playbook.Tasks {
-		if len(task.Manifests) > 0 {
-			for _, name := range task.Manifests {
-				m := d.Manifests[name]
-				rendered := m.Execute(d.Variables)
-				step, err := NewDefaultStep(task, rendered)
-				if err != nil {
-					return err
-				}
-				err = step.Deploy()
-				if err != nil {
-					return err
-				}
-			}
+	tasksteps, err := d.collectSteps()
+	if err != nil {
+		return err
+	}
+
+	for _, taskstep := range tasksteps {
+		err := taskstep.step.Deploy()
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+// collectSteps collects all the steps for the deployment from the playbook
+func (d *Deployment) collectSteps() ([]TaskStep, error) {
+	var steps = []TaskStep{}
+	for _, task := range d.Playbook.Tasks {
+		if task.PodManifest != "" {
+			m := d.Manifests[task.PodManifest]
+			rendered := m.Execute(d.Variables)
+			step, err := NewPodmanifestStep(rendered)
+			if err != nil {
+				return steps, err
+			}
+			steps = append(steps, TaskStep{&task, step})
+		} else {
+			for _, name := range task.Manifests {
+				m := d.Manifests[name]
+				rendered := m.Execute(d.Variables)
+				step, err := NewManifestStep(rendered)
+				if err != nil {
+					return steps, err
+				}
+				steps = append(steps, TaskStep{&task, step})
+			}
+		}
+	}
+	return steps, nil
 }

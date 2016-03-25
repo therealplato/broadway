@@ -3,39 +3,29 @@ package deployment
 import (
 	"k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/runtime"
-
-	"github.com/namely/broadway/playbook"
 )
 
-// Step represents a deployment step
-type Step interface {
-	Task() playbook.Task
-	Deploy() error
-}
-
-// DefaultStep implements a deployment step
-type DefaultStep struct {
-	task   playbook.Task
+// ManifestStep implements a deployment step
+type ManifestStep struct {
 	object runtime.Object
 }
 
-var _ Step = &DefaultStep{}
+var _ Step = &ManifestStep{}
 
-// NewDefaultStep creates a default step
-func NewDefaultStep(task playbook.Task, manifest string) (*DefaultStep, error) {
+// NewManifestStep creates a default step
+func NewManifestStep(manifest string) (Step, error) {
 	object, _, err := deserializer.Decode([]byte(manifest), &groupVersionKind, nil)
 	if err != nil {
 		return nil, err
 	}
-	s := &DefaultStep{
+	s := &ManifestStep{
 		object: object,
-		task:   task,
 	}
 	return s, nil
 }
 
 // Deploy executes the deployment of a step
-func (s *DefaultStep) Deploy() error {
+func (s *ManifestStep) Deploy() error {
 	oGVK := s.object.GetObjectKind().GroupVersionKind()
 	if oGVK.Kind == "ReplicationController" {
 		rc := s.object.(*v1.ReplicationController)
@@ -45,9 +35,4 @@ func (s *DefaultStep) Deploy() error {
 		}
 	}
 	return nil
-}
-
-// Task returns the step task
-func (s *DefaultStep) Task() playbook.Task {
-	return s.task
 }

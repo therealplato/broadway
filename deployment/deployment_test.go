@@ -16,41 +16,73 @@ func init() {
 }
 
 func TestDeploy(t *testing.T) {
-	p := playbook.Playbook{
-		ID:   "test",
-		Name: "Test deployment",
-		Meta: playbook.Meta{},
-		Vars: []string{"test"},
-		Tasks: []playbook.Task{
-			{
-				Name: "First step",
-				Manifests: []string{
-					"test",
+	cases := []struct {
+		Tasks    []playbook.Task
+		Expected int
+	}{
+		{
+			Tasks: []playbook.Task{
+				{
+					Name: "First step",
+					Manifests: []string{
+						"test",
+					},
 				},
 			},
+			Expected: 1,
+		}, {
+			Tasks: []playbook.Task{
+				{
+					Name: "First step",
+					Manifests: []string{
+						"test",
+						"test2",
+						"test2",
+					},
+				},
+			},
+			Expected: 3,
+		}, {
+			Tasks: []playbook.Task{
+				{
+					Name:        "First step",
+					PodManifest: "test",
+				},
+			},
+			Expected: 1,
 		},
 	}
 
-	v := map[string]string{
+	vars := map[string]string{
 		"test": "ok",
 	}
-
 	m, _ := manifest.New("test", mtemplate)
-
-	ms := map[string]*manifest.Manifest{
-		"test": m,
+	manifests := map[string]*manifest.Manifest{
+		"test":  m,
+		"test2": m,
+		"test3": m,
 	}
 
-	d := &Deployment{
-		Playbook:  p,
-		Variables: v,
-		Manifests: ms,
-	}
+	for _, c := range cases {
+		p := playbook.Playbook{
+			ID:    "test",
+			Name:  "Test deployment",
+			Meta:  playbook.Meta{},
+			Vars:  []string{"test"},
+			Tasks: c.Tasks,
+		}
 
-	err := d.Deploy()
-	assert.Nil(t, err)
-	f := client.(*fake.FakeCore).Fake
-	assert.Equal(t, 1, len(f.Actions()))
+		d := &Deployment{
+			Playbook:  p,
+			Variables: vars,
+			Manifests: manifests,
+		}
+
+		err := d.Deploy()
+		assert.Nil(t, err)
+		f := client.(*fake.FakeCore).Fake
+		assert.Equal(t, c.Expected, len(f.Actions()))
+	}
 }
 
 var mtemplate = `apiVersion: v1
