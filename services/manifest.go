@@ -13,19 +13,27 @@ import (
 // implementations
 type ManifestService struct {
 	rootFolder string
+	extension  string
 }
 
 // NewManifestService instantiates a ManifestService with a default rootFolder
 func NewManifestService() *ManifestService {
 	return &ManifestService{
 		rootFolder: "./manifests",
+		extension:  ".yml",
 	}
 }
 
 // Read loads the contents of `name` from disk, looking in the
 // ManifestService.rootFolder
 func (ms *ManifestService) Read(name string) (string, error) {
-	return "dummy", nil
+	name = name + ms.extension
+	path := filepath.Join(ms.rootFolder, name)
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
 }
 
 // LoadTask iterates through the podManifest and Manifests of a Task and returns
