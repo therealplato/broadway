@@ -64,6 +64,9 @@ func TestDeploy(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		// Reset client
+		client.(*fake.FakeCore).Fake.ClearActions()
+
 		p := playbook.Playbook{
 			ID:    "test",
 			Name:  "Test deployment",
@@ -82,6 +85,9 @@ func TestDeploy(t *testing.T) {
 		assert.Nil(t, err)
 		f := client.(*fake.FakeCore).Fake
 		assert.Equal(t, c.Expected, len(f.Actions()))
+		for _, action := range f.Actions() {
+			assert.IsType(t, core.CreateActionImpl{}, action)
+		}
 	}
 }
 
