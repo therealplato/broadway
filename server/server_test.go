@@ -20,11 +20,6 @@ import (
 var testToken = "BroadwayTestToken"
 
 func TestServerNew(t *testing.T) {
-	_, exists := os.LookupEnv(slackTokenENV)
-	if exists {
-		t.Fatalf("Found existing $%s. Skipping tests to avoid changing it...", slackTokenENV)
-	}
-
 	err := os.Setenv(slackTokenENV, testToken)
 	if err != nil {
 		t.Fatal(err)
@@ -385,14 +380,17 @@ func TestGetCommand200(t *testing.T) {
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected GET /command?ssl_check=1 to be 200")
 }
-func TestPostCommandMalformedBody(t *testing.T) {
+func TestPostCommandMissingToken(t *testing.T) {
+	if err := os.Setenv(slackTokenENV, testToken); err != nil {
+		t.Fatal(err)
+	}
 	w, server := helperSetupServer()
 	formBytes := bytes.NewBufferString("not a form")
 	req, _ := http.NewRequest("POST", "/command", formBytes)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	server.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /command with bad body to be 400")
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with bad body to be 401")
 }
 func TestPostCommandWrongToken(t *testing.T) {
 	if err := os.Setenv(slackTokenENV, testToken); err != nil {
@@ -406,22 +404,7 @@ func TestPostCommandWrongToken(t *testing.T) {
 	req.PostForm = form
 
 	server.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with wrong token to be 500")
-}
-func TestPostCommandWrongCommand(t *testing.T) {
-	if err := os.Setenv(slackTokenENV, testToken); err != nil {
-		t.Fatal(err)
-	}
-	w, server := helperSetupServer()
-	req, _ := http.NewRequest("POST", "/command", nil)
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	form := url.Values{}
-	form.Set("token", testToken)
-	form.Set("command", "/wrongcommand")
-	req.PostForm = form
-
-	server.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /command with wrong command to be 400")
+	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with wrong token to be 401")
 }
 func TestPostCommandHelp(t *testing.T) {
 	if err := os.Setenv(slackTokenENV, testToken); err != nil {

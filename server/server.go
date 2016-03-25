@@ -183,12 +183,9 @@ func (s *Server) postCommand(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
+
 	if form.Token != s.slackToken {
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
-		return
-	}
-	if form.Command != "/broadway" {
-		c.JSON(http.StatusBadRequest, BadRequestError)
 		return
 	}
 	if form.Text == "help" {
