@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/namely/broadway/playbook"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,6 +47,55 @@ func TestRead(t *testing.T) {
 	assert.Equal(t, tmpDir, ms.rootFolder)
 	contents, err := ms.Read("test")
 	assert.Contains(t, contents, "ReplicationController")
+	assert.Nil(t, err)
+
+	contents, err = ms.Read("missing")
+	assert.NotNil(t, err)
+}
+
+func TestLoad(t *testing.T) {
+	ms := NewManifestService()
+	ms.rootFolder = tmpDir
+	m, err := ms.Load("test")
+	assert.Nil(t, err)
+	assert.Equal(t, m.ID, "test")
+
+	m, err = ms.Load("missing")
+	assert.NotNil(t, err)
+}
+
+func TestLoadTask(t *testing.T) {
+	ms := NewManifestService()
+	ms.rootFolder = tmpDir
+	tk := playbook.Task{
+		Name: "First step",
+		Manifests: []string{
+			"test",
+		},
+	}
+
+	// Load from task with manifests
+	pod, mm, err := ms.LoadTask(tk)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(mm))
+	assert.Equal(t, mm[0].ID, "test")
+
+	// Load from task with pod manifest
+	tk.Manifests = []string{}
+	tk.PodManifest = "test"
+	pod, mm, err = ms.LoadTask(tk)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(mm))
+	assert.Equal(t, "test", pod.ID)
+
+}
+
+func TestNew(t *testing.T) {
+	ms := NewManifestService()
+	ms.rootFolder = tmpDir
+
+	m, err := ms.New("testId", "testContent")
+	assert.Equal(t, m.ID, "testId")
 	assert.Nil(t, err)
 }
 

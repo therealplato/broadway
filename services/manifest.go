@@ -42,7 +42,8 @@ func (ms *ManifestService) LoadTask(t playbook.Task) (*manifest.Manifest, []mani
 	pm := &manifest.Manifest{}
 	var mm []manifest.Manifest
 	if len(t.PodManifest) != 0 {
-		pm, err := ms.Load(t.PodManifest)
+		var err error
+		pm, err = ms.Load(t.PodManifest)
 		if err != nil {
 			return pm, mm, err
 		}
@@ -54,18 +55,16 @@ func (ms *ManifestService) LoadTask(t playbook.Task) (*manifest.Manifest, []mani
 		}
 		mm = append(mm, *m)
 	}
-
 	return pm, mm, nil
 }
 
 // Load takes a filename, reads the file and generates a Manifest object
 func (ms *ManifestService) Load(name string) (*manifest.Manifest, error) {
-	var mPath = filepath.Join(ms.rootFolder, name)
-	bytes, err := ioutil.ReadFile(mPath)
+	mString, err := ms.Read(name)
 	if err != nil {
 		return &manifest.Manifest{}, err
 	}
-	m, err := ms.New(name, string(bytes))
+	m, err := ms.New(name, mString)
 	if err != nil {
 		return &manifest.Manifest{}, err
 	}
