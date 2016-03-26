@@ -6,7 +6,9 @@ import (
 	"os"
 
 	"github.com/namely/broadway/broadway"
+	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -18,6 +20,8 @@ import (
 type Server struct {
 	store      store.Store
 	slackToken string
+	playbooks  map[string]playbook.Playbook
+	deployer   deployment.Deployer
 	engine     *gin.Engine
 }
 
@@ -67,6 +71,12 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
 	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
+	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
+}
+
+// SetPlaybooks passes playbooks to the server (from main.go)
+func (s *Server) SetPlaybooks(pbs map[string]playbook.Playbook) {
+	s.playbooks = pbs
 }
 
 // Handler returns a reference to the Gin engine that powers Server
@@ -203,4 +213,22 @@ func (s *Server) postCommand(c *gin.Context) {
 
 func helperRunCommand(text string) (string, error) {
 	return "unimplemented :sadpanda:", nil
+}
+
+func (s *Server) deployInstance(c *gin.Context) {
+	service := services.NewInstanceService(s.store)
+	_, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+
+	if err != nil {
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
+	}
+	// instance, err = service.Deploy(instance)
+	// c.JSON(http.StatusOK, instance)
 }

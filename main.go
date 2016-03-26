@@ -24,6 +24,7 @@ func main() {
 	fmt.Printf("%v+\n", playbooks)
 	fmt.Println(instance.StatusNew)
 	server := server.New(store.New())
+	server.SetPlaybooks(playbooks)
 	err = server.Run(os.Getenv("HOST"))
 	if err != nil {
 		panic(err)

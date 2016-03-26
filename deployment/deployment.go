@@ -59,6 +59,11 @@ func init() {
 	namespace = os.Getenv("KUBERNETES_NAMESPACE")
 }
 
+// Deployer declares something that can Deploy Deployments
+type Deployer interface {
+	Deploy(playbook.Playbook, map[string]string) error
+}
+
 // Deployment represents a deployment of an instance
 type Deployment struct {
 	Playbook  playbook.Playbook
