@@ -17,10 +17,12 @@ func init() {
 
 func TestDeploy(t *testing.T) {
 	cases := []struct {
+		Name     string
 		Tasks    []playbook.Task
 		Expected int
 	}{
 		{
+			Name: "Step with one manifest file",
 			Tasks: []playbook.Task{
 				{
 					Name: "First step",
@@ -31,6 +33,7 @@ func TestDeploy(t *testing.T) {
 			},
 			Expected: 1,
 		}, {
+			Name: "Step with 3 manifest files",
 			Tasks: []playbook.Task{
 				{
 					Name: "First step",
@@ -43,6 +46,7 @@ func TestDeploy(t *testing.T) {
 			},
 			Expected: 3,
 		}, {
+			Name: "Step with 1 podmanifest file",
 			Tasks: []playbook.Task{
 				{
 					Name:        "First step",
@@ -82,11 +86,11 @@ func TestDeploy(t *testing.T) {
 		}
 
 		err := d.Deploy()
-		assert.Nil(t, err)
+		assert.Nil(t, err, c.Name+" deployment should not return with error")
 		f := client.(*fake.FakeCore).Fake
-		assert.Equal(t, c.Expected, len(f.Actions()))
+		assert.Equal(t, c.Expected, len(f.Actions()), c.Name+" should trigger actions.")
 		for _, action := range f.Actions() {
-			assert.IsType(t, core.CreateActionImpl{}, action)
+			assert.IsType(t, core.CreateActionImpl{}, action, c.Name+" should only trigger create action(s)")
 		}
 	}
 }
