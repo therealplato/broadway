@@ -3,7 +3,6 @@ package services
 import (
 	"io/ioutil"
 	"path/filepath"
-	"text/template"
 
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
@@ -73,10 +72,5 @@ func (ms *ManifestService) Load(name string) (*manifest.Manifest, error) {
 
 // New creates a new Manifest object and parses (but does not execute) the template
 func (ms *ManifestService) New(id, content string) (*manifest.Manifest, error) {
-	t, err := template.New(id).Parse(content)
-	if err != nil {
-		return nil, err
-	}
-
-	return &manifest.Manifest{ID: id, Template: t}, nil
+	return manifest.New(id, content)
 }

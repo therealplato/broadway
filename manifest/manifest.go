@@ -12,6 +12,16 @@ type Manifest struct {
 	Template *template.Template
 }
 
+// New creates a new Manifest object and parses (but does not execute) the template
+func New(id, content string) (*Manifest, error) {
+	t, err := template.New(id).Parse(content)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Manifest{ID: id, Template: t}, nil
+}
+
 // Execute executes template with variables
 func (m *Manifest) Execute(vars map[string]string) string {
 	var b bytes.Buffer
