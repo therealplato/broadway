@@ -127,7 +127,7 @@ func (s *Server) getInstance(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case broadway.InstanceNotFoundError:
+		case broadway.NotFound
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -140,17 +140,13 @@ func (s *Server) getInstance(c *gin.Context) {
 
 func (s *Server) getInstances(c *gin.Context) {
 	service := services.NewInstanceService(s.store)
-	instances, err := instance.List(s.store, c.Param("playbookID"))
+	instances, err := service.AllWithPlaybookID(c.Param("playbookID"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
-	} else if len(instances) == 0 {
-		c.JSON(http.StatusNoContent, instances)
-		return
-	} else {
-		c.JSON(http.StatusOK, instances)
-		return
 	}
+	c.JSON(http.StatusOK, instances)
+	return
 }
 
 func (s *Server) getStatus400(c *gin.Context) {
