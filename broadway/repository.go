@@ -83,6 +83,7 @@ func (ir *InstanceRepo) FindByPlaybookID(playbookID string) []*Instance {
 		var instance Instance
 		err := json.Unmarshal([]byte(value), &instance)
 		if err != nil {
+			return instances
 		}
 		instances = append(instances, &instance)
 	}
