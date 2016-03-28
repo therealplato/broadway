@@ -1,42 +1,56 @@
 package services
 
 import (
+	"errors"
+
+	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
+	"github.com/namely/broadway/store"
 )
 
 // DeploymentService implements the Broadway logic for deployments
 type DeploymentService struct {
-	deployer  deployment.Deployer
+	repo      broadway.InstanceRepository
 	playbooks map[string]*playbook.Playbook
-	manifests map[string]*manifests.Manifest
+	manifests map[string]*manifest.Manifest
 }
 
 // NewDeploymentService creates a new DeploymentService
-func NewDeploymentService(deployer deployment.Deployer, playbooks map[string]*playbook.Playbook, manifests map[string]*manifest.Manifest) *DeploymentService {
+func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms map[string]*manifest.Manifest) *DeploymentService {
 	return &DeploymentService{
-		deployer:  deployer,
-		playbooks: playbooks,
-		manifests: manifests,
+		repo:      broadway.NewInstanceRepo(s),
+		playbooks: ps,
+		manifests: ms,
 	}
 }
 
 // Deploy deploys a playbook
-func (d *DeploymentService) Deploy(instance) error {
+func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
-	//if instance.Status != Deploying .. {
-	//	instance.Status = Deploying
-	//	instance.Save
+	playbook := d.playbooks[instance.PlaybookID]
 
-	//	err := d.deployer.Deploy(p, instance.Vars)
-	//	if err != nil {
-	//		instance.Status = error
-	//		instance.save
-	//	} else {
-	//		instance.Status = deployed
-	//		instance.save
-	//	}
+	deployer := deployment.NewKubernetesDeployment(playbook, instance.Vars, d.manifests)
 
-	//}
+	if instance.Status == broadway.StatusDeploying {
+		return errors.New("Instance is being deployed already.")
+	}
+
+	if instance.Status == broadway.StatusDeleting {
+		return errors.New("Instance is being deleted already.")
+	}
+
+	instance.Status = broadway.StatusDeploying
+	d.repo.Save(instance)
+
+	err := deployer.Deploy()
+	if err != nil {
+		instance.Status = broadway.StatusError
+	} else {
+		instance.Status = broadway.StatusDeployed
+	}
+	d.repo.Save(instance)
+
+	return nil
 }

@@ -22,8 +22,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	MS := services.NewManifestService()
-	manifests, err := MS.LoadManifestFolder()
+	ms := services.NewManifestService()
+	manifests, err := ms.LoadManifestFolder()
 	if err != nil {
 		log.Fatal(err)
 	}

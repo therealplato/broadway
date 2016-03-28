@@ -9,9 +9,9 @@ import (
 
 // InstanceRepository interface
 type InstanceRepository interface {
-	Save(instance Instance) error
-	FindByPath(path string) (Instance, error)
-	FindByID(playbookID, ID string) (Instance, error)
+	Save(instance *Instance) error
+	FindByPath(path string) (*Instance, error)
+	FindByID(playbookID, ID string) (*Instance, error)
 }
 
 // InstanceRepo handles persistence logic
@@ -41,7 +41,7 @@ func NewInstanceRepo(s store.Store) *InstanceRepo {
 }
 
 // Save a new instance as json
-func (ir *InstanceRepo) Save(instance Instance) error {
+func (ir *InstanceRepo) Save(instance *Instance) error {
 	encoded, err := instance.JSON()
 	if err != nil {
 		return err
@@ -54,22 +54,22 @@ func (ir *InstanceRepo) Save(instance Instance) error {
 }
 
 // FindByPath find an instance based on it's path
-func (ir *InstanceRepo) FindByPath(path string) (Instance, error) {
+func (ir *InstanceRepo) FindByPath(path string) (*Instance, error) {
 	var instance Instance
 
 	i := ir.store.Value(path)
 	if i == "" {
-		return instance, InstanceNotFoundError{path}
+		return nil, InstanceNotFoundError{path}
 	}
 	err := json.Unmarshal([]byte(i), &instance)
 	if err != nil {
-		return instance, InstanceMalformedError{}
+		return nil, InstanceMalformedError{}
 	}
-	return instance, nil
+	return &instance, nil
 }
 
 // FindByID finds an instance by playbook and instance ID
-func (ir *InstanceRepo) FindByID(playbookID, ID string) (Instance, error) {
+func (ir *InstanceRepo) FindByID(playbookID, ID string) (*Instance, error) {
 	path := "/broadway/instances/" + playbookID + "/" + ID
 	return ir.FindByPath(path)
 }

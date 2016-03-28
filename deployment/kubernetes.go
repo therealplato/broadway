@@ -61,9 +61,18 @@ func init() {
 
 // KubernetesDeployment represents a deployment of an instance
 type KubernetesDeployment struct {
-	Playbook  playbook.Playbook
+	Playbook  *playbook.Playbook
 	Variables map[string]string
 	Manifests map[string]*manifest.Manifest
+}
+
+// NewKubernetesDeployment creates a new kuberentes deployment
+func NewKubernetesDeployment(playbook *playbook.Playbook, variables map[string]string, manifests map[string]*manifest.Manifest) *KubernetesDeployment {
+	return &KubernetesDeployment{
+		Playbook:  playbook,
+		Variables: variables,
+		Manifests: manifests,
+	}
 }
 
 // Deploy executes the deployment

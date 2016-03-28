@@ -74,7 +74,7 @@ func (t Task) ManifestsPresent() error {
 }
 
 // Validate checks for ID, Name, and Tasks on a playbook
-func (p Playbook) Validate() error {
+func (p *Playbook) Validate() error {
 	if len(p.ID) == 0 {
 		return errors.New("Playbook missing required ID")
 	}
@@ -89,7 +89,7 @@ func (p Playbook) Validate() error {
 
 // ValidateTasks checks a task for fields Name, and one or both of Manifests and
 // PodManifests
-func (p Playbook) ValidateTasks() error {
+func (p *Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
 		if len(task.Name) == 0 {
 			return errors.New("Task missing required Name")
@@ -105,10 +105,10 @@ func (p Playbook) ValidateTasks() error {
 }
 
 // ParsePlaybook unmarshalls a YAML byte sequence into a Playbook struct
-func ParsePlaybook(playbook []byte) (Playbook, error) {
+func ParsePlaybook(playbook []byte) (*Playbook, error) {
 	var p Playbook
 	err := yaml.Unmarshal(playbook, &p)
-	return p, err
+	return &p, err
 }
 
 // ReadPlaybookFromDisk takes a filename and returns a byte array. Alias for
@@ -119,14 +119,14 @@ func ReadPlaybookFromDisk(fd string) ([]byte, error) {
 
 // LoadPlaybookFolder takes a directory and attempts to parse every file in that
 // directory into a Playbook struct
-func LoadPlaybookFolder(dir string) (map[string]Playbook, error) {
-	var AllPlaybooks = make(map[string]Playbook)
+func LoadPlaybookFolder(dir string) (map[string]*Playbook, error) {
+	var playbooks = make(map[string]*Playbook)
 	paths, err := filepath.Glob(dir + "/*")
 	if err != nil {
-		return AllPlaybooks, err
+		return nil, err
 	}
 	if len(paths) == 0 {
-		return AllPlaybooks, errors.New("Found zero files in directory " + dir)
+		return nil, errors.New("Found zero files in directory " + dir)
 	}
 	for _, path := range paths {
 		playbookBytes, err := ReadPlaybookFromDisk(path)
@@ -144,7 +144,7 @@ func LoadPlaybookFolder(dir string) (map[string]Playbook, error) {
 			fmt.Printf("Warning: Playbook %s invalid: %s\n", path, err)
 			continue
 		}
-		AllPlaybooks[parsed.ID] = parsed
+		playbooks[parsed.ID] = parsed
 	}
-	return AllPlaybooks, nil
+	return playbooks, nil
 }

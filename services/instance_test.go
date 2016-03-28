@@ -12,7 +12,7 @@ func TestCreateInstance(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	i := &broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	assert.Nil(t, err)
 	createdInstance, _ := service.Show(i.PlaybookID, i.ID)
@@ -24,7 +24,7 @@ func TestShow(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	i := &broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	instance, err := service.Show(i.PlaybookID, i.ID)
 	assert.Nil(t, err)
@@ -36,8 +36,8 @@ func TestShowMissingInstance(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "test", ID: "broken"}
+	i := &broadway.Instance{PlaybookID: "test", ID: "broken"}
 	instance, err := service.Show(i.PlaybookID, i.ID)
 	assert.NotNil(t, err)
-	assert.Empty(t, instance.PlaybookID, "PlaybookID should be empty")
+	assert.Nil(t, instance, "PlaybookID should be empty")
 }

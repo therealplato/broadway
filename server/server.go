@@ -8,6 +8,7 @@ import (
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
@@ -20,7 +21,8 @@ import (
 type Server struct {
 	store      store.Store
 	slackToken string
-	playbooks  map[string]playbook.Playbook
+	playbooks  map[string]*playbook.Playbook
+	manifests  map[string]*manifest.Manifest
 	deployer   deployment.Deployer
 	engine     *gin.Engine
 }
@@ -52,9 +54,22 @@ func CustomError(message string) ErrorResponse {
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
 func New(s store.Store) *Server {
+	ms := services.NewManifestService()
+	manifests, err := ms.LoadManifestFolder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	playbooks, err := playbook.LoadPlaybookFolder("playbooks/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	srvr := &Server{
 		store:      s,
 		slackToken: os.Getenv(slackTokenENV),
+		playbooks:  playbooks,
+		manifests:  manifests,
 	}
 	srvr.setupHandlers()
 	return srvr
@@ -72,11 +87,6 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
 	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
-}
-
-// SetPlaybooks passes playbooks to the server (from main.go)
-func (s *Server) SetPlaybooks(pbs map[string]playbook.Playbook) {
-	s.playbooks = pbs
 }
 
 // Handler returns a reference to the Gin engine that powers Server
@@ -217,7 +227,7 @@ func helperRunCommand(text string) (string, error) {
 
 func (s *Server) deployInstance(c *gin.Context) {
 	service := services.NewInstanceService(s.store)
-	_, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
 		switch err.(type) {
@@ -229,6 +239,14 @@ func (s *Server) deployInstance(c *gin.Context) {
 			return
 		}
 	}
-	// instance, err = service.Deploy(instance)
-	// c.JSON(http.StatusOK, instance)
+
+	deployService := services.NewDeploymentService(s.playbooks, s.manifests)
+
+	err = deployService.Deploy(instance)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, InternalError)
+		return
+	}
+
+	c.JSON(http.StatusOK, instance)
 }
