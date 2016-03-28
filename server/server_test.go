@@ -12,7 +12,6 @@ import (
 
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/playbook"
-	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
 	"github.com/stretchr/testify/assert"
@@ -46,6 +45,15 @@ func TestServerNew(t *testing.T) {
 
 }
 
+func jsonFromMap(t *testing.T, data map[string]interface{}) []byte {
+	rbody, err := json.Marshal(data)
+	if err != nil {
+		t.Error(err)
+		return []byte{}
+	}
+	return rbody
+}
+
 func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	w := httptest.NewRecorder()
 
@@ -57,11 +65,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 		},
 	}
 
-	rbody, err := json.Marshal(i)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	rbody := jsonFromMap(t, i)
 
 	req, err := http.NewRequest("POST", "/instances", bytes.NewBuffer(rbody))
 	if err != nil {
@@ -76,20 +80,6 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	server.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
-
-	var response instance.Attributes
-	err = json.Unmarshal(w.Body.Bytes(), &response)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	assert.Equal(t, response.PlaybookID, "test")
-
-	service := services.NewInstanceService(mem)
-	ii, err := service.Show("test", "test")
-	assert.Nil(t, err)
-	assert.Equal(t, "test", ii.ID, "New instance was created")
-
 }
 
 func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
