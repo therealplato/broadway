@@ -71,7 +71,7 @@ func TestDeploy(t *testing.T) {
 		// Reset client
 		client.(*fake.FakeCore).Fake.ClearActions()
 
-		p := playbook.Playbook{
+		p := &playbook.Playbook{
 			ID:    "test",
 			Name:  "Test deployment",
 			Meta:  playbook.Meta{},
@@ -79,7 +79,7 @@ func TestDeploy(t *testing.T) {
 			Tasks: c.Tasks,
 		}
 
-		d := &Deployment{
+		d := &KubernetesDeployment{
 			Playbook:  p,
 			Variables: vars,
 			Manifests: manifests,

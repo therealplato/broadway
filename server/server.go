@@ -54,25 +54,27 @@ func CustomError(message string) ErrorResponse {
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
 func New(s store.Store) *Server {
-	ms := services.NewManifestService()
-	manifests, err := ms.LoadManifestFolder()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	playbooks, err := playbook.LoadPlaybookFolder("playbooks/")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	srvr := &Server{
 		store:      s,
 		slackToken: os.Getenv(slackTokenENV),
-		playbooks:  playbooks,
-		manifests:  manifests,
 	}
 	srvr.setupHandlers()
 	return srvr
+}
+
+func (s *Server) Init() {
+	ms := services.NewManifestService()
+
+	var err error
+	s.manifests, err = ms.LoadManifestFolder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.playbooks, err = playbook.LoadPlaybookFolder("playbooks/")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (s *Server) setupHandlers() {
@@ -107,7 +109,7 @@ func (s *Server) createInstance(c *gin.Context) {
 	}
 
 	service := services.NewInstanceService(store.New())
-	err := service.Create(i)
+	err := service.Create(&i)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
@@ -240,7 +242,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 		}
 	}
 
-	deployService := services.NewDeploymentService(s.playbooks, s.manifests)
+	deployService := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
 
 	err = deployService.Deploy(instance)
 	if err != nil {

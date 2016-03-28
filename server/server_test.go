@@ -453,7 +453,7 @@ func TestDeployGood(t *testing.T) {
 		},
 	}
 	// Ensure playbook is in memory
-	p := playbook.Playbook{
+	p := &playbook.Playbook{
 		ID:    "test",
 		Name:  "Test deployment",
 		Meta:  playbook.Meta{},
@@ -465,9 +465,7 @@ func TestDeployGood(t *testing.T) {
 	// Setup server
 	mem := store.New()
 	server := New(mem)
-	pbs := make(map[string]playbook.Playbook)
-	pbs[p.ID] = p
-	server.SetPlaybooks(pbs)
+	server.playbooks = map[string]*playbook.Playbook{p.ID: p}
 	// engine := server.Handler()
 
 	// Ensure instance present in etcd

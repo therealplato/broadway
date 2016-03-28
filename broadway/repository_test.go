@@ -27,7 +27,7 @@ func (ds *DummyStore) Delete(path string) error {
 
 func TestFindByPath(t *testing.T) {
 	repo := NewInstanceRepo(store.New())
-	i := Instance{PlaybookID: "test", ID: "222"}
+	i := &Instance{PlaybookID: "test", ID: "222"}
 	err := repo.Save(i)
 	assert.Nil(t, err)
 
@@ -44,8 +44,7 @@ func TestFindByPathWhenTheInstanceDoesNotExist(t *testing.T) {
 	instance, err := repo.FindByPath(i.Path())
 	assert.NotNil(t, err)
 	assert.Equal(t, "Instance with path: "+i.Path()+" was not found", err.Error())
-	assert.Equal(t, "", instance.PlaybookID)
-	assert.Equal(t, "", instance.ID)
+	assert.Nil(t, instance)
 }
 
 func TestFindByPathWhenMalformedData(t *testing.T) {
@@ -59,7 +58,7 @@ func TestFindByPathWhenMalformedData(t *testing.T) {
 
 func TestFindByID(t *testing.T) {
 	repo := NewInstanceRepo(store.New())
-	i := Instance{PlaybookID: "created", ID: "222"}
+	i := &Instance{PlaybookID: "created", ID: "222"}
 
 	repo.Save(i)
 	instance, err := repo.FindByID(i.PlaybookID, i.ID)
