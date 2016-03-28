@@ -59,21 +59,16 @@ func init() {
 	namespace = os.Getenv("KUBERNETES_NAMESPACE")
 }
 
-// Deployer declares something that can Deploy Deployments
-type Deployer interface {
-	Deploy(playbook.Playbook, map[string]string) error
-}
-
-// Deployment represents a deployment of an instance
-type Deployment struct {
+// KubernetesDeployment represents a deployment of an instance
+type KubernetesDeployment struct {
 	Playbook  playbook.Playbook
 	Variables map[string]string
 	Manifests map[string]*manifest.Manifest
 }
 
 // Deploy executes the deployment
-func (d *Deployment) Deploy() error {
-	tasksteps, err := d.collectSteps()
+func (d *KubernetesDeployment) Deploy() error {
+	tasksteps, err := d.steps()
 	if err != nil {
 		return err
 	}
@@ -88,8 +83,7 @@ func (d *Deployment) Deploy() error {
 	return nil
 }
 
-// collectSteps collects all the steps for the deployment from the playbook
-func (d *Deployment) collectSteps() ([]TaskStep, error) {
+func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
 	var steps = []TaskStep{}
 	for _, task := range d.Playbook.Tasks {
 		if task.PodManifest != "" {

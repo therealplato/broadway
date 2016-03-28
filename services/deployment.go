@@ -1,40 +1,42 @@
 package services
 
 import (
-	"log"
-
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 )
 
-// DeploymentService mediates between high-level layers that want to deploy
-// things and the low-level implementation of that deployment
+// DeploymentService implements the Broadway logic for deployments
 type DeploymentService struct {
-	deployer deployment.Deployer
+	deployer  deployment.Deployer
+	playbooks map[string]*playbook.Playbook
+	manifests map[string]*manifests.Manifest
+}
+
+// NewDeploymentService creates a new DeploymentService
+func NewDeploymentService(deployer deployment.Deployer, playbooks map[string]*playbook.Playbook, manifests map[string]*manifest.Manifest) *DeploymentService {
+	return &DeploymentService{
+		deployer:  deployer,
+		playbooks: playbooks,
+		manifests: manifests,
+	}
 }
 
 // Deploy deploys a playbook
-func (d *DeploymentService) Deploy(p playbook.Playbook, vars map[string]string) error {
-	return d.deployer.Deploy(p, vars)
-}
+func (d *DeploymentService) Deploy(instance) error {
 
-// DefaultDeployer implements the Deployer interface
-type DefaultDeployer struct{}
+	//if instance.Status != Deploying .. {
+	//	instance.Status = Deploying
+	//	instance.Save
 
-// Deploy finds the playbook's manifests and executes them with Kubernetes.
-func (dd *DefaultDeployer) Deploy(p playbook.Playbook, vars map[string]string) error {
-	MS := NewManifestService()
-	for _, t := range p.Tasks {
-		pod, manifests, err := MS.LoadTask(t)
-		_ = pod
-		_ = err
-		// execute templates with vars
+	//	err := d.deployer.Deploy(p, instance.Vars)
+	//	if err != nil {
+	//		instance.Status = error
+	//		instance.save
+	//	} else {
+	//		instance.Status = deployed
+	//		instance.save
+	//	}
 
-		// give templated manifest to kubernetes
-		go func(ms []manifest.Manifest) {
-			log.Printf("Deploying: %+v\n", ms)
-		}(manifests)
-	}
-	return nil
+	//}
 }
