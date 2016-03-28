@@ -3,6 +3,7 @@ package services
 import (
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
@@ -73,4 +74,25 @@ func (ms *ManifestService) Load(name string) (*manifest.Manifest, error) {
 // New creates a new Manifest object and parses (but does not execute) the template
 func (ms *ManifestService) New(id, content string) (*manifest.Manifest, error) {
 	return manifest.New(id, content)
+}
+
+// LoadManifestFolder returns a map of name:Manifest for each file in
+// ms.rootFolder
+func (ms *ManifestService) LoadManifestFolder() (map[string]*manifest.Manifest, error) {
+	var mm = make(map[string]*manifest.Manifest)
+	extRX, err := regexp.Compile(`\.[^.]+$`)
+	paths, err := filepath.Glob(filepath.Join(ms.rootFolder, "*"))
+	if err != nil {
+		return mm, err
+	}
+	for _, p := range paths {
+		filename := filepath.Base(p)
+		name := extRX.ReplaceAllString(filename, "") // remove extension
+		m, err := ms.Load(name)
+		if err != nil {
+			return mm, err
+		}
+		mm[name] = m
+	}
+	return mm, nil
 }
