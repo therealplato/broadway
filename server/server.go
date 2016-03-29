@@ -7,7 +7,6 @@ import (
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
@@ -226,7 +225,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		switch err.(type) {
-		case broadway.InstanceNotFoundError:
+		case broadway.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
