@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
@@ -47,17 +48,19 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
 	instance.Status = broadway.StatusDeploying
 	if err := d.repo.Save(instance); err != nil {
-		fmt.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", instance.PlaybookID, instance.ID)
+		log.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", instance.PlaybookID, instance.ID)
+		log.Println(err)
 	}
 
 	err = deployer.Deploy()
 	if err != nil {
-		fmt.Printf("Deploying %s/%s failed: %s\n", instance.PlaybookID, instance.ID, err.Error())
+		log.Printf("Deploying %s/%s failed: %s\n", instance.PlaybookID, instance.ID, err.Error())
 		instance.Status = broadway.StatusError
 
 		errS := d.repo.Save(instance)
 		if errS != nil {
-			fmt.Printf("Failed to save instance status Error for %s/%s\n%s\n", instance.PlaybookID, instance.ID, errS.Error())
+			log.Printf("Failed to save instance status Error for %s/%s\n", instance.PlaybookID, instance.ID)
+			log.Println(errS)
 			return errS
 		}
 		return err
@@ -66,7 +69,7 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 	instance.Status = broadway.StatusDeployed
 	err = d.repo.Save(instance)
 	if err != nil {
-		fmt.Printf("Failed to save instance status Deployed for playbook ID %s, instance %s\n%s\n", instance.PlaybookID, instance.ID, err.Error())
+		log.Printf("Failed to save instance status Deployed for playbook ID %s, instance %s\n%s\n", instance.PlaybookID, instance.ID, err.Error())
 		return err
 	}
 	return nil

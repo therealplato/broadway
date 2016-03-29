@@ -54,6 +54,19 @@ func TestDeploy(t *testing.T) {
 				},
 			},
 			Expected: 2,
+		}, {
+			Name: "Two Tasks with podmanifest steps",
+			Tasks: []playbook.Task{
+				{
+					Name:        "First step",
+					PodManifest: "test",
+				},
+				{
+					Name:        "Second step",
+					PodManifest: "test",
+				},
+			},
+			Expected: 4,
 		},
 	}
 
