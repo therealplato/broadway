@@ -29,14 +29,14 @@ func (s *ManifestStep) Deploy() error {
 	case "ReplicationController":
 		o := s.object.(*v1.ReplicationController)
 
-		_, err := client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
+		rc, err := client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
 
-		if err != nil {
-			log.Println("Creating new replication controller: ", o.ObjectMeta.Name)
-			_, err = client.ReplicationControllers(namespace).Create(o)
-		} else {
+		if err == nil && rc != nil {
 			log.Println("Updating replication controller: ", o.ObjectMeta.Name)
 			_, err = client.ReplicationControllers(namespace).Update(o)
+		} else {
+			log.Println("Creating new replication controller: ", o.ObjectMeta.Name)
+			_, err = client.ReplicationControllers(namespace).Create(o)
 		}
 		if err != nil {
 			log.Println("Create or Update failed: ", err)

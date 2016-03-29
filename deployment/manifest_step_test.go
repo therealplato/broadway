@@ -3,34 +3,86 @@ package deployment
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/client/testing/core"
 	"k8s.io/kubernetes/pkg/client/typed/generated/core/v1/fake"
+	"k8s.io/kubernetes/pkg/runtime"
 )
 
 func init() {
-	client = &fake.FakeCore{&core.Fake{}}
+	namespace = "test"
+}
+
+func mustDeseralize(manifest string) runtime.Object {
+	o, err := deserialize(manifest)
+	if err != nil {
+		panic(err)
+	}
+	return o
 }
 
 func TestManifestStepDeploy(t *testing.T) {
-	//f := client.(*fake.FakeCore).Fake
-	//cases := []struct {
-	//	Object   runtime.Object
-	//	Expected string
-	//}{
-	//	{
-	//		Object:   &v1.ReplicationController{},
-	//		Expected: "replicationController",
-	//	},
-	//}
+	f := client.(*fake.FakeCore).Fake
+	cases := []struct {
+		Name     string
+		Object   runtime.Object
+		Expected string
+		Before   func()
+	}{
+		{
+			Name:     "Simple RC create",
+			Object:   mustDeseralize(rct1),
+			Expected: "update",
+			Before:   func() {},
+		},
+		{
+			Name:     "Simple RC update",
+			Object:   mustDeseralize(rct1),
+			Expected: "update",
+			Before: func() {
+				rc := mustDeseralize(rct1).(*v1.ReplicationController)
+				client.ReplicationControllers("test").Create(rc)
+			},
+		},
+	}
 
-	//for _, c := range cases {
-	//	// Reset client
-	//	client.(*fake.FakeCore).Fake.ClearActions()
-	//	step := NewManifestStep(c.Object)
-	//	err := step.Deploy()
-	//	assert.Nil(t, err)
-	//	assert.Equal(t, 1, len(f.Actions()))
-	//	assert.Equal(t, "create", f.Actions()[0].GetVerb)
-	//	assert.Equal(t, c.Expected, f.Actions()[0].GetResource())
-	//}
+	for _, c := range cases {
+		// Reset client
+		client = &fake.FakeCore{&core.Fake{}}
+		step := NewManifestStep(c.Object)
+		c.Before()
+		client.(*fake.FakeCore).Fake.ClearActions()
+		err := step.Deploy()
+		assert.Nil(t, err, c.Name+" deploy returned with nil")
+
+		// manifest step should always fire only 2 actions
+		assert.Equal(t, 2, len(f.Actions()), c.Name+" fired less/more than 2 actions")
+
+		verbs := []string{}
+		for _, a := range f.Actions() {
+			verbs = append(verbs, a.GetVerb())
+		}
+
+		assert.Contains(t, verbs, c.Expected, c.Name+" actions didn't contain the expected verb")
+	}
 }
+
+var rct1 = `apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: test2
+spec:
+  replicas: 1
+  selector:
+    name: redis
+  template:
+    metadata:
+      labels:
+        name: redis
+    spec:
+      containers:
+      - name: redis
+        image: kubernetes/redis:v1
+`
