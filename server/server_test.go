@@ -64,7 +64,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 		},
 	}
 
-	rbody := testutils.JsonFromMap(t, i)
+	rbody := testutils.JSONFromMap(t, i)
 	req, w := testutils.PostRequest(t, "/instances", rbody)
 	makeRequest(req, w)
 
@@ -83,7 +83,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 	}
 
 	for _, i := range invalidRequests {
-		rbody := testutils.JsonFromMap(t, i)
+		rbody := testutils.JSONFromMap(t, i)
 		req, w := testutils.PostRequest(t, "/instances", rbody)
 		makeRequest(req, w)
 
