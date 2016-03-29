@@ -77,6 +77,7 @@ func (ir *InstanceRepo) FindByID(playbookID, ID string) (*Instance, error) {
 
 // FindByPlaybookID finds instances by playbook id
 func (ir *InstanceRepo) FindByPlaybookID(playbookID string) ([]*Instance, error) {
+
 	data := ir.store.Values(fmt.Sprintf("/broadway/instances/%s", playbookID))
 	instances := []*Instance{}
 	for _, value := range data {
