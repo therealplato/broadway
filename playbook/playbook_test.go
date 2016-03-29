@@ -178,11 +178,11 @@ func TestValidatePlaybookPasses(t *testing.T) {
 
 	testcases := []struct {
 		scenario string
-		playbook Playbook
+		playbook *Playbook
 	}{
 		{
 			"Validate Valid Playbook",
-			Playbook{
+			&Playbook{
 				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{ValidTask1, ValidTask2},
@@ -212,24 +212,24 @@ func TestValidatePlaybookFailures(t *testing.T) {
 
 	testcases := []struct {
 		scenario    string
-		playbook    Playbook
+		playbook    *Playbook
 		expectedErr string
 	}{
 		{
 			"Validate Playbook Without ID",
-			Playbook{},
+			&Playbook{},
 			"Playbook missing required ID",
 		},
 		{
 			"Validate Playbook Without Name",
-			Playbook{
+			&Playbook{
 				ID: "playbook id 1",
 			},
 			"Playbook missing required Name",
 		},
 		{
 			"Validate Playbook With Zero Tasks",
-			Playbook{
+			&Playbook{
 				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{},
@@ -238,7 +238,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		},
 		{
 			"Validate Playbook With Tasks Missing Names",
-			Playbook{
+			&Playbook{
 				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask1},
@@ -247,7 +247,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		},
 		{
 			"Validate Playbook With Tasks Missing Manifests",
-			Playbook{
+			&Playbook{
 				ID:    "playbook id 1",
 				Name:  "playbook 1",
 				Tasks: []Task{InvalidTask2},

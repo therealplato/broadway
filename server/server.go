@@ -6,7 +6,10 @@ import (
 	"os"
 
 	"github.com/namely/broadway/broadway"
+	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/manifest"
+	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -18,6 +21,9 @@ import (
 type Server struct {
 	store      store.Store
 	slackToken string
+	playbooks  map[string]*playbook.Playbook
+	manifests  map[string]*manifest.Manifest
+	deployer   deployment.Deployer
 	engine     *gin.Engine
 }
 
@@ -56,6 +62,23 @@ func New(s store.Store) *Server {
 	return srvr
 }
 
+// Init initializes manifests and playbooks for the server.
+func (s *Server) Init() {
+	ms := services.NewManifestService()
+
+	var err error
+	s.manifests, err = ms.LoadManifestFolder()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	s.playbooks, err = playbook.LoadPlaybookFolder("playbooks/")
+	log.Printf("%+v", s.playbooks)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func (s *Server) setupHandlers() {
 	s.engine = gin.Default()
 	gin.SetMode(gin.ReleaseMode) // Comment this to use debug mode for more verbose output
@@ -67,6 +90,7 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
 	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
+	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
 }
 
 // Handler returns a reference to the Gin engine that powers Server
@@ -87,7 +111,7 @@ func (s *Server) createInstance(c *gin.Context) {
 	}
 
 	service := services.NewInstanceService(store.New())
-	err := service.Create(i)
+	err := service.Create(&i)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
@@ -203,4 +227,32 @@ func (s *Server) postCommand(c *gin.Context) {
 
 func helperRunCommand(text string) (string, error) {
 	return "unimplemented :sadpanda:", nil
+}
+
+func (s *Server) deployInstance(c *gin.Context) {
+	service := services.NewInstanceService(s.store)
+	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+
+	if err != nil {
+		log.Println(err)
+		switch err.(type) {
+		case broadway.InstanceNotFoundError:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
+	}
+
+	deployService := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+
+	err = deployService.Deploy(instance)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusInternalServerError, InternalError)
+		return
+	}
+
+	c.JSON(http.StatusOK, instance)
 }

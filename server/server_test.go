@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -373,6 +374,7 @@ func TestGetCommand400(t *testing.T) {
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected GET /command to be 400")
 }
+
 func TestGetCommand200(t *testing.T) {
 	w, server := helperSetupServer()
 	req, _ := http.NewRequest("GET", "/command?ssl_check=1", nil)
@@ -423,5 +425,51 @@ func TestPostCommandHelp(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway help to be 200")
 	assert.Contains(t, w.Body.String(), "/broadway", "Expected help message to contain /broadway")
 }
-func TestPostCommand(t *testing.T) {
+
+func TestDeployMissing(t *testing.T) {
+	mem := store.New()
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("POST", "/deploy/missingPlaybook/missingInstance", nil)
+	assert.Nil(t, err)
+
+	server := New(mem).Handler()
+	server.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	var errorResponse map[string]string
+	log.Println(w.Body.String())
+	err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
+	assert.Nil(t, err)
+	assert.Contains(t, errorResponse["error"], "Not Found")
+}
+
+func TestDeployGood(t *testing.T) {
+	task := playbook.Task{
+		Name: "First step",
+		Manifests: []string{
+			"test",
+		},
+	}
+	// Ensure playbook is in memory
+	p := &playbook.Playbook{
+		ID:    "test",
+		Name:  "Test deployment",
+		Meta:  playbook.Meta{},
+		Vars:  []string{"test"},
+		Tasks: []playbook.Task{task},
+	}
+
+	// Ensure manifest "test.yml" present in manifests folder
+	// Setup server
+	mem := store.New()
+	server := New(mem)
+	server.playbooks = map[string]*playbook.Playbook{p.ID: p}
+	// engine := server.Handler()
+
+	// Ensure instance present in etcd
+	// Call endpoint
+	// Assert successful deploy
+	// Teardown kubernetes topography
 }
