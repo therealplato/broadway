@@ -47,7 +47,8 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 	}
 
 	instance.Status = broadway.StatusDeploying
-	if err := d.repo.Save(instance); err != nil {
+	err := d.repo.Save(instance)
+	if err != nil {
 		log.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", instance.PlaybookID, instance.ID)
 		log.Println(err)
 	}

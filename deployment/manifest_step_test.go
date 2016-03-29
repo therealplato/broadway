@@ -24,7 +24,6 @@ func mustDeseralize(manifest string) runtime.Object {
 }
 
 func TestManifestStepDeploy(t *testing.T) {
-	f := client.(*fake.FakeCore).Fake
 	cases := []struct {
 		Name     string
 		Object   runtime.Object
@@ -51,6 +50,7 @@ func TestManifestStepDeploy(t *testing.T) {
 	for _, c := range cases {
 		// Reset client
 		client = &fake.FakeCore{&core.Fake{}}
+		f := client.(*fake.FakeCore).Fake
 		step := NewManifestStep(c.Object)
 		c.Before()
 		client.(*fake.FakeCore).Fake.ClearActions()
