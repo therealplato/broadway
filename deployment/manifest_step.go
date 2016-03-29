@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"errors"
+	"log"
 
 	"k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/runtime"
@@ -26,25 +27,53 @@ func (s *ManifestStep) Deploy() error {
 	oGVK := s.object.GetObjectKind().GroupVersionKind()
 	switch oGVK.Kind {
 	case "ReplicationController":
-		rc := s.object.(*v1.ReplicationController)
-		_, err := client.ReplicationControllers(namespace).Create(rc)
+		o := s.object.(*v1.ReplicationController)
+
+		_, err := client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
+
 		if err != nil {
+			log.Println("Creating new replication controller: ", o.ObjectMeta.Name)
+			_, err = client.ReplicationControllers(namespace).Create(o)
+		} else {
+			log.Println("Updating replication controller: ", o.ObjectMeta.Name)
+			_, err = client.ReplicationControllers(namespace).Update(o)
+		}
+		if err != nil {
+			log.Println("Create or Update failed: ", err)
 			return err
 		}
 	case "Pod":
-		pod := s.object.(*v1.Pod)
-		_, err := client.Pods(namespace).Create(pod)
+		o := s.object.(*v1.Pod)
+		_, err := client.Pods(namespace).Get(o.ObjectMeta.Name)
+
 		if err != nil {
+			log.Println("Creating new pod: ", o.ObjectMeta.Name)
+			_, err = client.Pods(namespace).Create(o)
+		} else {
+			log.Println("Updating pod", o.ObjectMeta.Name)
+			_, err = client.Pods(namespace).Update(o)
+		}
+		if err != nil {
+			log.Println("Create or Update failed: ", err)
 			return err
 		}
 	case "Service":
-		service := s.object.(*v1.Service)
-		_, err := client.Services(namespace).Create(service)
+		o := s.object.(*v1.Service)
+		_, err := client.Services(namespace).Get(o.ObjectMeta.Name)
+
 		if err != nil {
+			log.Println("Creating new service: ", o.ObjectMeta.Name)
+			_, err = client.Services(namespace).Create(o)
+		} else {
+			log.Println("Updating service", o.ObjectMeta.Name)
+			_, err = client.Services(namespace).Update(o)
+		}
+		if err != nil {
+			log.Println("Create or Update failed: ", err)
 			return err
 		}
 	default:
-		return errors.New("Manifest is not recognized")
+		return errors.New("Kubernetes resource is not recognized: " + oGVK.Kind)
 	}
 	return nil
 }
