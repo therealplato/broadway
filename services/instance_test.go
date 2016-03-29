@@ -46,7 +46,7 @@ func TestAllWithPlaybookID(t *testing.T) {
 	store := store.New()
 	service := NewInstanceService(store)
 
-	i := broadway.Instance{PlaybookID: "test", ID: "222"}
+	i := &broadway.Instance{PlaybookID: "test", ID: "222"}
 	err := service.Create(i)
 	if err != nil {
 		t.Log(err)

@@ -68,7 +68,7 @@ func TestFindByID(t *testing.T) {
 
 func TestFindByPlaybookID(t *testing.T) {
 	repo := NewInstanceRepo(store.New())
-	i := Instance{PlaybookID: "created", ID: "222"}
+	i := &Instance{PlaybookID: "created", ID: "222"}
 	repo.Save(i)
 
 	instances, err := repo.FindByPlaybookID(i.PlaybookID)
