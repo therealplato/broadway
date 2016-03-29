@@ -54,6 +54,7 @@ func TestManifestStepDeploy(t *testing.T) {
 		step := NewManifestStep(c.Object)
 		c.Before()
 		client.(*fake.FakeCore).Fake.ClearActions()
+		assert.Equal(t, 0, len(f.Actions()), c.Name+" action count did not reset")
 		err := step.Deploy()
 		assert.Nil(t, err, c.Name+" deploy returned with nil")
 
