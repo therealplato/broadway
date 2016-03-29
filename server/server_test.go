@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -93,7 +94,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 
 func TestGetInstanceWithValidPath(t *testing.T) {
 	store := store.New()
-	i := broadway.Instance{PlaybookID: "foo", ID: "doesExist"}
+	i := &broadway.Instance{PlaybookID: "foo", ID: "doesExist"}
 	service := services.NewInstanceService(store)
 	err := service.Create(i)
 	if err != nil {
@@ -114,8 +115,8 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 }
 
 func TestGetInstancesWithFullPlaybook(t *testing.T) {
-	testInstance1 := broadway.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance1"}
-	testInstance2 := broadway.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance2"}
+	testInstance1 := &broadway.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance1"}
+	testInstance2 := &broadway.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance2"}
 	service := services.NewInstanceService(store.New())
 	err := service.Create(testInstance1)
 	err = service.Create(testInstance2)
@@ -166,7 +167,7 @@ func TestGetStatusFailures(t *testing.T) {
 
 }
 func TestGetStatusWithGoodPath(t *testing.T) {
-	testInstance1 := broadway.Instance{
+	testInstance1 := &broadway.Instance{
 		PlaybookID: "goodPlaybook",
 		ID:         "goodInstance",
 		Status:     instance.StatusDeployed}
