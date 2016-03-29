@@ -2,7 +2,7 @@ package services
 
 import (
 	"errors"
-	"log"
+	"fmt"
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
@@ -30,10 +30,10 @@ func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms ma
 // Deploy deploys a playbook
 func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
-	log.Println("---")
-	log.Printf("%+v", d.playbooks)
-	log.Println("---")
-	playbook := d.playbooks[instance.PlaybookID]
+	playbook, ok := d.playbooks[instance.PlaybookID]
+	if !ok {
+		return fmt.Errorf("Could not find playbook ID %s while deploying %s\n", instance.PlaybookID, instance.ID)
+	}
 
 	deployer := deployment.NewKubernetesDeployment(playbook, instance.Vars, d.manifests)
 
@@ -46,16 +46,29 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 	}
 
 	instance.Status = broadway.StatusDeploying
-	d.repo.Save(instance)
-
-	err := deployer.Deploy()
-	if err != nil {
-		log.Println(err)
-		instance.Status = broadway.StatusError
-	} else {
-		instance.Status = broadway.StatusDeployed
+	if err := d.repo.Save(instance); err != nil {
+		fmt.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", instance.PlaybookID, instance.ID)
 	}
-	d.repo.Save(instance)
 
+	err = deployer.Deploy()
+	if err != nil {
+		fmt.Printf("Deploying %s/%s failed: %s\n", instance.PlaybookID, instance.ID, err.Error())
+		instance.Status = broadway.StatusError
+
+		errS := d.repo.Save(instance)
+		if errS != nil {
+			fmt.Printf("Failed to save instance status Error for %s/%s\n%s\n", instance.PlaybookID, instance.ID, errS.Error())
+			return errS
+		}
+		return err
+	}
+
+	instance.Status = broadway.StatusDeployed
+	err = d.repo.Save(instance)
+	if err != nil {
+		fmt.Printf("Failed to save instance status Deployed for playbook ID %s, instance %s\n%s\n", instance.PlaybookID, instance.ID, err.Error())
+		return err
+	}
 	return nil
+
 }
