@@ -31,7 +31,7 @@ func TestDeploy(t *testing.T) {
 					},
 				},
 			},
-			Expected: 1,
+			Expected: 2,
 		}, {
 			Name: "Step with 3 manifest files",
 			Tasks: []playbook.Task{
@@ -44,7 +44,7 @@ func TestDeploy(t *testing.T) {
 					},
 				},
 			},
-			Expected: 3,
+			Expected: 6,
 		}, {
 			Name: "Step with 1 podmanifest file",
 			Tasks: []playbook.Task{
@@ -53,7 +53,7 @@ func TestDeploy(t *testing.T) {
 					PodManifest: "test",
 				},
 			},
-			Expected: 1,
+			Expected: 2,
 		},
 	}
 
@@ -89,9 +89,6 @@ func TestDeploy(t *testing.T) {
 		assert.Nil(t, err, c.Name+" deployment should not return with error")
 		f := client.(*fake.FakeCore).Fake
 		assert.Equal(t, c.Expected, len(f.Actions()), c.Name+" should trigger actions.")
-		for _, action := range f.Actions() {
-			assert.IsType(t, core.CreateActionImpl{}, action, c.Name+" should only trigger create action(s)")
-		}
 	}
 }
 
