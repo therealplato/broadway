@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -97,9 +98,9 @@ func (p *Playbook) ValidateTasks() error {
 		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
 			return errors.New("Task requires at least one manifest or a pod manifest")
 		}
-		if err := task.ManifestsPresent(); err != nil {
-			return err
-		}
+		//if err := task.ManifestsPresent(); err != nil {
+		//	return err
+		//}
 	}
 	return nil
 }
@@ -128,6 +129,7 @@ func LoadPlaybookFolder(dir string) (map[string]*Playbook, error) {
 	if len(paths) == 0 {
 		return nil, errors.New("Found zero files in directory " + dir)
 	}
+	log.Println("Found playbook files:", paths)
 	for _, path := range paths {
 		playbookBytes, err := ReadPlaybookFromDisk(path)
 		if err != nil {

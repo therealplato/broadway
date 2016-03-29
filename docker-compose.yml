@@ -11,6 +11,7 @@ services:
       GOARCH: amd64
       ETCD_HOST: "http://localhost:4001"
       HOST: ":3000"
+      KUBERNETES_NAMESPACE: "broadway"
     network_mode: host
 
   test:

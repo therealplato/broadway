@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
@@ -29,6 +30,9 @@ func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms ma
 // Deploy deploys a playbook
 func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
+	log.Println("---")
+	log.Printf("%+v", d.playbooks)
+	log.Println("---")
 	playbook := d.playbooks[instance.PlaybookID]
 
 	deployer := deployment.NewKubernetesDeployment(playbook, instance.Vars, d.manifests)
@@ -46,6 +50,7 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
 	err := deployer.Deploy()
 	if err != nil {
+		log.Println(err)
 		instance.Status = broadway.StatusError
 	} else {
 		instance.Status = broadway.StatusDeployed

@@ -62,6 +62,7 @@ func New(s store.Store) *Server {
 	return srvr
 }
 
+// Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
 	ms := services.NewManifestService()
 
@@ -72,6 +73,7 @@ func (s *Server) Init() {
 	}
 
 	s.playbooks, err = playbook.LoadPlaybookFolder("playbooks/")
+	log.Printf("%+v", s.playbooks)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -232,6 +234,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
+		log.Println(err)
 		switch err.(type) {
 		case broadway.InstanceNotFoundError:
 			c.JSON(http.StatusNotFound, NotFoundError)
@@ -246,6 +249,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 
 	err = deployService.Deploy(instance)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
