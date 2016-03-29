@@ -86,6 +86,7 @@ func (s *Server) setupHandlers() {
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
+	s.engine.POST("/command", s.postCommand)
 	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
 	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
