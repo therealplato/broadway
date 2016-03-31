@@ -19,6 +19,8 @@ before_install:
   - docker-compose up -d
   - ./broadway-setup-kubernetes-namespace.sh
 
+install: true
+
 script:
   - docker-compose run test go test -v $(go list ./... | grep -v 'vendor/')
 
