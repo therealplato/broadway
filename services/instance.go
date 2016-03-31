@@ -29,3 +29,8 @@ func (is *InstanceService) Show(playbookID, ID string) (*broadway.Instance, erro
 	}
 	return instance, nil
 }
+
+// AllWithPlaybookID returns all the instances for an specified playbook id
+func (is *InstanceService) AllWithPlaybookID(playbookID string) ([]*broadway.Instance, error) {
+	return is.repo.FindByPlaybookID(playbookID)
+}

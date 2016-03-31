@@ -7,7 +7,6 @@ import (
 
 	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
@@ -85,11 +84,9 @@ func (s *Server) setupHandlers() {
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
 	s.engine.GET("/instances/:playbookID", s.getInstances)
-	s.engine.GET("/status", s.getStatus400)
-	s.engine.GET("/status/:playbookID", s.getStatus400)
 	s.engine.GET("/status/:playbookID/:instanceID", s.getStatus)
-	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/command", s.postCommand)
+	s.engine.GET("/command", s.getCommand)
 	s.engine.POST("/deploy/:playbookID/:instanceID", s.deployInstance)
 }
 
@@ -127,7 +124,7 @@ func (s *Server) getInstance(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case broadway.InstanceNotFoundError:
+		case broadway.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -139,23 +136,14 @@ func (s *Server) getInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstances(c *gin.Context) {
-	instances, err := instance.List(s.store, c.Param("playbookID"))
+	service := services.NewInstanceService(s.store)
+	instances, err := service.AllWithPlaybookID(c.Param("playbookID"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
-	} else if len(instances) == 0 {
-		c.JSON(http.StatusNoContent, instances)
-		return
-	} else {
-		c.JSON(http.StatusOK, instances)
-		return
 	}
-}
-
-func (s *Server) getStatus400(c *gin.Context) {
-	c.JSON(http.StatusBadRequest, ErrorResponse{
-		"error": "Use GET /status/yourPlaybookId/yourInstanceId",
-	})
+	c.JSON(http.StatusOK, instances)
+	return
 }
 
 func (s *Server) getStatus(c *gin.Context) {
@@ -164,7 +152,7 @@ func (s *Server) getStatus(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case broadway.InstanceNotFoundError:
+		case broadway.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -236,7 +224,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		switch err.(type) {
-		case broadway.InstanceNotFoundError:
+		case broadway.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
