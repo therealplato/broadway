@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	s := server.New(store.New())
 	s.Init()
 	err := s.Run(os.Getenv("HOST"))

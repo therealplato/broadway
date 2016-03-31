@@ -29,7 +29,7 @@ func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms ma
 }
 
 func vars(i *broadway.Instance) map[string]string {
-	var vs map[string]string
+	vs := map[string]string{}
 	for k, v := range i.Vars {
 		vs[k] = v
 	}

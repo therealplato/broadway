@@ -7,8 +7,6 @@ services:
       - .:/go/src/github.com/namely/broadway
     command: go run main.go
     environment:
-      GOOS: linux
-      GOARCH: amd64
       ETCD_HOST: "http://localhost:4001"
       HOST: ":3000"
       KUBERNETES_NAMESPACE: "broadway"
@@ -20,10 +18,9 @@ services:
       - .:/go/src/github.com/namely/broadway
     command: echo "hello"
     environment:
-      GOOS: linux
-      GOARCH: amd64
       ETCD_HOST: "http://localhost:4001"
       HOST: ":3000"
+      KUBERNETES_NAMESPACE: "broadway"
     network_mode: host
 
   etcd:

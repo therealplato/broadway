@@ -63,7 +63,7 @@ func New(s store.Store) *Server {
 
 // Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
-	ms := services.NewManifestService()
+	ms := services.NewManifestService("manifests/")
 
 	var err error
 	s.manifests, err = ms.LoadManifestFolder()

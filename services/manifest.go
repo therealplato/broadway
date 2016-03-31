@@ -17,9 +17,9 @@ type ManifestService struct {
 }
 
 // NewManifestService instantiates a ManifestService with a default rootFolder
-func NewManifestService() *ManifestService {
+func NewManifestService(path string) *ManifestService {
 	return &ManifestService{
-		rootFolder: "./manifests",
+		rootFolder: path,
 		extension:  ".yml",
 	}
 }
