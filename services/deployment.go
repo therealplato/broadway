@@ -28,6 +28,20 @@ func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms ma
 	}
 }
 
+func vars(i *broadway.Instance) map[string]string {
+	var vs map[string]string
+	for k, v := range i.Vars {
+		vs[k] = v
+	}
+
+	vs["playbook_id"] = i.PlaybookID
+	vs["instance_id"] = i.ID
+	vs["id"] = i.ID
+	vs["instance_status"] = string(i.Status)
+
+	return vs
+}
+
 // Deploy deploys a playbook
 func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 
@@ -36,7 +50,7 @@ func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
 		return fmt.Errorf("Could not find playbook ID %s while deploying %s\n", instance.PlaybookID, instance.ID)
 	}
 
-	deployer := deployment.NewKubernetesDeployment(playbook, instance.Vars, d.manifests)
+	deployer := deployment.NewKubernetesDeployment(playbook, vars(instance), d.manifests)
 
 	if instance.Status == broadway.StatusDeploying {
 		return errors.New("Instance is being deployed already.")
