@@ -24,11 +24,6 @@ install: true
 script:
   - docker-compose run test go test -v $(go list ./... | grep -v 'vendor/')
 
-deployment:
-  production:
-    branch: master
-    commands:
-
 deploy:
   provider: script
   script: deploy.sh
