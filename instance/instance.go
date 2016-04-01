@@ -1,10 +1,16 @@
 package instance
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
-// Status represents the lifecycle state of one instance
+// Instance entity
+type Instance struct {
+	PlaybookID string            `json:"playbook_id" binding:"required"`
+	ID         string            `json:"id"`
+	Created    string            `json:"created"`
+	Vars       map[string]string `json:"vars"`
+	Status
+}
+
 type Status string
 
 const (
@@ -20,33 +26,16 @@ const (
 	StatusError = "error"
 )
 
-// Attributes contains metadata about an instance
-type Attributes struct {
-	PlaybookID string            `json:"playbook_id" binding:"required"`
-	ID         string            `json:"id"`
-	Created    string            `json:"created"`
-	Vars       map[string]string `json:"vars"`
-	Status     Status            `json:"status"`
-}
-
-// JSON serializes a set of instance attributes
-func (attrs *Attributes) JSON() (string, error) {
-	encoded, err := json.Marshal(attrs)
+// JSON instance representation
+func (i *Instance) JSON() (string, error) {
+	encoded, err := json.Marshal(i)
 	if err != nil {
 		return "", err
 	}
 	return string(encoded), nil
 }
 
-// Instance represents an instantiation of a Playbook. The same Playbook might
-// be used multiple times, e.g. for two similar pull requests on the same repo.
-type Instance interface {
-	json.Marshaler
-	PlaybookID() string
-	ID() string
-	Save() error
-	Destroy() error
-
-	Attributes() *Attributes
-	Status() Status
+// Path for an instance
+func (i *Instance) Path() string {
+	return "/broadway/instances/" + i.PlaybookID + "/" + i.ID
 }

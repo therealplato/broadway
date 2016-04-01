@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
+	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/services"
@@ -101,7 +101,7 @@ func (s *Server) Run(addr ...string) error {
 }
 
 func (s *Server) createInstance(c *gin.Context) {
-	var i broadway.Instance
+	var i instance.Instance
 	if err := c.BindJSON(&i); err != nil {
 		c.JSON(http.StatusBadRequest, CustomError("Missing: "+err.Error()))
 		return
@@ -124,7 +124,7 @@ func (s *Server) getInstance(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case broadway.NotFound:
+		case instance.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -148,11 +148,11 @@ func (s *Server) getInstances(c *gin.Context) {
 
 func (s *Server) getStatus(c *gin.Context) {
 	service := services.NewInstanceService(s.store)
-	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
 		switch err.(type) {
-		case broadway.NotFound:
+		case instance.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -161,7 +161,7 @@ func (s *Server) getStatus(c *gin.Context) {
 		}
 	}
 	c.JSON(http.StatusOK, map[string]string{
-		"status": string(instance.Status),
+		"status": string(i.Status),
 	})
 }
 
@@ -219,12 +219,12 @@ func helperRunCommand(text string) (string, error) {
 
 func (s *Server) deployInstance(c *gin.Context) {
 	service := services.NewInstanceService(s.store)
-	instance, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
+	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
 		log.Println(err)
 		switch err.(type) {
-		case broadway.NotFound:
+		case instance.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -235,12 +235,12 @@ func (s *Server) deployInstance(c *gin.Context) {
 
 	deployService := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
 
-	err = deployService.Deploy(instance)
+	err = deployService.Deploy(i)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
 
-	c.JSON(http.StatusOK, instance)
+	c.JSON(http.StatusOK, i)
 }

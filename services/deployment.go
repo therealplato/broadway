@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/namely/broadway/broadway"
 	"github.com/namely/broadway/deployment"
+	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/manifest"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/store"
@@ -14,7 +14,7 @@ import (
 
 // DeploymentService implements the Broadway logic for deployments
 type DeploymentService struct {
-	repo      broadway.InstanceRepository
+	repo      instance.Repository
 	playbooks map[string]*playbook.Playbook
 	manifests map[string]*manifest.Manifest
 }
@@ -22,13 +22,13 @@ type DeploymentService struct {
 // NewDeploymentService creates a new DeploymentService
 func NewDeploymentService(s store.Store, ps map[string]*playbook.Playbook, ms map[string]*manifest.Manifest) *DeploymentService {
 	return &DeploymentService{
-		repo:      broadway.NewInstanceRepo(s),
+		repo:      instance.NewRepo(s),
 		playbooks: ps,
 		manifests: ms,
 	}
 }
 
-func vars(i *broadway.Instance) map[string]string {
+func vars(i *instance.Instance) map[string]string {
 	vs := map[string]string{}
 	for k, v := range i.Vars {
 		vs[k] = v
@@ -43,48 +43,48 @@ func vars(i *broadway.Instance) map[string]string {
 }
 
 // Deploy deploys a playbook
-func (d *DeploymentService) Deploy(instance *broadway.Instance) error {
+func (d *DeploymentService) Deploy(i *instance.Instance) error {
 
-	playbook, ok := d.playbooks[instance.PlaybookID]
+	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
-		return fmt.Errorf("Could not find playbook ID %s while deploying %s\n", instance.PlaybookID, instance.ID)
+		return fmt.Errorf("Could not find playbook ID %s while deploying %s\n", i.PlaybookID, i.ID)
 	}
 
-	deployer := deployment.NewKubernetesDeployment(playbook, vars(instance), d.manifests)
+	deployer := deployment.NewKubernetesDeployment(playbook, vars(i), d.manifests)
 
-	if instance.Status == broadway.StatusDeploying {
+	if i.Status == instance.StatusDeploying {
 		return errors.New("Instance is being deployed already.")
 	}
 
-	if instance.Status == broadway.StatusDeleting {
+	if i.Status == instance.StatusDeleting {
 		return errors.New("Instance is being deleted already.")
 	}
 
-	instance.Status = broadway.StatusDeploying
-	err := d.repo.Save(instance)
+	i.Status = instance.StatusDeploying
+	err := d.repo.Save(i)
 	if err != nil {
-		log.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", instance.PlaybookID, instance.ID)
+		log.Printf("Failed to save instance status Deploying for %s/%s, continuing deployment\n", i.PlaybookID, i.ID)
 		log.Println(err)
 	}
 
 	err = deployer.Deploy()
 	if err != nil {
-		log.Printf("Deploying %s/%s failed: %s\n", instance.PlaybookID, instance.ID, err.Error())
-		instance.Status = broadway.StatusError
+		log.Printf("Deploying %s/%s failed: %s\n", i.PlaybookID, i.ID, err.Error())
+		i.Status = instance.StatusError
 
-		errS := d.repo.Save(instance)
+		errS := d.repo.Save(i)
 		if errS != nil {
-			log.Printf("Failed to save instance status Error for %s/%s\n", instance.PlaybookID, instance.ID)
+			log.Printf("Failed to save instance status Error for %s/%s\n", i.PlaybookID, i.ID)
 			log.Println(errS)
 			return errS
 		}
 		return err
 	}
 
-	instance.Status = broadway.StatusDeployed
-	err = d.repo.Save(instance)
+	i.Status = instance.StatusDeployed
+	err = d.repo.Save(i)
 	if err != nil {
-		log.Printf("Failed to save instance status Deployed for playbook ID %s, instance %s\n%s\n", instance.PlaybookID, instance.ID, err.Error())
+		log.Printf("Failed to save instance status Deployed for playbook ID %s, instance %s\n%s\n", i.PlaybookID, i.ID, err.Error())
 		return err
 	}
 	return nil
