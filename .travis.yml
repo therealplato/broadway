@@ -15,7 +15,7 @@ before_install:
   - chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
   - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
   - sudo mv docker-compose /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
-  - docker login -e="." -u=$DOCKER_USER -p=$DOCKER_PASSWORD
+  - docker login -e=$DOCKER_EMAIL -u=$DOCKER_USER -p=$DOCKER_PASSWORD
   - docker-compose up -d
   - ./broadway-setup-kubernetes-namespace.sh
 
