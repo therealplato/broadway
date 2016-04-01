@@ -15,7 +15,7 @@ before_install:
   - chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
   - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
   - sudo mv docker-compose /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
-  - docker login -e="." -u=$DOCKER_USER -p=$DOCKER_PASSWORD registry.namely.tech
+  - docker login -e="." -u=$DOCKER_USER -p=$DOCKER_PASSWORD
   - docker-compose up -d
   - ./broadway-setup-kubernetes-namespace.sh
 
@@ -28,8 +28,8 @@ after_success:
   - export COMMIT=$(git rev-parse HEAD | cut -c1-8)
   - echo "Version: $COMMIT"
   - docker-compose run -e CGO_ENABLED=0 test go build -a -installsuffix cgo -ldflags "-s"
-  - docker build -t registry.namely.tech/namely/broadway:$COMMIT -f Dockerfile-build .
-  - docker push registry.namely.tech/namely/broadway:$COMMIT
+  - docker build -t namely/broadway:$COMMIT -f Dockerfile-build .
+  - docker push namely/broadway:$COMMIT
 
 
 notifications:
