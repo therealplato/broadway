@@ -24,7 +24,7 @@ script:
   - docker-compose run test go test -v $(go list ./... | grep -v 'vendor/')
 deploy:
   provider: script
-  script: deploy.sh
+  script: ./deploy.sh
   on:
     branch: master
 
