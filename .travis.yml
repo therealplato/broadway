@@ -30,3 +30,9 @@ after_success:
   - docker-compose run -e CGO_ENABLED=0 test go build -a -installsuffix cgo -ldflags "-s"
   - docker build -t registry.namely.tech/namely/broadway:$COMMIT -f Dockerfile-build .
   - docker push registry.namely.tech/namely/broadway:$COMMIT
+
+
+notifications:
+  slack:
+    on_success: change
+    on_failure: always
