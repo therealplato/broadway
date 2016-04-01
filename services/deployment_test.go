@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/namely/broadway/broadway"
+	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/playbook"
 	"github.com/namely/broadway/store"
 )
@@ -23,7 +23,7 @@ func TestDeployment(t *testing.T) {
 
 	service := NewDeploymentService(store.New(), playbooks, manifests)
 
-	i := &broadway.Instance{
+	i := &instance.Instance{
 		PlaybookID: "hello",
 		ID:         "test",
 		Vars: map[string]string{
@@ -33,5 +33,5 @@ func TestDeployment(t *testing.T) {
 
 	err = service.Deploy(i)
 	assert.Nil(t, err)
-	assert.EqualValues(t, broadway.StatusDeployed, i.Status)
+	assert.EqualValues(t, instance.StatusDeployed, i.Status)
 }

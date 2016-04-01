@@ -1,4 +1,4 @@
-package broadway
+package instance
 
 import (
 	"encoding/json"
@@ -7,16 +7,16 @@ import (
 	"github.com/namely/broadway/store"
 )
 
-// InstanceRepository interface
-type InstanceRepository interface {
+// Repository interface
+type Repository interface {
 	Save(instance *Instance) error
 	FindByPath(path string) (*Instance, error)
 	FindByID(playbookID, ID string) (*Instance, error)
 	FindByPlaybookID(playbookID string) ([]*Instance, error)
 }
 
-// InstanceRepo handles persistence logic
-type InstanceRepo struct {
+// Repo handles persistence logic
+type Repo struct {
 	store store.Store
 }
 
@@ -36,13 +36,13 @@ func (e MalformedSavedData) Error() string {
 	return "Saved data for this instance is malformed"
 }
 
-// NewInstanceRepo constructor
-func NewInstanceRepo(s store.Store) *InstanceRepo {
-	return &InstanceRepo{store: s}
+// NewRepo constructor
+func NewRepo(s store.Store) *Repo {
+	return &Repo{store: s}
 }
 
 // Save a new instance as json
-func (ir *InstanceRepo) Save(instance *Instance) error {
+func (ir *Repo) Save(instance *Instance) error {
 	encoded, err := instance.JSON()
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (ir *InstanceRepo) Save(instance *Instance) error {
 }
 
 // FindByPath find an instance based on it's path
-func (ir *InstanceRepo) FindByPath(path string) (*Instance, error) {
+func (ir *Repo) FindByPath(path string) (*Instance, error) {
 	var instance Instance
 
 	i := ir.store.Value(path)
@@ -70,13 +70,13 @@ func (ir *InstanceRepo) FindByPath(path string) (*Instance, error) {
 }
 
 // FindByID finds an instance by playbook and instance ID
-func (ir *InstanceRepo) FindByID(playbookID, ID string) (*Instance, error) {
+func (ir *Repo) FindByID(playbookID, ID string) (*Instance, error) {
 	path := "/broadway/instances/" + playbookID + "/" + ID
 	return ir.FindByPath(path)
 }
 
 // FindByPlaybookID finds instances by playbook id
-func (ir *InstanceRepo) FindByPlaybookID(playbookID string) ([]*Instance, error) {
+func (ir *Repo) FindByPlaybookID(playbookID string) ([]*Instance, error) {
 
 	data := ir.store.Values(fmt.Sprintf("/broadway/instances/%s", playbookID))
 	instances := []*Instance{}

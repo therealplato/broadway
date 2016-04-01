@@ -1,4 +1,4 @@
-package broadway
+package instance
 
 import (
 	"testing"
@@ -26,7 +26,7 @@ func (ds *DummyStore) Delete(path string) error {
 }
 
 func TestFindByPath(t *testing.T) {
-	repo := NewInstanceRepo(store.New())
+	repo := NewRepo(store.New())
 	i := &Instance{PlaybookID: "test", ID: "222"}
 	err := repo.Save(i)
 	assert.Nil(t, err)
@@ -38,7 +38,7 @@ func TestFindByPath(t *testing.T) {
 }
 
 func TestFindByPathWhenTheInstanceDoesNotExist(t *testing.T) {
-	repo := NewInstanceRepo(store.New())
+	repo := NewRepo(store.New())
 	i := Instance{PlaybookID: "notcreated", ID: "222"}
 
 	instance, err := repo.FindByPath(i.Path())
@@ -48,7 +48,7 @@ func TestFindByPathWhenTheInstanceDoesNotExist(t *testing.T) {
 }
 
 func TestFindByPathWhenMalformedData(t *testing.T) {
-	repo := NewInstanceRepo(&DummyStore{})
+	repo := NewRepo(&DummyStore{})
 	i := Instance{PlaybookID: "notcreated", ID: "222"}
 
 	_, err := repo.FindByPath(i.Path())
@@ -57,7 +57,7 @@ func TestFindByPathWhenMalformedData(t *testing.T) {
 }
 
 func TestFindByID(t *testing.T) {
-	repo := NewInstanceRepo(store.New())
+	repo := NewRepo(store.New())
 	i := &Instance{PlaybookID: "created", ID: "222"}
 
 	repo.Save(i)
@@ -67,7 +67,7 @@ func TestFindByID(t *testing.T) {
 }
 
 func TestFindByPlaybookID(t *testing.T) {
-	repo := NewInstanceRepo(store.New())
+	repo := NewRepo(store.New())
 	i := &Instance{PlaybookID: "created", ID: "222"}
 	repo.Save(i)
 
@@ -77,7 +77,7 @@ func TestFindByPlaybookID(t *testing.T) {
 }
 
 func TestFindByPlaybookIDNoExistent(t *testing.T) {
-	repo := NewInstanceRepo(&DummyStore{})
+	repo := NewRepo(&DummyStore{})
 
 	instances, err := repo.FindByPlaybookID("notcreated")
 
