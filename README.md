@@ -1,6 +1,8 @@
 # broadway
 Broadway 
 
+![](https://travis-ci.org/namely/broadway.svg)
+
 Broadway helps developers deploy their projects with defining their deployment
 workflows in Broadway playbooks. It runs as a service interacting with
 Kubernetes and allowing users to interact with it through various interfaces
