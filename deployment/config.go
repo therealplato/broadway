@@ -8,8 +8,10 @@ import (
 )
 
 var (
-	EnvServiceHost string = os.Getenv("KUBERNETES_SERVICE_HOST")
-	EnvServicePort string = os.Getenv("KUBERNETES_PORT_443_TCP_PORT")
+	// EnvServiceHost is the Kubernetes host
+	EnvServiceHost = os.Getenv("KUBERNETES_SERVICE_HOST")
+	// EnvServicePort is the Kubernetes port
+	EnvServicePort = os.Getenv("KUBERNETES_PORT_443_TCP_PORT")
 )
 
 func init() {
