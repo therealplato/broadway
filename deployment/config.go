@@ -7,6 +7,15 @@ import (
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
+var (
+	EnvServiceHost string = os.Getenv("KUBERNETES_SERVICE_HOST")
+	EnvServicePort string = os.Getenv("KUBERNETES_PORT_443_TCP_PORT")
+)
+
+func init() {
+
+}
+
 // IsKubernetesEnv returns true if necessary Kubernetes environment variables
 // and files are available
 func IsKubernetesEnv() bool {
@@ -23,13 +32,12 @@ func IsKubernetesEnv() bool {
 	}
 
 	envs := []string{
-		"KUBERNETES_SERVICE_HOST",
-		"KUBERNETES_PORT_443_TCP_PORT",
+		EnvServicePort,
+		EnvServiceHost,
 	}
 
 	for _, env := range envs {
-		_, ok := os.LookupEnv(env)
-		if !ok {
+		if env == "" {
 			return false
 		}
 	}
@@ -39,9 +47,9 @@ func IsKubernetesEnv() bool {
 
 // Config returns a kubernetes configuration
 func Config() (*restclient.Config, error) {
-	var err error
 	config := LocalConfig()
 	if IsKubernetesEnv() {
+		var err error
 		config, err = KubernetesConfig()
 		if err != nil {
 			return nil, err
@@ -51,15 +59,14 @@ func Config() (*restclient.Config, error) {
 	return config, nil
 }
 
-// KubernetesConfig returns Kubernetes configuration for native Kubernetes
-// environment
+// KubernetesConfig returns Kubernetes configuration for native Kubernetes environment
 func KubernetesConfig() (*restclient.Config, error) {
 	token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return nil, err
 	}
 	return &restclient.Config{
-		Host:        "http://" + os.Getenv("KUBERNETES_SERVICE_HOST") + ":" + os.Getenv("KUBERNETES_PORT_443_TCP_PORT"),
+		Host:        "http://" + EnvServiceHost + ":" + EnvServicePort,
 		BearerToken: string(token),
 		TLSClientConfig: restclient.TLSClientConfig{
 			CAFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",

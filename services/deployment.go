@@ -44,8 +44,6 @@ func vars(i *instance.Instance) map[string]string {
 
 // Deploy deploys a playbook
 func (d *DeploymentService) Deploy(i *instance.Instance) error {
-	var err error
-
 	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
 		return fmt.Errorf("Could not find playbook ID %s while deploying %s\n", i.PlaybookID, i.ID)
