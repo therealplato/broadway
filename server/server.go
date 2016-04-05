@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -25,6 +27,9 @@ type Server struct {
 	deployer   deployment.Deployer
 	engine     *gin.Engine
 }
+
+const commandHint string = `/broadway help: This message
+/broadway deploy myPlaybookID myInstanceID: Deploy a new instance`
 
 // ErrorResponse represents a JSON response to be returned in failure cases
 type ErrorResponse map[string]string
@@ -200,28 +205,59 @@ func (s *Server) postCommand(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
 		return
 	}
-	if form.Text == "help" {
-		c.String(http.StatusOK, "/broadway status playbook1 instance1: Check the status of instance1\n /broadway deploy playbook1 instance1: Deploy instance1")
-		return
-	}
-	output, err := helperRunCommand(form.Text)
+	code, output, err := doCommand(s, form.Text)
 	if err != nil {
 		glog.Error(err)
-		c.JSON(http.StatusInternalServerError, InternalError)
+		c.JSON(code, InternalError)
 		return
 	}
-	c.String(http.StatusOK, output)
+	c.String(code, output)
 	return
 }
 
-func helperRunCommand(text string) (string, error) {
-	return "unimplemented :sadpanda:", nil
+// doCommand takes the plaintext command, minus the leading /broadway
+// trigger, and returns statusCode, message, error for output to the user
+func doCommand(s *Server, text string) (int, string, error) {
+	commands := strings.Split(text, " ")
+	switch {
+	case len(commands) == 0:
+		return http.StatusOK, commandHint, nil
+	case commands[0] == "help":
+		return http.StatusOK, commandHint, nil
+
+	case commands[0] == "deploy":
+		if len(commands) < 3 {
+			return http.StatusOK, commandHint, nil
+		}
+
+		_, err := doDeploy(s, commands[1], commands[2])
+		if err != nil {
+			return http.StatusInternalServerError, "Deployment failed", err
+		}
+		msg := fmt.Sprintf("Instance %s/%s deployed", commands[1], commands[2])
+		return http.StatusOK, msg, nil
+	default:
+		return http.StatusNotImplemented, "unimplemented :sadpanda:", nil
+	}
+}
+
+func doDeploy(s *Server, pID string, ID string) (*instance.Instance, error) {
+	is := services.NewInstanceService(s.store)
+	i, err := is.Show(pID, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+	err = ds.Deploy(i)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
 }
 
 func (s *Server) deployInstance(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
-	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
-
+	i, err := doDeploy(s, c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
 		glog.Error(err)
 		switch err.(type) {
@@ -233,15 +269,5 @@ func (s *Server) deployInstance(c *gin.Context) {
 			return
 		}
 	}
-
-	deployService := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
-
-	err = deployService.Deploy(i)
-	if err != nil {
-		glog.Error(err)
-		c.JSON(http.StatusInternalServerError, InternalError)
-		return
-	}
-
 	c.JSON(http.StatusOK, i)
 }
