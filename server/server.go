@@ -1,9 +1,9 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
+	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
@@ -64,13 +64,13 @@ func (s *Server) Init() {
 	var err error
 	s.manifests, err = ms.LoadManifestFolder()
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	s.playbooks, err = playbook.LoadPlaybookFolder("playbooks/")
-	log.Printf("%+v", s.playbooks)
+	glog.Info("%+v", s.playbooks)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 }
 
@@ -99,7 +99,7 @@ func (s *Server) Run(addr ...string) error {
 func (s *Server) createInstance(c *gin.Context) {
 	var i instance.Instance
 	if err := c.BindJSON(&i); err != nil {
-		log.Println(err)
+		glog.Error(err)
 		c.JSON(http.StatusBadRequest, CustomError("Missing: "+err.Error()))
 		return
 	}
@@ -108,7 +108,7 @@ func (s *Server) createInstance(c *gin.Context) {
 	err := service.Create(&i)
 
 	if err != nil {
-		log.Println(err)
+		glog.Error(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
@@ -165,7 +165,7 @@ func (s *Server) getStatus(c *gin.Context) {
 
 func (s *Server) getCommand(c *gin.Context) {
 	ssl := c.Query("ssl_check")
-	log.Println(ssl)
+	glog.Info(ssl)
 	if ssl == "1" {
 		c.String(http.StatusOK, "")
 	} else {
@@ -190,13 +190,13 @@ type SlackCommand struct {
 func (s *Server) postCommand(c *gin.Context) {
 	var form SlackCommand
 	if err := c.BindWith(&form, binding.Form); err != nil {
-		log.Println(err)
+		glog.Error(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
 
 	if form.Token != s.slackToken {
-		log.Printf("Token mismatch, actual: %s, expected: %s\n", form.Token, s.slackToken)
+		glog.Errorf("Token mismatch, actual: %s, expected: %s\n", form.Token, s.slackToken)
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
 		return
 	}
@@ -206,7 +206,7 @@ func (s *Server) postCommand(c *gin.Context) {
 	}
 	output, err := helperRunCommand(form.Text)
 	if err != nil {
-		log.Println(err)
+		glog.Error(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
@@ -223,7 +223,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
-		log.Println(err)
+		glog.Error(err)
 		switch err.(type) {
 		case instance.NotFound:
 			c.JSON(http.StatusNotFound, NotFoundError)
@@ -238,7 +238,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 
 	err = deployService.Deploy(i)
 	if err != nil {
-		log.Println(err)
+		glog.Error(err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
 	}
