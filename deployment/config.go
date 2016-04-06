@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/golang/glog"
 	"github.com/namely/broadway/env"
 
 	"k8s.io/kubernetes/pkg/client/restclient"
@@ -19,7 +20,8 @@ func IsKubernetesEnv() bool {
 
 	for _, file := range files {
 		fi, err := os.Stat(file)
-		if err != nil || !fi.IsDir() {
+		if err != nil || fi.IsDir() {
+			glog.Infof("Not using kubernetes env because a file is missing: %s", file)
 			return false
 		}
 	}
@@ -31,6 +33,7 @@ func IsKubernetesEnv() bool {
 
 	for _, env := range envs {
 		if env == "" {
+			glog.Info("Not running in kub environment because an env var is missing.")
 			return false
 		}
 	}
