@@ -26,16 +26,9 @@ func IsKubernetesEnv() bool {
 		}
 	}
 
-	envs := []string{
-		env.K8sServicePort,
-		env.K8sServiceHost,
-	}
-
-	for _, env := range envs {
-		if env == "" {
-			glog.Info("Not running in kub environment because an env var is missing.")
-			return false
-		}
+	if env.KubernetesPort == "" {
+		glog.Info("Not running in kub environment because KUBERNETES_PORT env var is missing.")
+		return false
 	}
 
 	return true
@@ -62,7 +55,7 @@ func KubernetesConfig() (*restclient.Config, error) {
 		return nil, err
 	}
 	return &restclient.Config{
-		Host:        "http://" + env.K8sServiceHost + ":" + env.K8sServicePort,
+		Host:        env.KubernetesPort,
 		BearerToken: string(token),
 		TLSClientConfig: restclient.TLSClientConfig{
 			CAFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
