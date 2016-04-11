@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -131,7 +130,7 @@ func (s *Server) createInstance(c *gin.Context) {
 	}
 
 	service := services.NewInstanceService(store.New())
-	err := service.Create(&i)
+	createdInstance, err := service.Create(&i)
 
 	if err != nil {
 		glog.Error(err)
@@ -139,7 +138,7 @@ func (s *Server) createInstance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, i)
+	c.JSON(http.StatusCreated, createdInstance)
 }
 
 func (s *Server) getInstance(c *gin.Context) {
@@ -226,40 +225,16 @@ func (s *Server) postCommand(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
 		return
 	}
-	code, output, err := doCommand(s, form.Text)
+	is := services.NewInstanceService(s.store)
+	slackCommand := services.BuildSlackCommand(form.Text, is, s.playbooks)
+	msg, err := slackCommand.Execute()
+
 	if err != nil {
-		glog.Error(err)
-		c.JSON(code, InternalError)
+		c.JSON(http.StatusOK, err)
 		return
 	}
-	c.String(code, output)
+	c.String(http.StatusOK, msg)
 	return
-}
-
-// doCommand takes the plaintext command, minus the leading /broadway
-// trigger, and returns statusCode, message, error for output to the user
-func doCommand(s *Server, text string) (int, string, error) {
-	commands := strings.Split(text, " ")
-	switch {
-	case len(commands) == 0:
-		return http.StatusOK, commandHint, nil
-	case commands[0] == "help":
-		return http.StatusOK, commandHint, nil
-
-	case commands[0] == "deploy":
-		if len(commands) < 3 {
-			return http.StatusOK, commandHint, nil
-		}
-
-		_, err := doDeploy(s, commands[1], commands[2])
-		if err != nil {
-			return http.StatusInternalServerError, "Deployment failed", err
-		}
-		msg := fmt.Sprintf("Instance %s/%s deployed", commands[1], commands[2])
-		return http.StatusOK, msg, nil
-	default:
-		return http.StatusNotImplemented, "unimplemented :sadpanda:", nil
-	}
 }
 
 func doDeploy(s *Server, pID string, ID string) (*instance.Instance, error) {

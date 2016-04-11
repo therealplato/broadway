@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 
+	"github.com/golang/glog"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/store"
@@ -19,18 +20,27 @@ func NewInstanceService(s store.Store) *InstanceService {
 }
 
 // Create a new instance
-func (is *InstanceService) Create(i *instance.Instance) error {
+func (is *InstanceService) Create(i *instance.Instance) (*instance.Instance, error) {
+	glog.Info("Instance Service: Create")
 	err := is.repo.Save(i)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
 	err = sendCreationNotification(i)
 	if err != nil {
-		return err
+		return i, err
 	}
+	return i, nil
+}
 
-	return nil
+// Update an instance
+func (is *InstanceService) Update(i *instance.Instance) (*instance.Instance, error) {
+	glog.Info("Instance Service: Update")
+	err := is.repo.Save(i)
+	if err != nil {
+		return nil, err
+	}
+	return i, nil
 }
 
 // Show takes playbookID and instanceID and returns the matching Instance, if

@@ -121,7 +121,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 	store := store.New()
 	i := &instance.Instance{PlaybookID: "foo", ID: "doesExist"}
 	service := services.NewInstanceService(store)
-	err := service.Create(i)
+	_, err := service.Create(i)
 	if err != nil {
 		t.Log(err.Error())
 	}
@@ -134,7 +134,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 }
 
 func TestGetInstanceWithInvalidPath(t *testing.T) {
-	req, w := testutils.GetRequest(t, "/instance/foo/bar")
+	req, w := testutils.GetRequest(t, "/instance/missed/notfound")
 	req = auth(req)
 	makeRequest(req, w)
 
@@ -145,8 +145,8 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	testInstance1 := &instance.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance1"}
 	testInstance2 := &instance.Instance{PlaybookID: "testPlaybookFull", ID: "testInstance2"}
 	service := services.NewInstanceService(store.New())
-	err := service.Create(testInstance1)
-	err = service.Create(testInstance2)
+	_, err := service.Create(testInstance1)
+	_, err = service.Create(testInstance2)
 	if err != nil {
 		t.Log(err.Error())
 	}
@@ -202,7 +202,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 		ID:         "goodInstance",
 		Status:     instance.StatusDeployed}
 	service := services.NewInstanceService(store.New())
-	err := service.Create(testInstance1)
+	_, err := service.Create(testInstance1)
 	if err != nil {
 		t.Error(err)
 		return
@@ -282,6 +282,28 @@ func TestPostCommandHelp(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway help to be 200")
 	assert.Contains(t, w.Body.String(), "/broadway", "Expected help message to contain /broadway")
 }
+
+func TestSlackCommandSetvar(t *testing.T) {
+	env.SlackToken = testToken
+	w, server := helperSetupServer()
+	req, _ := http.NewRequest("POST", "/command", nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	form := url.Values{}
+	form.Set("token", testToken)
+	form.Set("command", "/broadway")
+	form.Set("text", "setvar boing bar var1=val1")
+	req.PostForm = form
+
+	i := &instance.Instance{PlaybookID: "boing", ID: "bar", Vars: map[string]string{"var1": "val2"}}
+	is := services.NewInstanceService(store.New())
+	_, err := is.Create(i)
+	if err != nil {
+		t.Log(err)
+	}
+	server.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code, "Expected slack command to be 200")
+}
+
 func TestPostCommandDeployBad(t *testing.T) {
 	env.SlackToken = testToken
 	w, server := helperSetupServer()
