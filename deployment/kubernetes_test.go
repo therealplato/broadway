@@ -42,28 +42,6 @@ func TestDeploy(t *testing.T) {
 				},
 			},
 			Expected: 6,
-		}, {
-			Name: "Step with 1 podmanifest file",
-			Tasks: []Task{
-				{
-					Name:        "First step",
-					PodManifest: "test",
-				},
-			},
-			Expected: 2,
-		}, {
-			Name: "Two Tasks with podmanifest steps",
-			Tasks: []Task{
-				{
-					Name:        "First step",
-					PodManifest: "test",
-				},
-				{
-					Name:        "Second step",
-					PodManifest: "test",
-				},
-			},
-			Expected: 4,
 		},
 	}
 
@@ -74,7 +52,6 @@ func TestDeploy(t *testing.T) {
 	manifests := map[string]*Manifest{
 		"test":  m,
 		"test2": m,
-		"test3": m,
 	}
 
 	for _, c := range cases {

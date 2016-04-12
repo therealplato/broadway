@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: goodbye-pod
+spec:
+  restartPolicy: Never
+  selector:
+    name: goodbye-pod
+  containers:
+    - name: goodbye-pod
+      image: busybox:latest
+      command:
+        - "/bin/false"

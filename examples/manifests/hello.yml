@@ -3,6 +3,7 @@ kind: ReplicationController
 metadata:
   name: hello
 spec:
+  restartPolicy: Never
   replicas: 1
   selector:
     name: hello

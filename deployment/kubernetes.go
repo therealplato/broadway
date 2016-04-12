@@ -3,7 +3,6 @@ package deployment
 import (
 	"github.com/namely/broadway/env"
 
-	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/api/v1"
@@ -17,7 +16,7 @@ import (
 )
 
 var groupVersionKind = unversioned.GroupVersionKind{
-	Group:   api.GroupName,
+	Group:   v1.GroupName,
 	Version: runtime.APIVersionInternal,
 	Kind:    meta.AnyKind,
 }
@@ -25,6 +24,7 @@ var groupVersionKind = unversioned.GroupVersionKind{
 var client coreclient.CoreInterface
 var deserializer runtime.Decoder
 var namespace string
+var scheme *runtime.Scheme
 
 // Step represents a deployment step
 type Step interface {
@@ -94,7 +94,7 @@ func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
 			if err != nil {
 				return steps, err
 			}
-			step := NewPodmanifestStep(object)
+			step := NewPodManifestStep(object)
 			steps = append(steps, TaskStep{&task, step})
 		} else {
 			for _, name := range task.Manifests {

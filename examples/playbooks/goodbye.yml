@@ -1,0 +1,12 @@
+id: goodbye
+name: Goodbye World
+meta:
+  team: goodbye team
+vars:
+  - version
+tasks:
+  - name: Deploy Hello World
+    manifests:
+      - hello
+  - name: Deploy Goodbye World Setup Pod
+    pod_manifest: goodbye-pod
