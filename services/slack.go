@@ -93,12 +93,43 @@ func (c *helpCommand) Execute() (string, error) {
 	return commandHints, nil
 }
 
+// InvalidDelete definition of syntax error
+type InvalidDelete struct{}
+
+func (e *InvalidDelete) Error() string {
+	return ""
+}
+
+// Delete slack command
+type deleteCommand struct {
+	args []string
+	is   *InstanceService
+}
+
+func (c *deleteCommand) Execute() (string, error) {
+	if len(c.args) < 3 {
+		return "", &InvalidDelete{}
+	}
+	iToDelete, err := c.is.Show(c.args[1], c.args[2])
+
+	if err != nil {
+		return "", err
+	}
+	err = c.is.Delete(iToDelete)
+	if err != nil {
+		return "", err
+	}
+	return "Instance successfully deleted", nil
+}
+
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
 func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
 	switch terms[0] {
 	case "setvar": // setvar foo bar var1=val1 var2=val2
 		return &setvarCommand{args: terms, is: is, playbooks: playbooks}
+	case "delete":
+		return &deleteCommand{args: terms, is: is}
 	default:
 		return &helpCommand{}
 	}

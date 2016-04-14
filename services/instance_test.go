@@ -129,7 +129,7 @@ func TestUpdate(t *testing.T) {
 	for _, testcase := range testcases {
 		createdInstance, err := instanceService.Create(testcase.Instance)
 		if err != nil {
-			t.Error(err)
+			t.Fail()
 		}
 		createdInstance.PlaybookID = testcase.ExpectedPlaybookID
 		createdInstance.ID = testcase.ExpectedID
@@ -139,4 +139,28 @@ func TestUpdate(t *testing.T) {
 		assert.Equal(t, testcase.ExpectedPlaybookID, updatedInstance.PlaybookID)
 		assert.Equal(t, testcase.E, err, testcase.Scenario)
 	}
+}
+
+func TestDeleteWhenExistentInstance(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	is := NewInstanceService(store.New())
+
+	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "new"}
+
+	createdInstance, err := is.Create(i)
+	if err != nil {
+		t.Log(err)
+	}
+	err = is.Delete(createdInstance)
+	assert.Nil(t, err, "When instance exists")
+}
+
+func TestDeleteWhenNonExistantInstance(t *testing.T) {
+	is := NewInstanceService(store.New())
+	i := &instance.Instance{PlaybookID: "random", ID: "bar"}
+
+	err := is.Delete(i)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "was not found", "When non-existent instance")
 }
