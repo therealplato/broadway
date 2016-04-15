@@ -8,6 +8,7 @@ import (
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
 
@@ -196,7 +197,7 @@ func (s *Server) getCommand(c *gin.Context) {
 	}
 }
 
-// SlackCommand ...
+// SlackCommand represents the unmarshalled JSON post data from Slack
 type SlackCommand struct {
 	Token       string `form:"token"`
 	TeamID      string `form:"team_id"`
@@ -211,6 +212,7 @@ type SlackCommand struct {
 }
 
 func (s *Server) postCommand(c *gin.Context) {
+	is := services.NewInstanceService(s.store)
 	var form SlackCommand
 	if err := c.BindWith(&form, binding.Form); err != nil {
 		glog.Error(err)
@@ -223,19 +225,21 @@ func (s *Server) postCommand(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
 		return
 	}
-	is := services.NewInstanceService(s.store)
 	slackCommand := services.BuildSlackCommand(form.Text, is, s.playbooks)
+	glog.Infof("Running command: %s", form.Text)
 	msg, err := slackCommand.Execute()
-
 	if err != nil {
 		c.JSON(http.StatusOK, err)
 		return
 	}
-	c.String(http.StatusOK, msg)
+
+	// Craft a Slack payload for an ephemeral message:
+	j := notification.NewMessage(true, msg)
+	c.JSON(http.StatusOK, j)
 	return
 }
 
-func doDeploy(s *Server, pID string, ID string) (*instance.Instance, error) {
+func doDeploySync(s *Server, pID string, ID string) (*instance.Instance, error) {
 	is := services.NewInstanceService(s.store)
 	i, err := is.Show(pID, ID)
 	if err != nil {
@@ -243,7 +247,8 @@ func doDeploy(s *Server, pID string, ID string) (*instance.Instance, error) {
 	}
 
 	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
-	err = ds.Deploy(i)
+
+	err = ds.DeployAndNotify(i)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +256,7 @@ func doDeploy(s *Server, pID string, ID string) (*instance.Instance, error) {
 }
 
 func (s *Server) deployInstance(c *gin.Context) {
-	i, err := doDeploy(s, c.Param("playbookID"), c.Param("instanceID"))
+	i, err := doDeploySync(s, c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
 		glog.Error(err)
 		switch err.(type) {

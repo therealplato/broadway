@@ -9,6 +9,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestDeployExecute(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	is := NewInstanceService(store.New())
+	testcases := []struct {
+		Scenario       string
+		Arguments      string
+		Instance       *instance.Instance
+		Playbooks      map[string]*deployment.Playbook
+		ExpectedStatus instance.Status
+		ExpectedMsg    string
+		E              error
+	}{
+		{
+			"Test Deployment through slack command",
+			"deploy helloplaybook chickenman",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "chickenman"},
+			map[string]*deployment.Playbook{"helloplaybook": &deployment.Playbook{ID: "helloplaybook"}},
+			instance.StatusNew, // it changes to StatusDeploying and StatusDeployed asynchronously
+			"Started deployment of helloplaybook/chickenman",
+			nil,
+		},
+	}
+
+	for _, testcase := range testcases {
+		_, err := is.Create(testcase.Instance)
+		if err != nil {
+			t.Log(err)
+		}
+		command := BuildSlackCommand(testcase.Arguments, is, testcase.Playbooks)
+
+		msg, err := command.Execute()
+		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
+		assert.Equal(t, testcase.E, err, testcase.Scenario)
+
+		updatedInstance, err := is.Show(testcase.Instance.PlaybookID, testcase.Instance.ID)
+		assert.Nil(t, err)
+		assert.Equal(t, testcase.ExpectedStatus, updatedInstance.Status, testcase.Scenario)
+	}
+}
+
 func TestSetvarExecute(t *testing.T) {
 	is := NewInstanceService(store.New())
 	testcases := []struct {
@@ -26,7 +67,7 @@ func TestSetvarExecute(t *testing.T) {
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "setvar1", Vars: map[string]string{"bird": "", "word": ""}},
 			map[string]*deployment.Playbook{"helloplaybook": &deployment.Playbook{ID: "helloplaybook", Vars: []string{"word", "bird"}}},
 			map[string]string{"bird": "chickadee", "word": ""},
-			"Instance helloplaybook setvar1 updated its variables",
+			"Instance helloplaybook/setvar1 updated its variables",
 			nil,
 		},
 		{
@@ -35,7 +76,7 @@ func TestSetvarExecute(t *testing.T) {
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "setvar2", Vars: map[string]string{"bird": "", "word": ""}},
 			map[string]*deployment.Playbook{"helloplaybook": &deployment.Playbook{ID: "helloplaybook", Vars: []string{"word", "bird"}}},
 			map[string]string{"bird": "gander", "word": "test"},
-			"Instance helloplaybook setvar2 updated its variables",
+			"Instance helloplaybook/setvar2 updated its variables",
 			nil,
 		},
 		{
@@ -53,7 +94,7 @@ func TestSetvarExecute(t *testing.T) {
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "setvar4", Vars: map[string]string{"bird": "", "word": ""}},
 			map[string]*deployment.Playbook{"helloplaybook": &deployment.Playbook{ID: "helloplaybook", Vars: []string{"word", "bird"}}},
 			map[string]string{"bird": "", "word": ""},
-			"Instance helloplaybook setvar4 updated its variables",
+			"Instance helloplaybook/setvar4 updated its variables",
 			nil,
 		},
 		{
@@ -71,7 +112,9 @@ func TestSetvarExecute(t *testing.T) {
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "setvar6", Vars: map[string]string{"bird": "", "word": ""}},
 			map[string]*deployment.Playbook{"helloplaybook": &deployment.Playbook{ID: "helloplaybook", Vars: []string{"word", "bird"}}},
 			map[string]string{"bird": "", "word": ""},
-			"",
+			`/broadway help: This message
+/broadway deploy myPlaybookID myInstanceID: Deploy a new instance
+/broadway setvar myPlaybookID myInstanceID var1=val1 githash=8ad33dad env=prod`,
 			&InvalidSetVar{},
 		},
 	}
