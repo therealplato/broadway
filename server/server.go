@@ -32,17 +32,16 @@ const commandHint string = `/broadway help: This message
 // ErrorResponse represents a JSON response to be returned in failure cases
 type ErrorResponse map[string]string
 
-// BadRequestError represents a JSON response for status 400
-var BadRequestError = ErrorResponse{"error": "Bad Request"}
-
-// UnauthorizedError represents a JSON response for status 401
-var UnauthorizedError = ErrorResponse{"error": "Unauthorized"}
-
-// NotFoundError represents a JSON response for status 404
-var NotFoundError = ErrorResponse{"error": "Not Found"}
-
-// InternalError represents a JSON response for status 500
-var InternalError = map[string]string{"error": "Internal Server Error"}
+var (
+	// BadRequestError represents a JSON response for status 400
+	BadRequestError = ErrorResponse{"error": "Bad Request"}
+	// UnauthorizedError represents a JSON response for status 401
+	UnauthorizedError = ErrorResponse{"error": "Unauthorized"}
+	// NotFoundError represents a JSON response for status 404
+	NotFoundError = ErrorResponse{"error": "Not Found"}
+	// InternalError represents a JSON response for status 500
+	InternalError = ErrorResponse{"error": "Internal Server Error"}
+)
 
 // CustomError creates an ErrorResponse with a custom message
 func CustomError(message string) ErrorResponse {
@@ -212,7 +211,6 @@ type SlackCommand struct {
 }
 
 func (s *Server) postCommand(c *gin.Context) {
-	is := services.NewInstanceService(s.store)
 	var form SlackCommand
 	if err := c.BindWith(&form, binding.Form); err != nil {
 		glog.Error(err)
@@ -225,6 +223,8 @@ func (s *Server) postCommand(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, UnauthorizedError)
 		return
 	}
+
+	is := services.NewInstanceService(s.store)
 	slackCommand := services.BuildSlackCommand(form.Text, is, s.playbooks)
 	glog.Infof("Running command: %s", form.Text)
 	msg, err := slackCommand.Execute()
@@ -275,12 +275,24 @@ func (s *Server) deleteInstance(c *gin.Context) {
 	is := services.NewInstanceService(s.store)
 	ii, err := is.Show(c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, NotFoundError)
-		return
+		switch err.(type) {
+		case instance.MalformedSavedData:
+			c.JSON(http.StatusInternalServerError, CustomError(err.Error()))
+			return
+		case instance.NotFound:
+			c.JSON(http.StatusNotFound, NotFoundError)
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, InternalError)
+			return
+		}
 	}
+
 	err = is.Delete(ii)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
+		return
 	}
+
 	c.JSON(http.StatusOK, "Instance successfully deleted")
 }
