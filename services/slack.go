@@ -33,7 +33,7 @@ func (c *deployCommand) Execute() (string, error) {
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", i.PlaybookID, i.ID)
+		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", c.pID, c.ID)
 		glog.Error(msg)
 		return msg, err
 	}
