@@ -1,6 +1,7 @@
 package deployment
 
 import (
+	"github.com/golang/glog"
 	"github.com/namely/broadway/env"
 
 	"k8s.io/kubernetes/pkg/api/meta"
@@ -74,11 +75,14 @@ func (d *KubernetesDeployment) Deploy() error {
 		return err
 	}
 
-	for _, taskstep := range tasksteps {
+	for i, taskstep := range tasksteps {
+		glog.Infof("%d. Deploying Task %s...", i, taskstep.task.Name)
 		err := taskstep.step.Deploy()
 		if err != nil {
+			glog.Warning("%d. step failed.")
 			return err
 		}
+		glog.Infof("Done.")
 	}
 
 	return nil
