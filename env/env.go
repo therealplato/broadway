@@ -25,6 +25,15 @@ var (
 	// K8sNamespace is the namespace used by Broadway's deployments
 	K8sNamespace string
 
+	// K8sCertFile is the cert file setting for local development
+	K8sCertFile string
+
+	// K8sKeyFile is the key file setting for local development
+	K8sKeyFile string
+
+	// K8sCAFile is the CA file setting for local development
+	K8sCAFile string
+
 	// EtcdHost is the Etcd host
 	EtcdHost string
 
@@ -67,6 +76,10 @@ func LoadEnvs() {
 	K8sServiceHost = loadw("KUBERNETES_SERVICE_HOST")
 	K8sServicePort = loadw("KUBERNETES_PORT_443_TCP_PORT")
 	K8sNamespace = loadf("KUBERNETES_NAMESPACE")
+
+	K8sCertFile = loadw("KUBERNETES_CERT_FILE")
+	K8sKeyFile = loadw("KUBERNETES_KEY_FILE")
+	K8sCAFile = loadw("KUBERNETES_CA_FILE")
 
 	EtcdHost = loadw("ETCD_HOST")
 	EtcdPath = loadw("ETCD_PATH")

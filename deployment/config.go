@@ -72,6 +72,19 @@ func KubernetesConfig() (*restclient.Config, error) {
 
 // LocalConfig returns a configuration for local development
 func LocalConfig() *restclient.Config {
+	if env.K8sServiceHost != "" && env.K8sCertFile != "" &&
+		env.K8sKeyFile != "" && env.K8sCAFile != "" {
+
+		return &restclient.Config{
+			Host: env.K8sServiceHost,
+			TLSClientConfig: restclient.TLSClientConfig{
+				CertFile: env.K8sCertFile,
+				KeyFile:  env.K8sKeyFile,
+				CAFile:   env.K8sCAFile,
+			},
+		}
+	}
+
 	return &restclient.Config{
 		Host:     "http://localhost:8080",
 		Insecure: true,
