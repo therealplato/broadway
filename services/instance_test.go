@@ -49,6 +49,20 @@ func TestCreateInstanceNotification(t *testing.T) {
 	assert.Contains(t, nt.requestBody, "TestCreateInstanceNotification")
 }
 
+func TestCreateInstanceWithInvalidId(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	store := store.New()
+	is := NewInstanceService(store)
+
+	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "Test*Create_Instance"}
+	ii, err := is.Create(i)
+	assert.Nil(t, ii)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "Test*Create_Instance")
+	assert.Contains(t, err.Error(), "Test-Create-Instance")
+}
+
 func TestCreateInstance(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()

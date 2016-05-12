@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -40,9 +41,38 @@ func (e *InvalidVar) Error() string {
 	return fmt.Sprintf("Playbook %s does not declare a var named %s\n", e.playbookID, e.key)
 }
 
+// InvalidID indicates an id that does not match the format of a subdomain
+type InvalidID struct {
+	badID       string
+	suggestedID string
+}
+
+func (e *InvalidID) Error() string {
+	return fmt.Sprintf("%s is an invalid id; valid characters are dash and alphanumerics. Try %s", e.badID, e.suggestedID)
+}
+
 // Create a new instance
 func (is *InstanceService) Create(i *instance.Instance) (*instance.Instance, error) {
-	glog.Infof("InstanceService attempting to create %s/%s...\n", i.PlaybookID, i.ID)
+	sanitizer, err := regexp.Compile(`[^a-zA-Z0-9\-]`)
+	if err != nil {
+		panic(err)
+	}
+	validator, err := regexp.Compile(`^[a-zA-Z0-9\-]{1,253}$`)
+	if err != nil {
+		panic(err)
+	}
+	match := validator.FindStringIndex(i.ID)
+	if match == nil {
+		x := sanitizer.ReplaceAllString(i.ID, "-")
+		if len(x) > 253 {
+			x = x[0:253]
+		}
+		return nil, &InvalidID{
+			badID:       i.ID,
+			suggestedID: x,
+		}
+	}
+
 	pb, ok := deployment.AllPlaybooks[i.PlaybookID]
 	if !ok {
 		return nil, &PlaybookNotFound{i.PlaybookID}
@@ -62,7 +92,7 @@ func (is *InstanceService) Create(i *instance.Instance) (*instance.Instance, err
 	}
 
 	i.Vars = vars
-	err := is.repo.Save(i)
+	err = is.repo.Save(i)
 	if err != nil {
 		return nil, err
 	}
