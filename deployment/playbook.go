@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"text/template"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/env"
@@ -31,11 +32,12 @@ type Task struct {
 
 // Playbook configures a set of tasks to be automated
 type Playbook struct {
-	ID    string   `yaml:"id"`
-	Name  string   `yaml:"name"`
-	Meta  Meta     `yaml:"meta"`
-	Vars  []string `yaml:"vars"`
-	Tasks []Task   `yaml:"tasks"`
+	ID       string            `yaml:"id"`
+	Name     string            `yaml:"name"`
+	Meta     Meta              `yaml:"meta"`
+	Vars     []string          `yaml:"vars"`
+	Tasks    []Task            `yaml:"tasks"`
+	Messages map[string]string `yaml:"messages"`
 }
 
 // AllPlaybooks is a map of playbook id's to playbooks
@@ -59,6 +61,12 @@ func (p *Playbook) Validate() error {
 	}
 	if len(p.Tasks) == 0 {
 		return errors.New("Playbook requires at least 1 task")
+	}
+	for key, value := range p.Messages {
+		_, err := template.New(key).Parse(value)
+		if err != nil {
+			return fmt.Errorf("Playbook had an invalid message template: \"%s\"", value)
+		}
 	}
 	return p.ValidateTasks()
 }

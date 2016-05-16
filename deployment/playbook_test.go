@@ -22,6 +22,9 @@ vars:
   - version
   - assets_version
   - owner
+messages:
+  created: "help I'm stuck in a test {{ .ID }}"
+  deployed: "help I'm still stuck in a test {{ .ID }}"
 tasks:
   - name: Deploy Postgres
     manifests:
@@ -49,10 +52,23 @@ tasks:
 const MockPlaybookContentsIncomplete = `---
 name: The Project 
 `
+
+const MockPlaybookContentsBadTemplate string = `---
+id: project-playbook
+name: The Project 
+messages:
+  created: "help I'm stuck in a test {{ .ID }}"
+  deployed: "help I'm still stuck in a test {{ .ID"
+tasks:
+  - name: Deploy Postgres
+    manifests:
+      - hello
+`
 const MockPlaybookFilename = "test-playbook.yml"
 
 var MockPlaybookBytes = []byte(MockPlaybookContents)
 var MockIncompletePlaybookBytes = []byte(MockPlaybookContentsIncomplete)
+var MockBadTemplatePlaybookBytes = []byte(MockPlaybookContentsBadTemplate)
 var rootDir string
 var playbookDir string
 var mockPlaybookPath string
@@ -191,6 +207,11 @@ func TestValidatePlaybookFailures(t *testing.T) {
 		Name: "task",
 	}
 
+	InvalidPlaybook1, err := ParsePlaybook(MockBadTemplatePlaybookBytes)
+	if err != nil {
+		t.Error(err)
+	}
+
 	testcases := []struct {
 		scenario    string
 		playbook    *Playbook
@@ -200,6 +221,11 @@ func TestValidatePlaybookFailures(t *testing.T) {
 			"Validate Playbook Without ID",
 			&Playbook{},
 			"Playbook missing required ID",
+		},
+		{
+			"Validate Playbook With Bad Template",
+			InvalidPlaybook1,
+			`Playbook had an invalid message template: "help I'm still stuck in a test {{ .ID"`,
 		},
 		{
 			"Validate Playbook Without Name",

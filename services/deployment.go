@@ -1,8 +1,10 @@
 package services
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"text/template"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -106,8 +108,10 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 	}
 
 	// It worked, notify success:
-	msg := fmt.Sprintf("Instance %s/%s deployed successfully", i.PlaybookID, i.ID)
-	notify(i, msg)
+	err = sendDeploymentNotification(i)
+	if err != nil {
+		glog.Error(err)
+	}
 
 	i.Status = instance.StatusDeployed
 	err = d.repo.Save(i)
@@ -117,6 +121,37 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 	}
 
 	return nil
+}
+
+func sendDeploymentNotification(i *instance.Instance) error {
+	pb, ok := deployment.AllPlaybooks[i.PlaybookID]
+	if !ok {
+		return fmt.Errorf("Failed to lookup playbook for instance %+v", *i)
+	}
+
+	atts := []notification.Attachment{
+		{
+			Text: fmt.Sprintf("Instance %s/%s deployed successfully", i.PlaybookID, i.ID),
+		},
+	}
+	tp, ok := pb.Messages["deployed"]
+	if ok {
+		b := new(bytes.Buffer)
+		err := template.Must(template.New("deployed").Parse(tp)).Execute(b, i)
+		if err != nil {
+			panic(err)
+		}
+		atts = append(atts, notification.Attachment{
+			Text:  b.String(),
+			Color: "good",
+		})
+	}
+
+	m := &notification.Message{
+		Attachments: atts,
+	}
+
+	return m.Send()
 }
 
 func notify(i *instance.Instance, msg string) {

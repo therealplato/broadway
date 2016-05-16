@@ -49,6 +49,20 @@ func TestCreateInstanceNotification(t *testing.T) {
 	assert.Contains(t, nt.requestBody, "TestCreateInstanceNotification")
 }
 
+func TestCreateInstanceCustomNotification(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+
+	store := store.New()
+	is := NewInstanceService(store)
+	i := &instance.Instance{PlaybookID: "messagesplaybook", ID: "TestCreateInstanceCustomNotification"}
+	_, err := is.Create(i)
+	assert.Nil(t, err)
+
+	assert.Contains(t, nt.requestBody, "custom created")
+	assert.Contains(t, nt.requestBody, "messagesplaybook/TestCreateInstanceCustomNotification")
+}
+
 func TestCreateInstanceWithInvalidId(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()

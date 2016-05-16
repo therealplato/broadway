@@ -64,3 +64,31 @@ func TestDeployment(t *testing.T) {
 		assert.EqualValues(t, c.Expected, c.Instance.Status)
 	}
 }
+
+func TestCustomDeploymentNotification(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	manifests, err := NewManifestService(env.ManifestsPath).LoadManifestFolder()
+	if err != nil {
+		panic(err)
+	}
+
+	playbooks, err := deployment.LoadPlaybookFolder(env.PlaybooksPath)
+	if err != nil {
+		panic(err)
+	}
+	service := NewDeploymentService(store.New(), playbooks, manifests)
+
+	i := &instance.Instance{
+		PlaybookID: "messagesplaybook",
+		ID:         "test",
+		Vars: map[string]string{
+			"version": "test",
+		},
+	}
+
+	err = service.DeployAndNotify(i)
+	assert.Equal(t, nil, err)
+	assert.Contains(t, nt.requestBody, "custom deployed")
+	assert.Contains(t, nt.requestBody, "messagesplaybook/test")
+}

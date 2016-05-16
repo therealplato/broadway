@@ -1,8 +1,10 @@
 package services
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
+	"text/template"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -139,12 +141,31 @@ func (is *InstanceService) Delete(i *instance.Instance) error {
 }
 
 func sendCreationNotification(i *instance.Instance) error {
-	m := &notification.Message{
-		Attachments: []notification.Attachment{
-			{
-				Text: fmt.Sprintf("New broadway instance was created: %s %s.", i.PlaybookID, i.ID),
-			},
+	pb, ok := deployment.AllPlaybooks[i.PlaybookID]
+	if !ok {
+		return fmt.Errorf("Failed to lookup playbook for instance %+v", *i)
+	}
+
+	atts := []notification.Attachment{
+		{
+			Text: fmt.Sprintf("New broadway instance was created: %s %s.", i.PlaybookID, i.ID),
 		},
+	}
+	tp, ok := pb.Messages["created"]
+	if ok {
+		b := new(bytes.Buffer)
+		err := template.Must(template.New("created").Parse(tp)).Execute(b, i)
+		if err != nil {
+			panic(err)
+		}
+		atts = append(atts, notification.Attachment{
+			Text:  b.String(),
+			Color: "good",
+		})
+	}
+
+	m := &notification.Message{
+		Attachments: atts,
 	}
 
 	return m.Send()
