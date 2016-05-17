@@ -30,6 +30,7 @@ var scheme *runtime.Scheme
 // Step represents a deployment step
 type Step interface {
 	Deploy() error
+	Destroy() error
 }
 
 // TaskStep combines a task and a step
@@ -79,12 +80,30 @@ func (d *KubernetesDeployment) Deploy() error {
 		glog.Infof("%d. Deploying Task %s...", i, taskstep.task.Name)
 		err := taskstep.step.Deploy()
 		if err != nil {
-			glog.Warning("%d. step failed.")
+			glog.Warning("%d. step failed: %s", i, err.Error())
 			return err
 		}
 		glog.Infof("Done.")
 	}
 
+	return nil
+}
+
+// Destroy deletes Kubernetes resourses
+func (d *KubernetesDeployment) Destroy() error {
+	tasksteps, err := d.steps()
+	if err != nil {
+		return err
+	}
+
+	for i, taskstep := range tasksteps {
+		glog.Infof("%d. Destroying Task Resources %s...", i, taskstep.task.Name)
+		err := taskstep.step.Destroy()
+		if err != nil {
+			glog.Warning("%d. step failed: %s", i, err.Error())
+			return err
+		}
+	}
 	return nil
 }
 
