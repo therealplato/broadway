@@ -154,9 +154,9 @@ func sendCreationNotification(i *instance.Instance) error {
 	tp, ok := pb.Messages["created"]
 	if ok {
 		b := new(bytes.Buffer)
-		err := template.Must(template.New("created").Parse(tp)).Execute(b, i)
+		err := template.Must(template.New("created").Parse(tp)).Execute(b, vars(i))
 		if err != nil {
-			panic(err)
+			return err
 		}
 		atts = append(atts, notification.Attachment{
 			Text:  b.String(),
