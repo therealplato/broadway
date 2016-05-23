@@ -10,7 +10,7 @@ import (
 type Instance struct {
 	PlaybookID string            `json:"playbook_id" binding:"required"`
 	ID         string            `json:"id"`
-	Created    string            `json:"created"`
+	Created    int64             `json:"created_time"`
 	Vars       map[string]string `json:"vars"`
 	Status     `json:"status"`
 }

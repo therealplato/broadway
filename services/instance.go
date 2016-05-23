@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"text/template"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -94,6 +95,10 @@ func (is *InstanceService) Create(i *instance.Instance) (*instance.Instance, err
 	}
 
 	i.Vars = vars
+
+	// This is seconds resolution, multiply by 1000 for javascript ms timestamp:
+	i.Created = time.Now().Unix()
+
 	err = is.repo.Save(i)
 	if err != nil {
 		return nil, err

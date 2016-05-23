@@ -2,6 +2,7 @@ package services
 
 import (
 	"testing"
+	"time"
 
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store"
@@ -89,6 +90,14 @@ func TestCreateInstance(t *testing.T) {
 	assert.Equal(t, "helloplaybook", ii.PlaybookID)
 	assert.Equal(t, instance.StatusNew, ii.Status)
 	assert.Equal(t, "", ii.Vars["word"]) // Should be available since helloplaybook defines this var
+
+	// Check the timestamp was made within the past minute:
+	assert.NotEmpty(t, ii.Created)
+	time0 := time.Unix(ii.Created, 0).UTC()
+	time1 := time.Now().UTC()
+	assert.True(t, time1.After(time0), "instance timestamp is after now")
+	time2 := time0.Add(time.Minute)
+	assert.True(t, time2.After(time1), "instance timestamp is more than a minute old")
 }
 
 func TestShow(t *testing.T) {
