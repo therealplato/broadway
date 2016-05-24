@@ -2,34 +2,27 @@ sudo: required
 language: go
 env:
   global:
-    - DOCKER_VERSION=1.10.1-0~trusty
-    - DOCKER_COMPOSE_VERSION=1.6.0
-
+  - DOCKER_VERSION=1.10.1-0~trusty
+  - DOCKER_COMPOSE_VERSION=1.6.0
 services:
-  - docker
-
+- docker
 before_install:
-  # upgrade docker-engine to specific version
-  - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
-  - wget https://storage.googleapis.com/kubernetes-release/release/v1.2.0/bin/linux/amd64/kubectl
-  - chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
-  - curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - sudo mv docker-compose /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
-  - docker-compose up -d
-  - ./broadway-setup-kubernetes-namespace.sh
-
+- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine=${DOCKER_VERSION}
+- wget https://storage.googleapis.com/kubernetes-release/release/v1.2.0/bin/linux/amd64/kubectl
+- chmod +x kubectl && sudo mv kubectl /usr/local/bin/kubectl
+- curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname
+  -s`-`uname -m` > docker-compose
+- sudo mv docker-compose /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose
+- docker-compose up -d
+- "./broadway-setup-kubernetes-namespace.sh"
 install: true
-
 script:
-  - docker-compose run test go test $(go list ./... | grep -v 'vendor/')
+- docker-compose run test go test $(go list ./... | grep -v 'vendor/')
 deploy:
   provider: script
-  script: ./deploy.sh
+  script: "./deploy.sh"
   on:
     branch: master
-
 notifications:
   slack:
-    on_success: change
-    on_failure: always
-    secure: Yw+mglZEQqZYQq0P9OOytr+p6abGcWty4ks7/Z4Vvz+3C6dFGv+sXUOzERQgvUEj+tZ4gyLrmRs0N3i+kSMVQ6VOVrw/ZNRwwVvIz5zO020gJJ3tCUoNjmZ0j19Wqq3VwOT6gqAdJanijxzivoC/rJZfZ+SHvyVfvfUy3nK2SX/b0jrH0mMLFmiTWCd2rRHSSpZtV08S+Rdx3xLzJC1HXkSPIUj09eBIDljN++dL/SEHTLyKu4mh9AkyPhV1HpCB66MSy0WBIuOWeqASG4ta7OwlHucFlB1ePL2OZ0UAamy4B5YHE0AjznIGdZaOKgXBa9SGLS4U1N5+oHsmSZ8weFxjYlL84zW28NBulFzA4PIfKHhxjxeYJCppwpB3HCwUvsYk2I34ExutURbTPEb9hgBC3celQChedXRj+5HAWUntKydF+pZg2fNbcqV58KPPbRj9bGga4dJSnJHIYqpwxwE42pQ0XT7Bmz4QIVghd7axm7LgoYDIoPBR9RLpRhjDkXtwOAPmmRRtV6QErA3W58ylUyhUV/T0pAd341J06ozmbDcaIQ6gHrYA6iATy1PlbqvkWGgBrKBeegO3k04Zio1Q18+JmTxMgwuOEXEmZ/ymqVum7AWWLfbEiMS7TydG17XowWhM8zxEeyfKUuKY6X/4VrNKe9zA880kIP9UEaA=
+    secure: KUc8ZrE3lCM+ZiUrosvq0kfX9HwYUVQBEe7N4rlv7MsgfDhrHjLsRZVJIBzAJ72XAnQwVqkPVSh/7UVhyO1BDCz/Bf0yirZHTaUlcnFT1Gp/aPoOeAQiikNnOTCuwf2ssTf9FePe+/aHm5FK8ZiAg4ZPz4EeIf9tKZf37VLOlsn8VCb+sqCY6knv+K8lbWtmtzgbJdzS2+rOYDGyRzW+4Hl05EXsXd5BXEhS/mCXpc640wbde1Q0dFgFfBnSAJrJAaOjuiXPZnZFOpYQP9dFc+Xf36hpCZGW89NMDyq++ZgYT2+6Gf6okQXhfaGWiEHIlnpUdXtogQKNPn94GADveCV1Zdtgpw2xppBFsz3CfY2CTv81ghHgZ/UNZsBL843Ue2E/o3T1xKhTaGz3myvbxVhcXy/p16vTGaPMqUfxcbEwh2ilA0Cy+t7/YjaCLfqlA+m6uybdYPnxLZUV93Xpbu4odDDQQVKMAWJwoVILMUnXGZMjcqJ3RXvFIErzyWTJcyPdjhOTSLgLigC4r3jSgySy6ey/uBOmrKSH3ew5Iu6Bk5Ut4jruGgtgx4LNkOelZtj40FxEscbbLAaZHX7yHt9i179jSp3pvKO7lKbz+PZCVXGVDE5dm30lM/3VEEScEszVQlLe8k7lKEKlgaQhBdxsA6cI4F6tjYNkpYai7VI=
