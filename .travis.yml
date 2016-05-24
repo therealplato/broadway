@@ -21,7 +21,7 @@ before_install:
 install: true
 
 script:
-  - docker-compose run test go test -v $(go list ./... | grep -v 'vendor/')
+  - docker-compose run test go test $(go list ./... | grep -v 'vendor/')
 deploy:
   provider: script
   script: ./deploy.sh
