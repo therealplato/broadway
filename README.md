@@ -2,6 +2,7 @@
 Broadway 
 
 [![Build Status](https://travis-ci.org/namely/broadway.svg?branch=master)](https://travis-ci.org/namely/broadway)
+[![Go Report Card](https://goreportcard.com/badge/namely/broadway)](https://goreportcard.com/report/namely/broadway)
 
 Broadway helps developers deploy their projects with defining their deployment
 workflows in Broadway playbooks. It runs as a service interacting with
