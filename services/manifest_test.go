@@ -50,7 +50,7 @@ func TestRead(t *testing.T) {
 	assert.Contains(t, contents, "ReplicationController")
 	assert.Nil(t, err)
 
-	contents, err = ms.Read("missing")
+	_, err = ms.Read("missing")
 	assert.NotNil(t, err)
 }
 
