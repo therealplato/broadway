@@ -111,6 +111,11 @@ func (s *ManifestStep) Deploy() error {
 				return nil
 			}
 
+			var i int32
+			rc.Spec.Replicas = &i
+			client.ReplicationControllers(namespace).Update(rc)
+			time.Sleep(1 * time.Second) // Wait for Kubernetes to delete pods
+
 			glog.Info("Deleting old replication controller: ", o.ObjectMeta.Name)
 			err = client.ReplicationControllers(namespace).Delete(o.ObjectMeta.Name, nil)
 
@@ -118,7 +123,6 @@ func (s *ManifestStep) Deploy() error {
 				time.Sleep(200 * time.Millisecond) // Wait for Kubernetes to delete the resource
 				_, err = client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
 			}
-			time.Sleep(2 * time.Second) // Wait for Kubernetes to delete pods
 		}
 
 		glog.Info("Creating new replication controller: ", o.ObjectMeta.Name)
