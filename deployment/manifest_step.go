@@ -101,7 +101,7 @@ func compareRCs(a, b *v1.ReplicationController) bool {
 	return compareS("rc object meta name", a.ObjectMeta.Name, b.ObjectMeta.Name) &&
 		compareI("rc object meta labels", a.ObjectMeta.Labels, b.ObjectMeta.Labels) &&
 		compareI("rc spec replicas", a.Spec.Replicas, b.Spec.Replicas) &&
-		compareI("rc sepc selector", a.Spec.Selector, b.Spec.Selector) &&
+		(len(a.Spec.Selector) == 0 || len(b.Spec.Selector) == 0 || compareI("rc spec selector", a.Spec.Selector, b.Spec.Selector)) &&
 		compareI("rc spec template object meta labels", a.Spec.Template.ObjectMeta.Labels, b.Spec.Template.ObjectMeta.Labels) &&
 		compareS("rc spec template object meta name", a.Spec.Template.ObjectMeta.Name, b.Spec.Template.ObjectMeta.Name) &&
 		comparePodSpecs(a.Spec.Template.Spec, b.Spec.Template.Spec)
