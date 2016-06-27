@@ -89,7 +89,8 @@ func comparePodSpecs(a, b v1.PodSpec) bool {
 }
 
 func comparePods(a, b *v1.Pod) bool {
-	return compareI("pod object meta", a.ObjectMeta, b.ObjectMeta) &&
+	return compareS("pod object meta name", a.ObjectMeta.Name, b.ObjectMeta.Name) &&
+		compareI("pod object meta labels", a.ObjectMeta.Labels, b.ObjectMeta.Labels) &&
 		comparePodSpecs(a.Spec, b.Spec)
 }
 
@@ -97,10 +98,12 @@ func compareRCs(a, b *v1.ReplicationController) bool {
 	if a.ObjectMeta.Name == "" {
 		return false
 	}
-	return compareI("rc object meta", a.ObjectMeta, b.ObjectMeta) &&
+	return compareS("rc object meta name", a.ObjectMeta.Name, b.ObjectMeta.Name) &&
+		compareI("rc object meta labels", a.ObjectMeta.Labels, b.ObjectMeta.Labels) &&
 		compareI("rc spec replicas", a.Spec.Replicas, b.Spec.Replicas) &&
 		compareI("rc sepc selector", a.Spec.Selector, b.Spec.Selector) &&
-		compareI("rc spec template object meta", a.Spec.Template.ObjectMeta, b.Spec.Template.ObjectMeta) &&
+		compareI("rc spec template object meta labels", a.Spec.Template.ObjectMeta.Labels, b.Spec.Template.ObjectMeta.Labels) &&
+		compareS("rc spec template object meta name", a.Spec.Template.ObjectMeta.Name, b.Spec.Template.ObjectMeta.Name) &&
 		comparePodSpecs(a.Spec.Template.Spec, b.Spec.Template.Spec)
 }
 
