@@ -93,7 +93,7 @@ func TestDestroy(t *testing.T) {
 					},
 				},
 			},
-			Expected: 1,
+			Expected: 1 * 4,
 		}, {
 			Name: "Step with 3 manifest files",
 			Tasks: []Task{
@@ -106,7 +106,7 @@ func TestDestroy(t *testing.T) {
 					},
 				},
 			},
-			Expected: 3,
+			Expected: 3 * 4,
 		},
 	}
 

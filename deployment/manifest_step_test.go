@@ -134,8 +134,8 @@ func TestManifestStepDestroy(t *testing.T) {
 		err := step.Destroy()
 		assert.Nil(t, err, c.Name+" deploy returned with nil")
 
-		// manifest step should always fire only 1 actions
-		assert.Equal(t, 1, len(f.Actions()), c.Name+" fired less/more than 2 actions")
+		// manifest step should always fire only 4 actions
+		assert.Equal(t, 4, len(f.Actions()), c.Name+" fired less/more than 4 actions")
 
 		verbs := []string{}
 		for _, a := range f.Actions() {

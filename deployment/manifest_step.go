@@ -208,11 +208,64 @@ func (s *ManifestStep) Destroy() error {
 	}
 	switch oGVK.Kind {
 	case "ReplicationController":
-		err = client.ReplicationControllers(namespace).Delete(meta.Name, nil)
+		err = deleteRC(namespace, meta)
 	case "Service":
 		err = client.Services(namespace).Delete(meta.Name, nil)
 	case "Pod":
 		err = client.Pods(namespace).Delete(meta.Name, nil)
 	}
 	return err
+}
+
+func deleteRC(namespace string, meta *api.ObjectMeta) error {
+	// SCALE RC DOWN TO 0
+	rc, err := client.ReplicationControllers(namespace).Get(meta.Name)
+	if err != nil {
+		return err
+	}
+	// The i variable needs to be declared as a int32 for the Replicas type
+	var i int32
+	rc.Spec.Replicas = &i // Replicas type is *int32 ... so this is *int32(0)
+	client.ReplicationControllers(namespace).Update(rc)
+	time.Sleep(10 * time.Second) // Wait for Kubernetes to delete pods
+	rc, err = client.ReplicationControllers(namespace).Get(meta.Name)
+	if err != nil {
+		return err
+	}
+	if rc.Status.Replicas != 0 {
+		return errors.New("deployment: RC deletion not successful")
+	}
+	// WATCH REPLICATION CONTROLLER
+	// selector := fields.Set{"metadata.name": meta.Name}.AsSelector()
+	// lo := api.ListOptions{Watch: true, FieldSelector: selector}
+	// watcher, err := client.ReplicationControllers(namespace).Watch(lo)
+	// defer watcher.Stop()
+	//
+	// var rc1 *v1.ReplicationController
+	// var attempt int
+	// for {
+	// 	var ok bool
+	// 	event := <-watcher.ResultChan()
+	// 	rc1, ok = event.Object.(*v1.ReplicationController)
+	// 	if !ok {
+	// 		rcv := v1.ReplicationController{}
+	// 		apirc := event.Object.(*api.ReplicationController)
+	// 		if err = api.Scheme.Convert(apirc, &rcv); err != nil {
+	// 			glog.Errorln("API Object conversion failed: ", err)
+	// 			return err
+	// 		}
+	// 		rc1 = &rcv
+	// 	}
+	//
+	// 	if rc1.Status.Replicas == 0 {
+	// 		break
+	// 	}
+	// 	if attempt > 20 {
+	// 		return errors.New("deployment: RC deletion timed out")
+	// 	}
+	// 	time.Sleep(200 * time.Millisecond)
+	// 	attempt++
+	// }
+	// DELETE RC
+	return client.ReplicationControllers(namespace).Delete(meta.Name, nil)
 }
