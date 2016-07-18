@@ -178,6 +178,36 @@ func (c *deleteCommand) Execute() (string, error) {
 	return fmt.Sprintf("Started deletion of %s/%s", i.PlaybookID, i.ID), nil
 }
 
+// Info slack command returns info about the instance
+type infoCommand struct {
+	pID string
+	ID  string
+	is  *InstanceService
+}
+
+func (c *infoCommand) Execute() (string, error) {
+	i, err := c.is.Show(c.pID, c.ID)
+	if err != nil {
+		msg := fmt.Sprintf("Failed to retrieve info for %s/%s: Instance not found", c.pID, c.ID)
+		glog.Error(msg)
+		return msg, err
+	}
+	m1 := fmt.Sprintf("Playbook: %s\n", wrapQuotes(i.PlaybookID))
+	m2 := fmt.Sprintf("Instance: %s\n", wrapQuotes(i.ID))
+	m3 := fmt.Sprintf("Status: %s\n", wrapQuotes(string(i.Status)))
+	m4 := "Vars:\n"
+	for k, v := range i.Vars {
+		m4 += fmt.Sprintf("  - %s: %s\n", k, wrapQuotes(v))
+	}
+	// fmt.Sprintf("Playbook: %s\n", i.PlaybookID())
+	msg := m1 + m2 + m3 + m4
+	return msg, nil
+}
+
+func wrapQuotes(s string) string {
+	return fmt.Sprintf("\"%s\"", s)
+}
+
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
 func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
@@ -198,6 +228,11 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 			return &helpCommand{}
 		}
 		return &deleteCommand{pID: terms[1], ID: terms[2], is: is}
+	case "info":
+		if len(terms) < 3 {
+			return &helpCommand{}
+		}
+		return &infoCommand{pID: terms[1], ID: terms[2], is: is}
 	default:
 		return &helpCommand{}
 	}

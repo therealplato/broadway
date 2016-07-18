@@ -241,3 +241,63 @@ func TestHelpExecute(t *testing.T) {
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
 	}
 }
+
+func TestInfoExecute(t *testing.T) {
+	testcases := []struct {
+		Scenario    string
+		Instance    *instance.Instance
+		Args        string
+		ExpectedMsg string
+		ExpectedErr error
+	}{
+		{
+			"info for existing instance succeeds",
+			&instance.Instance{
+				PlaybookID: "helloplaybook",
+				ID:         "showinfo",
+				Status:     instance.StatusDeployed,
+				Vars:       map[string]string{"bird": "albatross"},
+			},
+			"info helloplaybook showinfo",
+			`Playbook: "helloplaybook"
+Instance: "showinfo"
+Status: "deployed"
+Vars:
+  - bird: "albatross"
+  - word: ""
+`,
+			nil,
+		},
+		{
+			"info for missing instance fails",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
+			"info helloplaybook showmissing",
+			"Failed to retrieve info for helloplaybook/showmissing: Instance not found",
+			instance.NotFound{},
+		},
+		{
+			"info for missing playbook fails",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "showinfo"},
+			"info missingplaybook showinfo",
+			"Failed to retrieve info for missingplaybook/showinfo: Instance not found",
+			instance.NotFound{},
+		},
+	}
+	is := NewInstanceService(store.New())
+	for _, testcase := range testcases {
+		_, err := is.CreateOrUpdate(testcase.Instance)
+		if err != nil {
+			t.Log(err)
+		}
+		command := BuildSlackCommand(
+			testcase.Args,
+			is,
+			map[string]*deployment.Playbook{
+				"helloplaybook": {ID: "showinfo"},
+			},
+		)
+		msg, err := command.Execute()
+		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
+		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
+	}
+}
