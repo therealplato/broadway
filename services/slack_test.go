@@ -288,8 +288,6 @@ Vars:
 	is := NewInstanceService(store.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
-		// CreateOrUpdate always resets instance.Created so we can't mock it:
-		time.Sleep(3 * time.Second)
 		if err != nil {
 			t.Log(err)
 		}
@@ -300,6 +298,8 @@ Vars:
 				"helloplaybook": {ID: "showinfo"},
 			},
 		)
+		// CreateOrUpdate always resets instance.Created so we can't mock it:
+		time.Sleep(3 * time.Second)
 		msg, err := command.Execute()
 		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)

@@ -25,7 +25,7 @@ func (vv Vars) Less(i, j int) bool {
 	if len(xx[j].k) == 0 {
 		return false
 	}
-	return strings.ToLower(xx[i].k)[0] < strings.ToLower(xx[j].k)[0]
+	return strings.ToLower(xx[i].k) < strings.ToLower(xx[j].k)
 }
 
 // Len returns the length of vv
