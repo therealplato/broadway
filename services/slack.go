@@ -119,8 +119,8 @@ func (c *setvarCommand) playbookContainsVar(playbookID, name string) bool {
 const commandHints = `
 */bw deploy myPlaybookID myInstanceID*: Deploy an instance
 */bw info myPlaybookID myInstanceID*: Display the age and playbook variables of an instance
-*/bw <delete|destroy> myPlaybookID myInstanceID*: Stop and remove an instance
-*/bw <setvar|setvars> myPlaybookID myInstanceID var1=val1 ...* : Set one or more playbook variables for an instance
+*/bw &lt;delete|destroy&gt; myPlaybookID myInstanceID*: Stop and remove an instance
+*/bw &lt;setvar|setvars&gt; myPlaybookID myInstanceID var1=val1 ...* : Set one or more playbook variables for an instance
 `
 
 // Help slack command
