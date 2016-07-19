@@ -193,13 +193,22 @@ func (c *infoCommand) Execute() (string, error) {
 		glog.Error(msg)
 		return msg, err
 	}
+	vv := Vars{}
+	for k, val := range i.Vars {
+		v := Var{
+			k: k,
+			v: val,
+		}
+		vv = append(vv, v)
+	}
+	sortVars(vv)
 	m1 := fmt.Sprintf("Playbook: %s\n", wrapQuotes(i.PlaybookID))
 	m2 := fmt.Sprintf("Instance: %s\n", wrapQuotes(i.ID))
 	m3 := fmt.Sprintf("Age: %s\n", wrapQuotes(fmtAge(i.Created)))
 	m4 := fmt.Sprintf("Status: %s\n", wrapQuotes(string(i.Status)))
 	m5 := "Vars:\n"
-	for k, v := range i.Vars {
-		m5 += fmt.Sprintf("  - %s: %s\n", k, wrapQuotes(v))
+	for _, vr := range vv {
+		m5 += fmt.Sprintf("  - %s: %s\n", vr.k, wrapQuotes(vr.v))
 	}
 	msg := m1 + m2 + m3 + m4 + m5
 	return msg, nil

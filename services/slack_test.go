@@ -257,7 +257,7 @@ func TestInfoExecute(t *testing.T) {
 				PlaybookID: "helloplaybook",
 				ID:         "showinfo",
 				Status:     instance.StatusDeployed,
-				Vars:       map[string]string{"bird": "albatross"},
+				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
 			},
 			"info helloplaybook showinfo",
 			`Playbook: "helloplaybook"
@@ -266,7 +266,7 @@ Age: "3s"
 Status: "deployed"
 Vars:
   - bird: "albatross"
-  - word: ""
+  - word: "phlegmatic"
 `,
 			nil,
 		},
