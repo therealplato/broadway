@@ -2,6 +2,7 @@ package services
 
 import (
 	"testing"
+	"time"
 
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
@@ -261,6 +262,7 @@ func TestInfoExecute(t *testing.T) {
 			"info helloplaybook showinfo",
 			`Playbook: "helloplaybook"
 Instance: "showinfo"
+Age: "3s"
 Status: "deployed"
 Vars:
   - bird: "albatross"
@@ -286,6 +288,8 @@ Vars:
 	is := NewInstanceService(store.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
+		// CreateOrUpdate always resets instance.Created so we can't mock it:
+		time.Sleep(3 * time.Second)
 		if err != nil {
 			t.Log(err)
 		}
