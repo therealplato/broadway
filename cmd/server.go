@@ -1,26 +1,21 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/server"
 	"github.com/namely/broadway/store"
-	"github.com/spf13/cobra"
+	"gopkg.in/urfave/cli.v1"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "server",
-	Short: "Starts a Broadway server",
-	Long:  "Starts a Broadway server",
-	Run: func(cmd *cobra.Command, args []string) {
-		s := server.New(store.New())
-		s.Init()
-		err := s.Run(env.ServerHost)
-		if err != nil {
-			panic(err)
-		}
-	},
+var ServerCmd = func(c *cli.Context) error {
+	fmt.Println("starting server...")
+	s := server.New(store.New())
+	s.Init()
+	err := s.Run(env.ServerHost)
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }
