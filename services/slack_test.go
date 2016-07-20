@@ -92,6 +92,19 @@ func TestSetvarExecute(t *testing.T) {
 			nil,
 		},
 		{
+			"Succeeds when command is setvars",
+			"setvars helloplaybook setvar2 bird=plover word=behemoth",
+			&instance.Instance{
+				PlaybookID: "helloplaybook",
+				ID:         "setvar2",
+				Vars:       map[string]string{"bird": "", "word": ""},
+			},
+			tPlaybooks,
+			map[string]string{"bird": "plover", "word": "behemoth"},
+			"Instance helloplaybook/setvar2 updated its variables",
+			nil,
+		},
+		{
 			"When the instance's playbook does not define a variable",
 			"setvar helloplaybook setvar3 newvar=val1",
 			&instance.Instance{
@@ -140,9 +153,7 @@ func TestSetvarExecute(t *testing.T) {
 			},
 			tPlaybooks,
 			map[string]string{"bird": "", "word": ""},
-			`/broadway help: This message
-/broadway deploy myPlaybookID myInstanceID: Deploy a new instance
-/broadway setvar myPlaybookID myInstanceID var1=val1 githash=8ad33dad env=prod`,
+			commandHints,
 			&InvalidSetVar{},
 		},
 	}
@@ -176,14 +187,21 @@ func TestDelete(t *testing.T) {
 		ExpectedErr error
 	}{
 		{
-			"When a proper delete syntax is sent",
+			"Succeeds when correct delete syntax is sent",
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
 			"delete helloplaybook randomid",
 			"Started deletion of helloplaybook/randomid",
 			nil,
 		},
 		{
-			"When missing playbookid",
+			"Succeeds when correct destroy syntax is sent",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
+			"destroy helloplaybook randomid",
+			"Started deletion of helloplaybook/randomid",
+			nil,
+		},
+		{
+			"Fails when missing playbookid",
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
 			"delete randomid",
 			commandHints,
@@ -207,6 +225,8 @@ func TestDelete(t *testing.T) {
 		msg, err := command.Execute()
 		assert.Equal(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
+		// Wait for Kubernetes to destroy the pod so we can recreate and destroy it in future test cases:
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -220,17 +240,13 @@ func TestHelpExecute(t *testing.T) {
 		{
 			"When passing help command",
 			"help",
-			`/broadway help: This message
-/broadway deploy myPlaybookID myInstanceID: Deploy a new instance
-/broadway setvar myPlaybookID myInstanceID var1=val1 githash=8ad33dad env=prod`,
+			commandHints,
 			nil,
 		},
 		{
 			"When non existent command",
 			"none",
-			`/broadway help: This message
-/broadway deploy myPlaybookID myInstanceID: Deploy a new instance
-/broadway setvar myPlaybookID myInstanceID var1=val1 githash=8ad33dad env=prod`,
+			commandHints,
 			nil,
 		},
 	}

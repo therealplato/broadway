@@ -276,7 +276,9 @@ func TestPostCommandHelp(t *testing.T) {
 
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway help to be 200")
-	assert.Contains(t, w.Body.String(), "/broadway", "Expected help message to contain /broadway")
+	assert.Contains(t, w.Body.String(), "deploy", "Expected help message to contain deploy")
+	assert.Contains(t, w.Body.String(), "info", "Expected help message to contain info")
+	assert.Contains(t, w.Body.String(), "setvar", "Expected help message to contain setvar")
 }
 
 func TestSlackCommandSetvar(t *testing.T) {
@@ -334,7 +336,7 @@ func TestPostCommandDeployBad(t *testing.T) {
 
 	server.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway deploy foo to be 200")
-	assert.Contains(t, w.Body.String(), "/broadway deploy myPlaybookID myInstanceID", "Expected help message to contain /broadway")
+	assert.Contains(t, w.Body.String(), "deploy", "Expected help message to contain deploy")
 }
 
 func TestDeployMissing(t *testing.T) {

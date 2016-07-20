@@ -117,9 +117,12 @@ func (c *setvarCommand) playbookContainsVar(playbookID, name string) bool {
 }
 
 // CommandHints slack commands help hints
-const commandHints = `/broadway help: This message
-/broadway deploy myPlaybookID myInstanceID: Deploy a new instance
-/broadway setvar myPlaybookID myInstanceID var1=val1 githash=8ad33dad env=prod`
+const commandHints = `
+*/bw deploy myPlaybookID myInstanceID*: Deploy an instance
+*/bw info myPlaybookID myInstanceID*: Display the age and playbook variables of an instance
+*/bw &lt;delete|destroy&gt; myPlaybookID myInstanceID*: Stop and remove an instance
+*/bw &lt;setvar|setvars&gt; myPlaybookID myInstanceID var1=val1 ...* : Set one or more playbook variables for an instance
+`
 
 // Help slack command
 type helpCommand struct{}
@@ -236,7 +239,7 @@ func fmtAge(d0 int64) string {
 func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
 	switch terms[0] {
-	case "setvar": // setvar foo bar var1=val1 var2=val2
+	case "setvar", "setvars": // setvar foo bar var1=val1 var2=val2
 		return &setvarCommand{args: terms, is: is, playbooks: playbooks}
 	case "deploy":
 		if len(terms) < 3 {
@@ -247,7 +250,7 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 			ID:  terms[2],
 			is:  is,
 		}
-	case "delete":
+	case "delete", "destroy":
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
