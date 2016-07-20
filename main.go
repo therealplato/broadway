@@ -1,17 +1,15 @@
 package main
 
 import (
-	"github.com/namely/broadway/env"
-	"github.com/namely/broadway/server"
-	"github.com/namely/broadway/store"
+	"fmt"
+	"os"
+
+	"github.com/namely/broadway/cmd"
 )
 
 func main() {
-	s := server.New(store.New())
-	s.Init()
-	err := s.Run(env.ServerHost)
-	if err != nil {
-		panic(err)
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
-
 }
