@@ -2,6 +2,7 @@ package services
 
 import (
 	"testing"
+	"time"
 
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
@@ -256,15 +257,16 @@ func TestInfoExecute(t *testing.T) {
 				PlaybookID: "helloplaybook",
 				ID:         "showinfo",
 				Status:     instance.StatusDeployed,
-				Vars:       map[string]string{"bird": "albatross"},
+				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
 			},
 			"info helloplaybook showinfo",
 			`Playbook: "helloplaybook"
 Instance: "showinfo"
+Age: "3s"
 Status: "deployed"
 Vars:
   - bird: "albatross"
-  - word: ""
+  - word: "phlegmatic"
 `,
 			nil,
 		},
@@ -296,6 +298,8 @@ Vars:
 				"helloplaybook": {ID: "showinfo"},
 			},
 		)
+		// CreateOrUpdate always resets instance.Created so we can't mock it:
+		time.Sleep(3 * time.Second)
 		msg, err := command.Execute()
 		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)

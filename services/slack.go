@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
@@ -192,20 +193,43 @@ func (c *infoCommand) Execute() (string, error) {
 		glog.Error(msg)
 		return msg, err
 	}
+	vv := varSlice{}
+	for k, val := range i.Vars {
+		v := varKV{
+			k: k,
+			v: val,
+		}
+		vv = append(vv, v)
+	}
+	sortVars(vv)
 	m1 := fmt.Sprintf("Playbook: %s\n", wrapQuotes(i.PlaybookID))
 	m2 := fmt.Sprintf("Instance: %s\n", wrapQuotes(i.ID))
-	m3 := fmt.Sprintf("Status: %s\n", wrapQuotes(string(i.Status)))
-	m4 := "Vars:\n"
-	for k, v := range i.Vars {
-		m4 += fmt.Sprintf("  - %s: %s\n", k, wrapQuotes(v))
+	m3 := fmt.Sprintf("Age: %s\n", wrapQuotes(fmtAge(i.Created)))
+	m4 := fmt.Sprintf("Status: %s\n", wrapQuotes(string(i.Status)))
+	m5 := "Vars:\n"
+	for _, vr := range vv {
+		m5 += fmt.Sprintf("  - %s: %s\n", vr.k, wrapQuotes(vr.v))
 	}
-	// fmt.Sprintf("Playbook: %s\n", i.PlaybookID())
-	msg := m1 + m2 + m3 + m4
+	msg := m1 + m2 + m3 + m4 + m5
 	return msg, nil
 }
 
 func wrapQuotes(s string) string {
 	return fmt.Sprintf("\"%s\"", s)
+}
+
+func fmtAge(d0 int64) string {
+	t0 := time.Unix(d0, 0)
+	age := time.Since(t0)
+	switch {
+	case age > 24*60*time.Minute:
+		return fmt.Sprintf("%dd", int(age.Hours()/24))
+	case age > 60*time.Minute:
+		return fmt.Sprintf("%dh", int(age.Minutes()/60))
+	case age > 60*time.Second:
+		return fmt.Sprintf("%dm", int(age.Minutes()))
+	}
+	return fmt.Sprintf("%ds", int(age.Seconds()))
 }
 
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
