@@ -1,17 +1,34 @@
 package main
 
 import (
-	"github.com/namely/broadway/env"
-	"github.com/namely/broadway/server"
-	"github.com/namely/broadway/store/etcdstore"
+	"fmt"
+	"os"
+
+	"github.com/namely/broadway/cmd"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func main() {
-	s := server.New(etcdstore.New())
-	s.Init()
-	err := s.Run(env.ServerHost)
-	if err != nil {
-		panic(err)
+	app := cli.NewApp()
+	app.Name = "broadway"
+	app.Usage = "Deploy distributed container systems"
+	app.Commands = []cli.Command{
+		{
+			Name:    "server",
+			Aliases: []string{"s"},
+			Usage:   "Start Broadway's HTTP API server",
+			Action:  cmd.ServerCmd,
+		},
+	}
+	app.Action = func(c *cli.Context) error {
+		fmt.Println(`Use "broadway server"`)
+		return nil
 	}
 
+	app.Run(os.Args)
+
+	// if err := cmd.RootCmd.Execute(); err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(-1)
+	// }
 }
