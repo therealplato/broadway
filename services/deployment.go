@@ -29,7 +29,7 @@ func NewDeploymentService(s store.Store, ps map[string]*deployment.Playbook, ms 
 	}
 }
 
-func vars(i *instance.Instance) map[string]string {
+func varMap(i *instance.Instance) map[string]string {
 	vs := map[string]string{}
 	for k, v := range i.Vars {
 		vs[k] = v
@@ -60,7 +60,7 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 		return err
 	}
 
-	deployer, err := deployment.NewKubernetesDeployment(config, playbook, vars(i), d.manifests)
+	deployer, err := deployment.NewKubernetesDeployment(config, playbook, varMap(i), d.manifests)
 	if err != nil {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Internal error", i.PlaybookID, i.ID)
 		notify(i, msg)
@@ -137,7 +137,7 @@ func sendDeploymentNotification(i *instance.Instance) error {
 	tp, ok := pb.Messages["deployed"]
 	if ok {
 		b := new(bytes.Buffer)
-		err := template.Must(template.New("deployed").Parse(tp)).Execute(b, vars(i))
+		err := template.Must(template.New("deployed").Parse(tp)).Execute(b, varMap(i))
 		if err != nil {
 			return err
 		}
@@ -183,7 +183,7 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 		return err
 	}
 
-	deployer, err := deployment.NewKubernetesDeployment(config, playbook, vars(i), d.manifests)
+	deployer, err := deployment.NewKubernetesDeployment(config, playbook, varMap(i), d.manifests)
 	if err != nil {
 		msg := fmt.Sprintf("Can't delete %s/%s: Internal error", i.PlaybookID, i.ID)
 		notify(i, msg)

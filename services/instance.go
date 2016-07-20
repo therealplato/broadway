@@ -192,7 +192,7 @@ func sendNotification(update bool, i *instance.Instance) error {
 	}
 	if ok {
 		b := new(bytes.Buffer)
-		err := template.Must(template.New("created").Parse(tp)).Execute(b, vars(i))
+		err := template.Must(template.New("created").Parse(tp)).Execute(b, varMap(i))
 		if err != nil {
 			return err
 		}

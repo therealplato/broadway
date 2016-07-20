@@ -193,9 +193,9 @@ func (c *infoCommand) Execute() (string, error) {
 		glog.Error(msg)
 		return msg, err
 	}
-	vv := Vars{}
+	vv := varSlice{}
 	for k, val := range i.Vars {
-		v := Var{
+		v := varKV{
 			k: k,
 			v: val,
 		}

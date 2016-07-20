@@ -7,27 +7,27 @@ import (
 )
 
 func TestSortVars(t *testing.T) {
-	foo1 := Var{
+	foo1 := varKV{
 		k: "food",
 		v: "clamato",
 	}
 
-	foo2 := Var{
+	foo2 := varKV{
 		k: "fool",
 		v: "motley",
 	}
 
-	foo3 := Var{
+	foo3 := varKV{
 		k: "goal",
 		v: "goooooooooooooooooooooooal",
 	}
-	v1 := Vars{foo1, foo2, foo3}
-	v2 := Vars{foo2, foo3, foo1}
+	v1 := varSlice{foo1, foo2, foo3}
+	v2 := varSlice{foo2, foo3, foo1}
 
 	testcases := []struct {
 		scenario string
-		in       Vars
-		out      Vars
+		in       varSlice
+		out      varSlice
 	}{
 		{
 			scenario: "it sorts in order vars",

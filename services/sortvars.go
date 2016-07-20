@@ -7,18 +7,18 @@ import (
 
 // Implement sort.Interface for Vars:
 
-// Vars is a slice of instance variables
-type Vars []Var
+// varSlice is a slice of instance variables
+type varSlice []varKV
 
-// Var is a single instance variable with key k, value v
-type Var struct {
+// varKV is a single instance variable with key k, value v
+type varKV struct {
 	k string
 	v string
 }
 
 // Less returns true if vv[i].k is alphabetically before vv[j].k
-func (vv Vars) Less(i, j int) bool {
-	xx := []Var(vv)
+func (vv varSlice) Less(i, j int) bool {
+	xx := []varKV(vv)
 	if len(xx[i].k) == 0 {
 		return true
 	}
@@ -29,14 +29,14 @@ func (vv Vars) Less(i, j int) bool {
 }
 
 // Len returns the length of vv
-func (vv Vars) Len() int {
-	xx := []Var(vv)
+func (vv varSlice) Len() int {
+	xx := []varKV(vv)
 	return len(xx)
 }
 
 // Swap swaps two indices of vv
-func (vv Vars) Swap(i, j int) {
-	xx := []Var(vv)
+func (vv varSlice) Swap(i, j int) {
+	xx := []varKV(vv)
 	// *vv[i], *vv[j] = *vv[j], *vv[i]
 	xx[i], xx[j] = xx[j], xx[i]
 }
@@ -44,6 +44,6 @@ func (vv Vars) Swap(i, j int) {
 // sortVars takes a slice of 2-ary arrays
 // each array is [k, v]
 // returned slice will be sorted alphabetically by k
-func sortVars(vv Vars) {
+func sortVars(vv varSlice) {
 	sort.Sort(vv)
 }
