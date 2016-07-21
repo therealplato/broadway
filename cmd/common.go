@@ -1,6 +1,9 @@
 package cmd
 
-import "gopkg.in/urfave/cli.v1"
+import (
+	"github.com/namely/broadway/cfg"
+	"gopkg.in/urfave/cli.v1"
+)
 
 // CommonFlags declare configuration that is used by broadway's packages
 var CommonFlags = []cli.Flag{

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/server"
 	"github.com/namely/broadway/store"
 	"gopkg.in/urfave/cli.v1"
