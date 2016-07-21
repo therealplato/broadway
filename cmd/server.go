@@ -35,7 +35,7 @@ var ServerCmdFlags = []cli.Flag{
 		Destination: &ServerCfg.ServerHost,
 	},
 	cli.StringFlag{
-		Name:        "auth, auth-token",
+		Name:        "auth-token",
 		Usage:       "a global bearer token required for http api requests", // but not GET/POST command/
 		EnvVar:      "BROADWAY_AUTH_TOKEN",
 		Destination: &ServerCfg.AuthBearerToken,
@@ -44,9 +44,29 @@ var ServerCmdFlags = []cli.Flag{
 	// Custom Command configuration page.
 	// broadway denies the request if it doesn't match this config value
 	cli.StringFlag{
-		Name:        "slack, slack-token",
+		Name:        "slack-token",
 		Usage:       "the expected Slack custom command token",
-		EnvVar:      "BROADWAY_AUTH_TOKEN",
-		Destination: &ServerCfg.AuthBearerToken,
+		EnvVar:      "SLACK_VERIFICATION_TOKEN",
+		Destination: &ServerCfg.SlackToken,
+	},
+	cli.StringFlag{
+		Name:        "slack-webhook",
+		Usage:       "slack.com webhook URL where broadway sends notifications",
+		EnvVar:      "SLACK_WEBHOOK",
+		Destination: &ServerCfg.SlackWebhook,
+	},
+	cli.StringFlag{
+		Name:        "manifest-dir",
+		Usage:       "path to a folder containing broadway manifests",
+		Value:       "./manifests",
+		EnvVar:      "BROADWAY_MANIFESTS_PATH",
+		Destination: &ServerCfg.ManifestsPath,
+	},
+	cli.StringFlag{
+		Name:        "playbook-dir",
+		Usage:       "path to a folder containing broadway playbooks",
+		Value:       "./playbooks",
+		EnvVar:      "BROADWAY_PLAYBOOKS_PATH",
+		Destination: &ServerCfg.PlaybooksPath,
 	},
 }
