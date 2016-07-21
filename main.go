@@ -11,12 +11,12 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "broadway"
-	app.Usage = "deploy container topographies"
+	app.Usage = "Deploy distributed container systems"
 	app.Commands = []cli.Command{
 		{
 			Name:    "server",
-			Aliases: []string{"a"},
-			Usage:   "add a task to the list",
+			Aliases: []string{"s"},
+			Usage:   "Start Broadway's HTTP API server",
 			Action:  cmd.ServerCmd,
 		},
 	}
