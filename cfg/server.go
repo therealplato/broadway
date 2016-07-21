@@ -1,7 +1,7 @@
 package cfg
 
-// Broadway configuration object contains all global configs and will be passed to dependencies
-type Broadway struct {
+// Broadway configuration object contains all server configs and will be passed to dependencies
+type BroadwayServer struct {
 	// AuthBearerToken is a global token required for all requests except GET/POST command/
 	AuthBearerToken string
 	// SlackToken contains the expected Slack custom command token.
