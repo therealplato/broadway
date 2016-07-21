@@ -26,20 +26,15 @@ var ServerCmd = func(c *cli.Context) error {
 
 // ServerCfgType declares what server config looks like
 type ServerCfgType struct {
-	// AuthBearerToken is a global token required for all requests except GET/POST command/
-	AuthBearerToken string
-	// SlackToken contains the expected Slack custom command token.
-	SlackToken string
-	// ServerHost is passed to gin and configures the listen address of the server
-	ServerHost   string
-	SlackWebhook string
-	// ManifestsPath is the absolute path where manifest files are read from
-	ManifestsPath string
-	// PlaybooksPath is the absolute path where playbook files are read from
-	PlaybooksPath string
+	AuthBearerToken string // a global token required for all requests except GET/POST command/
+	SlackToken      string // the expected Slack custom command token.
+	ServerHost      string // passed to gin and configures the listen address of the server
+	SlackWebhook    string // your team's slack incoming message webhook URL
+	ManifestsPath   string // the absolute path where manifest files are read from
+	PlaybooksPath   string // the absolute path where playbook files are read from
 }
 
-// ServerCmdFlags declare what flags can be passed to the `server` subcommand
+// ServerCmdFlags declares what flags can be passed to the `server` subcommand
 var ServerCmdFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:        "host, server-host",
@@ -54,9 +49,8 @@ var ServerCmdFlags = []cli.Flag{
 		EnvVar:      "BROADWAY_AUTH_TOKEN",
 		Destination: &ServerCfg.AuthBearerToken,
 	},
-	// slack-token is sent from Slack to POST command/ and can be found on Slack's
-	// Custom Command configuration page.
-	// broadway denies the request if it doesn't match this config value
+	// slack-token is sent from Slack to POST command/ and can be found on Slack's Custom Command configuration page.
+	// broadway denies the request if the received token doesn't match this config value
 	cli.StringFlag{
 		Name:        "slack-token",
 		Usage:       "the expected Slack custom command token",
