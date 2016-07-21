@@ -16,6 +16,7 @@ func main() {
 		fmt.Println(`Use "broadway server"`)
 		return nil
 	}
+	app.Flags = cmd.CommonFlags
 	app.Commands = []cli.Command{
 		{
 			Name:    "server",
