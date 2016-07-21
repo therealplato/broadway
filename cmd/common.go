@@ -7,22 +7,14 @@ var CommonCfg CommonConfigType
 
 // CommonConfigType declares what the common config looks like
 type CommonConfigType struct {
-	// K8sServiceHost is the Kubernetes host
-	K8sServiceHost string
-	// K8sServicePort is the Kubernetes port
-	K8sServicePort string
-	// K8sNamespace is the namespace used by Broadway's deployments
-	K8sNamespace string
-	// K8sCertFile is the cert file setting for local development
-	K8sCertFile string
-	// K8sKeyFile is the key file setting for local development
-	K8sKeyFile string
-	// K8sCAFile is the CA file setting for local development
-	K8sCAFile string
-	// EtcdEndpoints is the list Etcd hosts separated by comma
-	EtcdEndpoints string
-	// EtcdPath is the root directory for Broadway objects
-	EtcdPath string
+	K8sServiceHost string // the Kubernetes host
+	K8sServicePort string // the Kubernetes port
+	K8sNamespace   string // the namespace used by Broadway's deployments
+	K8sCertFile    string // the cert file setting for local development
+	K8sKeyFile     string // the key file setting for local development
+	K8sCAFile      string // the CA file setting for local development
+	EtcdEndpoints  string // the list Etcd hosts separated by comma
+	EtcdPath       string // the root directory for Broadway objects
 }
 
 // CommonFlags declare configuration that is used by broadway's packages
