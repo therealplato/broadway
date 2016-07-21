@@ -3,14 +3,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/server"
 	"github.com/namely/broadway/store"
 	"gopkg.in/urfave/cli.v1"
 )
 
 // ServerCfg is the configuration object for the server
-var ServerCfg cfg.BroadwayServer
+var ServerCfg ServerCfgType
 
 // ServerCmd is executed by cli on `broadway server`
 var ServerCmd = func(c *cli.Context) error {
@@ -23,6 +22,21 @@ var ServerCmd = func(c *cli.Context) error {
 		panic(err)
 	}
 	return nil
+}
+
+// ServerCfgType declares what server config looks like
+type ServerCfgType struct {
+	// AuthBearerToken is a global token required for all requests except GET/POST command/
+	AuthBearerToken string
+	// SlackToken contains the expected Slack custom command token.
+	SlackToken string
+	// ServerHost is passed to gin and configures the listen address of the server
+	ServerHost   string
+	SlackWebhook string
+	// ManifestsPath is the absolute path where manifest files are read from
+	ManifestsPath string
+	// PlaybooksPath is the absolute path where playbook files are read from
+	PlaybooksPath string
 }
 
 // ServerCmdFlags declare what flags can be passed to the `server` subcommand
