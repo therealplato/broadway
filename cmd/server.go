@@ -8,30 +8,17 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-// ServerCfg is the configuration object for the server
-var ServerCfg ServerCfgType
-
 // ServerCmd is executed by cli on `broadway server`
 var ServerCmd = func(c *cli.Context) error {
 	fmt.Println("starting server...")
-	s := server.New(store.New())
+	s := server.New(store.New(), cfg.CommonCfg, cfg.ServerCfg)
 	s.Init()
 	// err := s.Run(env.ServerHost)
-	err := s.Run(ServerCfg.ServerHost)
+	err := s.Run(cfg.ServerCfg.ServerHost)
 	if err != nil {
 		panic(err)
 	}
 	return nil
-}
-
-// ServerCfgType declares what server config looks like
-type ServerCfgType struct {
-	AuthBearerToken string // a global token required for all requests except GET/POST command/
-	SlackToken      string // the expected Slack custom command token.
-	ServerHost      string // passed to gin and configures the listen address of the server
-	SlackWebhook    string // your team's slack incoming message webhook URL
-	ManifestsPath   string // the absolute path where manifest files are read from
-	PlaybooksPath   string // the absolute path where playbook files are read from
 }
 
 // ServerCmdFlags declares what flags can be passed to the `server` subcommand
@@ -41,13 +28,13 @@ var ServerCmdFlags = []cli.Flag{
 		Value:       "0.0.0.0:3000",
 		Usage:       "listen address for broadway http api server",
 		EnvVar:      "HOST",
-		Destination: &ServerCfg.ServerHost,
+		Destination: &cfg.ServerCfg.ServerHost,
 	},
 	cli.StringFlag{
 		Name:        "auth-token",
 		Usage:       "a global bearer token required for http api requests", // but not GET/POST command/
 		EnvVar:      "BROADWAY_AUTH_TOKEN",
-		Destination: &ServerCfg.AuthBearerToken,
+		Destination: &cfg.ServerCfg.AuthBearerToken,
 	},
 	// slack-token is sent from Slack to POST command/ and can be found on Slack's Custom Command configuration page.
 	// broadway denies the request if the received token doesn't match this config value
@@ -55,26 +42,26 @@ var ServerCmdFlags = []cli.Flag{
 		Name:        "slack-token",
 		Usage:       "the expected Slack custom command token",
 		EnvVar:      "SLACK_VERIFICATION_TOKEN",
-		Destination: &ServerCfg.SlackToken,
+		Destination: &cfg.ServerCfg.SlackToken,
 	},
 	cli.StringFlag{
 		Name:        "slack-webhook",
 		Usage:       "slack.com webhook URL where broadway sends notifications",
 		EnvVar:      "SLACK_WEBHOOK",
-		Destination: &ServerCfg.SlackWebhook,
+		Destination: &cfg.ServerCfg.SlackWebhook,
 	},
 	cli.StringFlag{
 		Name:        "manifest-dir",
 		Usage:       "path to a folder containing broadway manifests",
 		Value:       "./manifests",
 		EnvVar:      "BROADWAY_MANIFESTS_PATH",
-		Destination: &ServerCfg.ManifestsPath,
+		Destination: &cfg.ServerCfg.ManifestsPath,
 	},
 	cli.StringFlag{
 		Name:        "playbook-dir",
 		Usage:       "path to a folder containing broadway playbooks",
 		Value:       "./playbooks",
 		EnvVar:      "BROADWAY_PLAYBOOKS_PATH",
-		Destination: &ServerCfg.PlaybooksPath,
+		Destination: &cfg.ServerCfg.PlaybooksPath,
 	},
 }

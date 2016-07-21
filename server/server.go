@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
@@ -24,6 +25,8 @@ type Server struct {
 	manifests  map[string]*deployment.Manifest
 	deployer   deployment.Deployer
 	engine     *gin.Engine
+	Cfg        cfg.ServerCfgType
+	CfgCommon  cfg.CommonCfgType
 }
 
 const commandHint string = `/broadway help: This message
@@ -50,10 +53,12 @@ func CustomError(message string) ErrorResponse {
 
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
-func New(s store.Store) *Server {
+func New(s store.Store, cfgC cfg.CommonCfgType, cfgS cfg.ServerCfgType) *Server {
 	srvr := &Server{
+		CfgCommon:  cfgC,
+		Cfg:        cfgS,
 		store:      s,
-		slackToken: env.SlackToken,
+		slackToken: env.SlackToken, // TODO NUKE
 	}
 	srvr.setupHandlers()
 	return srvr
