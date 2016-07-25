@@ -740,7 +740,7 @@
 			"revisionTime": "2016-03-24T12:34:56Z"
 		},
 		{
-			"checksumSHA1": "C1XB1rbV0/Q9RqzbZtoKs5PXZXk=",
+			"checksumSHA1": "+WpwuirW2K4jcdGEWJnKk2jqFxI=",
 			"path": "k8s.io/kubernetes/pkg/api/validation",
 			"revision": "5cb86ee022267586db386f62781338b0483733b3",
 			"revisionTime": "2016-03-24T12:34:56Z"

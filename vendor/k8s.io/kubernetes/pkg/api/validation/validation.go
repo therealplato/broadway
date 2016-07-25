@@ -1107,7 +1107,6 @@ func validateSecretKeySelector(s *api.SecretKeySelector, fldPath *field.Path) fi
 
 func validateVolumeMounts(mounts []api.VolumeMount, volumes sets.String, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	mountpoints := sets.NewString()
 
 	for i, mnt := range mounts {
 		idxPath := fldPath.Index(i)
@@ -1121,10 +1120,6 @@ func validateVolumeMounts(mounts []api.VolumeMount, volumes sets.String, fldPath
 		} else if strings.Contains(mnt.MountPath, ":") {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("mountPath"), mnt.MountPath, "must not contain ':'"))
 		}
-		if mountpoints.Has(mnt.MountPath) {
-			allErrs = append(allErrs, field.Invalid(idxPath.Child("mountPath"), mnt.MountPath, "must be unique"))
-		}
-		mountpoints.Insert(mnt.MountPath)
 	}
 	return allErrs
 }
