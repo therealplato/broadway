@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
@@ -20,11 +21,13 @@ import (
 )
 
 var testToken = "BroadwayTestToken"
+var testCommonCfg = cfg.CommonCfgType{}
+var testServerCfg = cfg.ServerCfgType{}
 
 func makeRequest(req *http.Request, w *httptest.ResponseRecorder) {
 	mem := store.New()
 
-	server := New(mem)
+	server := New(mem, testCommonCfg, testServerCfg)
 	server.Init()
 	server.Handler().ServeHTTP(w, req)
 }
@@ -36,16 +39,13 @@ func auth(req *http.Request) *http.Request {
 
 func TestServerNew(t *testing.T) {
 	env.SlackToken = testToken
-
 	mem := store.New()
-
-	s := New(mem)
+	s := New(mem, testCommonCfg, testServerCfg)
 	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
 
 	env.SlackToken = ""
-	s = New(mem)
+	s = New(mem, testCommonCfg, testServerCfg)
 	assert.Equal(t, "", s.slackToken, "Expected server.slackToken to be empty string")
-
 }
 
 func TestAuthFailure(t *testing.T) {
@@ -219,8 +219,8 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 func helperSetupServer() (*httptest.ResponseRecorder, http.Handler) {
 	w := httptest.NewRecorder()
 	mem := store.New()
-	server := New(mem).Handler()
-	return w, server
+	s := New(mem, testCommonCfg, testServerCfg)
+	return w, s.Handler()
 }
 
 func TestGetCommand400(t *testing.T) {
@@ -347,8 +347,9 @@ func TestDeployMissing(t *testing.T) {
 	assert.Nil(t, err)
 	req = auth(req)
 
-	server := New(mem).Handler()
-	server.ServeHTTP(w, req)
+	s := New(mem, testCommonCfg, testServerCfg)
+	engine := s.Handler()
+	engine.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
