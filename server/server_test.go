@@ -24,12 +24,11 @@ var testToken = "BroadwayTestToken"
 var testCommonCfg = cfg.CommonCfgType{}
 var testServerCfg = cfg.ServerCfgType{}
 
-func makeRequest(req *http.Request, w *httptest.ResponseRecorder) {
-	mem := store.New()
+// var testServerCfg = cfg.ServerCfgType{SlackToken: testToken}
 
-	server := New(mem, testCommonCfg, testServerCfg)
-	server.Init()
-	server.Handler().ServeHTTP(w, req)
+func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
+	s.Init()
+	s.Handler().ServeHTTP(w, req)
 }
 
 func auth(req *http.Request) *http.Request {
@@ -38,53 +37,37 @@ func auth(req *http.Request) *http.Request {
 }
 
 func TestServerNew(t *testing.T) {
-	env.SlackToken = testToken
-	mem := store.New()
-	s := New(mem, testCommonCfg, testServerCfg)
+	testCfg := cfg.ServerCfgType{AuthBearerToken: testToken}
+	s := New(store.New(), testCommonCfg, testCfg)
 	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
 
-	env.SlackToken = ""
-	s = New(mem, testCommonCfg, testServerCfg)
+	noAuthCfg := cfg.ServerCfgType{AuthBearerToken: ""}
+	s = New(store.New(), testCommonCfg, noAuthCfg)
 	assert.Equal(t, "", s.slackToken, "Expected server.slackToken to be empty string")
 }
 
 func TestAuthFailure(t *testing.T) {
-	env.AuthBearerToken = "testtoken"
-	w, server := helperSetupServer()
+	testCfg := cfg.ServerCfgType{AuthBearerToken: "testtoken"}
+	s := New(store.New(), testCommonCfg, testCfg)
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer faketoken")
-	server.ServeHTTP(w, req)
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST / with wrong auth token to be 401")
+	assert.Contains(t, w.Body.String(), "Authorization")
 }
 
 func TestAuthSuccess(t *testing.T) {
-	env.AuthBearerToken = "testtoken"
-	w, server := helperSetupServer()
+	testCfg := cfg.ServerCfgType{AuthBearerToken: "testtoken"}
+	s := New(store.New(), testCommonCfg, testCfg)
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer testtoken")
-	server.ServeHTTP(w, req)
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected POST / with correct auth token to be 200")
 }
 
-func TestAuthFailureHints(t *testing.T) {
-	env.AuthBearerToken = "testtoken"
-	w, server := helperSetupServer()
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("Authorization", "Bearer faketoken")
-	server.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code, "Response code should be 401")
-	assert.Contains(t, w.Body.String(), "Authorization")
-
-	req, _ = http.NewRequest("GET", "/", nil)
-	server.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code, "Response code should be 401")
-	assert.Contains(t, w.Body.String(), "Authorization")
-}
-
 func TestInstanceCreateWithValidAttributes(t *testing.T) {
-
 	i := map[string]interface{}{
 		"playbook_id": "helloplaybook",
 		"id":          "TestInstanceCreateWithValidAttributes",
@@ -96,7 +79,8 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	rbody := testutils.JSONFromMap(t, i)
 	req, w := testutils.PostRequest(t, "/instances", rbody)
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
 }
@@ -116,16 +100,17 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 		rbody := testutils.JSONFromMap(t, i)
 		req, w := testutils.PostRequest(t, "/instances", rbody)
 		req = auth(req)
-		makeRequest(req, w)
+		server := New(store.New(), testCommonCfg, testServerCfg)
+		makeRequest(server, req, w)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /instances with wrong attributes to be 400")
 	}
 }
 
 func TestGetInstanceWithValidPath(t *testing.T) {
-	store := store.New()
+	st := store.New()
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestGetInstanceWithValidPath"}
-	service := services.NewInstanceService(store)
+	service := services.NewInstanceService(st)
 	_, err := service.CreateOrUpdate(i)
 	if err != nil {
 		t.Log(err.Error())
@@ -133,7 +118,8 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 
 	req, w := testutils.GetRequest(t, "/instance/helloplaybook/TestGetInstanceWithValidPath")
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(st, testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 }
@@ -141,7 +127,8 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 func TestGetInstanceWithInvalidPath(t *testing.T) {
 	req, w := testutils.GetRequest(t, "/instance/vanished/TestGetInstanceWithInvalidPath")
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -158,7 +145,8 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 
 	req, w := testutils.GetRequest(t, "/instances/helloplaybook")
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Response code should be 200 OK")
 }
@@ -181,7 +169,8 @@ func TestGetStatusFailures(t *testing.T) {
 	for _, i := range invalidRequests {
 		req, w := testutils.GetRequest(t, i.path)
 		req = auth(req)
-		makeRequest(req, w)
+		server := New(store.New(), testCommonCfg, testServerCfg)
+		makeRequest(server, req, w)
 
 		assert.Equal(t, i.errCode, w.Code)
 
@@ -205,7 +194,8 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	}
 	req, w := testutils.GetRequest(t, "/status/helloplaybook/TestGetStatusWithGoodPath")
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -376,7 +366,8 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	)
 
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
 	assert.Contains(t, w.Body.String(), "Instance successfully deleted")
@@ -388,7 +379,8 @@ func TestDeleteWhenNonExistantInstance(t *testing.T) {
 	req, w := testutils.DeleteRequest(t, fmt.Sprintf("/%s/%s", "nonehere", "noid"))
 
 	req = auth(req)
-	makeRequest(req, w)
+	server := New(store.New(), testCommonCfg, testServerCfg)
+	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusNotFound, w.Code, "Expected DELETE /instances to return 404 when missing instance")
 }

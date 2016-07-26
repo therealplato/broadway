@@ -5,7 +5,7 @@ services:
     build: .
     volumes:
       - .:/go/src/github.com/namely/broadway
-    command: go run main.go
+    command: go run main.go server
     environment:
       BROADWAY_PLAYBOOKS_PATH: "/go/src/github.com/namely/broadway/examples/playbooks"
       BROADWAY_MANIFESTS_PATH: "/go/src/github.com/namely/broadway/examples/manifests"

@@ -11,7 +11,7 @@ import (
 
 // ServerCmd is executed by cli on `broadway server`
 var ServerCmd = func(c *cli.Context) error {
-	fmt.Println("starting server...")
+	fmt.Printf("starting server with config...\n%+v", cfg.ServerCfg)
 	s := server.New(store.New(), cfg.CommonCfg, cfg.ServerCfg)
 	s.Init()
 	// err := s.Run(env.ServerHost)

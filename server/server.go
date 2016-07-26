@@ -7,7 +7,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/services"
@@ -58,7 +57,7 @@ func New(s store.Store, cfgC cfg.CommonCfgType, cfgS cfg.ServerCfgType) *Server 
 		CfgCommon:  cfgC,
 		Cfg:        cfgS,
 		store:      s,
-		slackToken: env.SlackToken, // TODO NUKE
+		slackToken: cfgS.SlackToken,
 	}
 	srvr.setupHandlers()
 	return srvr
@@ -66,7 +65,7 @@ func New(s store.Store, cfgC cfg.CommonCfgType, cfgS cfg.ServerCfgType) *Server 
 
 // Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
-	ms := services.NewManifestService(env.ManifestsPath)
+	ms := services.NewManifestService(s.Cfg.ManifestsPath)
 
 	var err error
 	s.manifests, err = ms.LoadManifestFolder()
@@ -85,7 +84,7 @@ func (s *Server) setupHandlers() {
 	s.engine.POST("/command", s.postCommand)
 	s.engine.GET("/command", s.getCommand)
 	// Protect subsequent routes with middleware:
-	s.engine.Use(authMiddleware)
+	s.engine.Use(s.genAuthMiddleware())
 	s.engine.GET("/", s.home)
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
@@ -105,16 +104,18 @@ func (s *Server) Run(addr ...string) error {
 	return s.engine.Run(addr...)
 }
 
-func authMiddleware(c *gin.Context) {
-	a := c.Request.Header.Get("Authorization")
-	a = strings.TrimPrefix(a, "Bearer ")
-	if len(a) == 0 || a != env.AuthBearerToken {
-		glog.Infof("Auth failure for %s\nExpected: %s Actual: %s\n", c.Request.URL.Path, env.AuthBearerToken, a)
-		c.String(http.StatusUnauthorized, "Wrong or Missing Authorization")
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
+func (s *Server) genAuthMiddleware() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		a := c.Request.Header.Get("Authorization")
+		a = strings.TrimPrefix(a, "Bearer ")
+		if len(a) == 0 || a != s.Cfg.AuthBearerToken {
+			glog.Infof("Auth failure for %s\nExpected: %s Actual: %s\n", c.Request.URL.Path, s.Cfg.AuthBearerToken, a)
+			c.String(http.StatusUnauthorized, "Wrong or Missing Authorization")
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		c.Next()
 	}
-	c.Next()
 }
 
 func (s *Server) home(c *gin.Context) {
