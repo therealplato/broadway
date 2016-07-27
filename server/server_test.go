@@ -232,8 +232,9 @@ func TestGetCommand200(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code, "Expected GET /command?ssl_check=1 to be 200")
 }
 func TestPostCommandMissingToken(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	testCfg := cfg.ServerCfgType{SlackToken: testToken}
+	server := New(store.New(), testCommonCfg, testCfg)
+	w, _ := helperSetupServer()
 	formBytes := bytes.NewBufferString("not a form")
 	req, _ := http.NewRequest("POST", "/command", formBytes)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -242,8 +243,9 @@ func TestPostCommandMissingToken(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with bad body to be 401")
 }
 func TestPostCommandWrongToken(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	testCfg := cfg.ServerCfgType{SlackToken: testToken}
+	server := New(store.New(), testCommonCfg, testCfg)
+	w, _ := helperSetupServer()
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
