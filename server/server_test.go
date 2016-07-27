@@ -22,7 +22,10 @@ import (
 
 var testToken = "BroadwayTestToken"
 var testCommonCfg = cfg.CommonCfgType{}
-var testServerCfg = cfg.ServerCfgType{}
+var testServerCfg = cfg.ServerCfgType{
+	AuthBearerToken: "testtoken",
+	SlackToken:      testToken,
+}
 
 // var testServerCfg = cfg.ServerCfgType{SlackToken: testToken}
 
@@ -37,33 +40,25 @@ func auth(req *http.Request) *http.Request {
 }
 
 func TestServerNew(t *testing.T) {
-	testCfg := cfg.ServerCfgType{SlackToken: testToken}
-	s := New(store.New(), testCommonCfg, testCfg)
-	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
-
-	noAuthCfg := cfg.ServerCfgType{SlackToken: ""}
-	s = New(store.New(), testCommonCfg, noAuthCfg)
-	assert.Equal(t, "", s.slackToken, "Expected server.slackToken to be empty string")
+	_, s, _ := helperSetupServer(testServerCfg)
+	assert.Equal(t, testServerCfg, s.Cfg, "Expected server.Cfg to match passed in config")
 }
 
 func TestAuthFailure(t *testing.T) {
-	testCfg := cfg.ServerCfgType{AuthBearerToken: "testtoken"}
-	s := New(store.New(), testCommonCfg, testCfg)
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer faketoken")
-	w := httptest.NewRecorder()
-	s.Handler().ServeHTTP(w, req)
+	w, _, e := helperSetupServer(testServerCfg)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST / with wrong auth token to be 401")
 	assert.Contains(t, w.Body.String(), "Authorization")
 }
 
 func TestAuthSuccess(t *testing.T) {
-	testCfg := cfg.ServerCfgType{AuthBearerToken: "testtoken"}
-	s := New(store.New(), testCommonCfg, testCfg)
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer testtoken")
 	w := httptest.NewRecorder()
-	s.Handler().ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected POST / with correct auth token to be 200")
 }
 
@@ -81,12 +76,10 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	req = auth(req)
 	server := New(store.New(), testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
-
 	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
 }
 
 func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
-
 	invalidRequests := map[string]map[string]interface{}{
 		"playbook_id": {
 			"id": "test",
@@ -206,58 +199,52 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	assert.Contains(t, statusResponse["status"], "deployed")
 }
 
-func helperSetupServer() (*httptest.ResponseRecorder, http.Handler) {
+func helperSetupServer(cfg cfg.ServerCfgType) (*httptest.ResponseRecorder, *Server, http.Handler) {
 	w := httptest.NewRecorder()
 	mem := store.New()
-	s := New(mem, testCommonCfg, testServerCfg)
-	return w, s.Handler()
+	s := New(mem, testCommonCfg, cfg)
+	return w, s, s.Handler()
 }
 
 func TestGetCommand400(t *testing.T) {
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, err := http.NewRequest("GET", "/command", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code, "Expected GET /command to be 400")
 }
 
 func TestGetCommand200(t *testing.T) {
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("GET", "/command?ssl_check=1", nil)
-
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected GET /command?ssl_check=1 to be 200")
 }
 func TestPostCommandMissingToken(t *testing.T) {
-	testCfg := cfg.ServerCfgType{SlackToken: testToken}
-	server := New(store.New(), testCommonCfg, testCfg)
-	w, _ := helperSetupServer()
 	formBytes := bytes.NewBufferString("not a form")
 	req, _ := http.NewRequest("POST", "/command", formBytes)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	server.ServeHTTP(w, req)
+	testCfg := cfg.ServerCfgType{SlackToken: testToken}
+	w, _, e := helperSetupServer(testCfg)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with bad body to be 401")
 }
 func TestPostCommandWrongToken(t *testing.T) {
 	testCfg := cfg.ServerCfgType{SlackToken: testToken}
-	server := New(store.New(), testCommonCfg, testCfg)
-	w, _ := helperSetupServer()
+	w, _, e := helperSetupServer(testCfg)
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
 	form.Set("token", "wrongtoken")
 	req.PostForm = form
-
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusUnauthorized, w.Code, "Expected POST /command with wrong token to be 401")
 }
 func TestPostCommandHelp(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
@@ -266,7 +253,7 @@ func TestPostCommandHelp(t *testing.T) {
 	form.Set("text", "help")
 	req.PostForm = form
 
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway help to be 200")
 	assert.Contains(t, w.Body.String(), "deploy", "Expected help message to contain deploy")
 	assert.Contains(t, w.Body.String(), "info", "Expected help message to contain info")
@@ -274,8 +261,7 @@ func TestPostCommandHelp(t *testing.T) {
 }
 
 func TestSlackCommandSetvar(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
@@ -290,13 +276,12 @@ func TestSlackCommandSetvar(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected slack command to be 200")
 }
 
 func TestSlackCommandDelete(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
@@ -311,13 +296,12 @@ func TestSlackCommandDelete(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected delete slack command to be 200")
 }
 
 func TestPostCommandDeployBad(t *testing.T) {
-	env.SlackToken = testToken
-	w, server := helperSetupServer()
+	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("POST", "/command", nil)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	form := url.Values{}
@@ -326,25 +310,18 @@ func TestPostCommandDeployBad(t *testing.T) {
 	form.Set("text", "deploy foo")
 	req.PostForm = form
 
-	server.ServeHTTP(w, req)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected /broadway deploy foo to be 200")
 	assert.Contains(t, w.Body.String(), "deploy", "Expected help message to contain deploy")
 }
 
 func TestDeployMissing(t *testing.T) {
-	mem := store.New()
-	w := httptest.NewRecorder()
-
 	req, err := http.NewRequest("POST", "/deploy/missingPlaybook/missingInstance", nil)
 	assert.Nil(t, err)
 	req = auth(req)
-
-	s := New(mem, testCommonCfg, testServerCfg)
-	engine := s.Handler()
-	engine.ServeHTTP(w, req)
-
+	w, s, e := helperSetupServer(testServerCfg)
+	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code)
-
 	var errorResponse map[string]string
 	log.Println(w.Body.String())
 	err = json.Unmarshal(w.Body.Bytes(), &errorResponse)
@@ -368,8 +345,8 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	)
 
 	req = auth(req)
-	server := New(store.New(), testCommonCfg, testServerCfg)
-	makeRequest(server, req, w)
+	_, s, _ := helperSetupServer(testServerCfg)
+	makeRequest(s, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
 	assert.Contains(t, w.Body.String(), "Instance successfully deleted")
