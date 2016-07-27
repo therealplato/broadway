@@ -2,6 +2,8 @@ package deployment
 
 import (
 	"bytes"
+	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,7 +47,10 @@ func NewManifest(id, content string) (*Manifest, error) {
 // Execute executes template with variables
 func (m *Manifest) Execute(vars map[string]string) string {
 	var b bytes.Buffer
+	log.Println("pre-executing...")
+	fmt.Printf("%T%+v / %T%+v\n", b, b, vars, vars)
 	err := m.Template.Execute(&b, vars)
+	log.Println("post-executing...")
 	if err != nil {
 		glog.Errorf("%s template errored, ignoring: %s", m.ID, err.Error())
 		return ""

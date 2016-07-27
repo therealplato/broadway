@@ -329,7 +329,7 @@ func TestDeployMissing(t *testing.T) {
 func TestDeleteWhenExistentInstance(t *testing.T) {
 	testInstance1 := &instance.Instance{
 		PlaybookID: "helloplaybook",
-		ID:         "TestGetStatusWithGoodPath",
+		ID:         "TestDeleteInstance",
 		Status:     instance.StatusDeployed}
 	is := services.NewInstanceService(store.New())
 	_, err := is.CreateOrUpdate(testInstance1)
@@ -342,12 +342,13 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	)
 
 	req = auth(testServerCfg, req)
-	_, s, _ := helperSetupServer(testServerCfg)
-	makeRequest(s, req, w)
+	_, _, e := helperSetupServer(testServerCfg)
+	// makeRequest(s, req, w)
+	e.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
 	assert.Contains(t, w.Body.String(), "Instance successfully deleted")
-	_, err = is.Show("helloplaybook", "TestGetStatusWithGoodPath")
+	_, err = is.Show("helloplaybook", "TestDeleteInstance")
 	assert.IsType(t, instance.NotFound{}, err)
 }
 
