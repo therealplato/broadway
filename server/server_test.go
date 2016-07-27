@@ -28,8 +28,6 @@ var testServerCfg = cfg.ServerCfgType{
 	PlaybooksPath:   "examples/playbooks",
 }
 
-// var testServerCfg = cfg.ServerCfgType{SlackToken: testToken}
-
 func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
 	s.Init()
 	s.Handler().ServeHTTP(w, req)
