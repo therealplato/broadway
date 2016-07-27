@@ -6,14 +6,14 @@ import (
 
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
-	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeployExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	testcases := []struct {
 		Scenario    string
 		Arguments   string
@@ -49,7 +49,7 @@ func TestSetvarExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	tPlaybooks := map[string]*deployment.Playbook{
 		"helloplaybook": {
 			ID:   "helloplaybook",
@@ -208,7 +208,7 @@ func TestDelete(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
@@ -250,7 +250,7 @@ func TestHelpExecute(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	for _, testcase := range testcases {
 		command := BuildSlackCommand(testcase.Args, is, nil)
 		msg, err := command.Execute()
@@ -291,17 +291,17 @@ Vars:
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
 			"info helloplaybook showmissing",
 			"Failed to retrieve info for helloplaybook/showmissing: Instance not found",
-			instance.NotFound{},
+			instance.NotFoundError("instances//"),
 		},
 		{
 			"info for missing playbook fails",
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "showinfo"},
 			"info missingplaybook showinfo",
 			"Failed to retrieve info for missingplaybook/showinfo: Instance not found",
-			instance.NotFound{},
+			instance.NotFoundError("instances//"),
 		},
 	}
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {

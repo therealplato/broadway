@@ -8,7 +8,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
-	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 )
 
 // SlackCommand represents a user command that came in from Slack
@@ -30,7 +30,7 @@ func (c *deployCommand) Execute() (string, error) {
 		glog.Error(err)
 	}
 
-	ds := NewDeploymentService(store.New(), deployment.AllPlaybooks, AllManifests)
+	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *deleteCommand) Execute() (string, error) {
 		glog.Error(err)
 	}
 
-	ds := NewDeploymentService(store.New(), deployment.AllPlaybooks, AllManifests)
+	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {

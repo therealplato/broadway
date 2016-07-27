@@ -1,4 +1,4 @@
-package store
+package etcdstore
 
 import (
 	"strings"
@@ -7,6 +7,7 @@ import (
 
 	etcdclient "github.com/coreos/etcd/client"
 	"github.com/golang/glog"
+	"github.com/namely/broadway/store"
 	"golang.org/x/net/context"
 )
 
@@ -28,7 +29,7 @@ func init() {
 type etcdStore struct{}
 
 // New instantiates and returns a Store using the etcd driver
-func New() Store {
+func New() store.Store {
 	return &etcdStore{}
 }
 
