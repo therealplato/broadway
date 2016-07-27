@@ -1,4 +1,4 @@
 /manifests/
 /playbooks/
 *.swp
-./broadway
+broadway

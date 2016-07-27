@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/cfg"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
@@ -25,6 +24,8 @@ var testCommonCfg = cfg.CommonCfgType{}
 var testServerCfg = cfg.ServerCfgType{
 	AuthBearerToken: "testtoken",
 	SlackToken:      testToken,
+	ManifestsPath:   "examples/manifests",
+	PlaybooksPath:   "examples/playbooks",
 }
 
 // var testServerCfg = cfg.ServerCfgType{SlackToken: testToken}
@@ -34,8 +35,8 @@ func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
 	s.Handler().ServeHTTP(w, req)
 }
 
-func auth(req *http.Request) *http.Request {
-	req.Header.Set("Authorization", "Bearer "+env.AuthBearerToken)
+func auth(cfg cfg.ServerCfgType, req *http.Request) *http.Request {
+	req.Header.Set("Authorization", "Bearer "+cfg.AuthBearerToken)
 	return req
 }
 
@@ -57,7 +58,6 @@ func TestAuthSuccess(t *testing.T) {
 	w, _, e := helperSetupServer(testServerCfg)
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Set("Authorization", "Bearer testtoken")
-	w := httptest.NewRecorder()
 	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected POST / with correct auth token to be 200")
 }
@@ -70,10 +70,9 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 			"word": "gorilla",
 		},
 	}
-
 	rbody := testutils.JSONFromMap(t, i)
 	req, w := testutils.PostRequest(t, "/instances", rbody)
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	server := New(store.New(), testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
 	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
@@ -92,7 +91,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 	for _, i := range invalidRequests {
 		rbody := testutils.JSONFromMap(t, i)
 		req, w := testutils.PostRequest(t, "/instances", rbody)
-		req = auth(req)
+		req = auth(testServerCfg, req)
 		server := New(store.New(), testCommonCfg, testServerCfg)
 		makeRequest(server, req, w)
 
@@ -110,7 +109,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 	}
 
 	req, w := testutils.GetRequest(t, "/instance/helloplaybook/TestGetInstanceWithValidPath")
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	server := New(st, testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
 
@@ -119,7 +118,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 
 func TestGetInstanceWithInvalidPath(t *testing.T) {
 	req, w := testutils.GetRequest(t, "/instance/vanished/TestGetInstanceWithInvalidPath")
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	server := New(store.New(), testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
 
@@ -137,7 +136,7 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	}
 
 	req, w := testutils.GetRequest(t, "/instances/helloplaybook")
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	server := New(store.New(), testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
 
@@ -161,7 +160,7 @@ func TestGetStatusFailures(t *testing.T) {
 
 	for _, i := range invalidRequests {
 		req, w := testutils.GetRequest(t, i.path)
-		req = auth(req)
+		req = auth(testServerCfg, req)
 		server := New(store.New(), testCommonCfg, testServerCfg)
 		makeRequest(server, req, w)
 
@@ -186,7 +185,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	req, w := testutils.GetRequest(t, "/status/helloplaybook/TestGetStatusWithGoodPath")
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	server := New(store.New(), testCommonCfg, testServerCfg)
 	makeRequest(server, req, w)
 
@@ -318,8 +317,8 @@ func TestPostCommandDeployBad(t *testing.T) {
 func TestDeployMissing(t *testing.T) {
 	req, err := http.NewRequest("POST", "/deploy/missingPlaybook/missingInstance", nil)
 	assert.Nil(t, err)
-	req = auth(req)
-	w, s, e := helperSetupServer(testServerCfg)
+	req = auth(testServerCfg, req)
+	w, _, e := helperSetupServer(testServerCfg)
 	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	var errorResponse map[string]string
@@ -344,7 +343,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 		fmt.Sprintf("/instances/%s/%s", testInstance1.PlaybookID, testInstance1.ID),
 	)
 
-	req = auth(req)
+	req = auth(testServerCfg, req)
 	_, s, _ := helperSetupServer(testServerCfg)
 	makeRequest(s, req, w)
 
@@ -357,9 +356,9 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 func TestDeleteWhenNonExistantInstance(t *testing.T) {
 	req, w := testutils.DeleteRequest(t, fmt.Sprintf("/%s/%s", "nonehere", "noid"))
 
-	req = auth(req)
-	server := New(store.New(), testCommonCfg, testServerCfg)
-	makeRequest(server, req, w)
+	req = auth(testServerCfg, req)
+	_, s, _ := helperSetupServer(testServerCfg)
+	makeRequest(s, req, w)
 
 	assert.Equal(t, http.StatusNotFound, w.Code, "Expected DELETE /instances to return 404 when missing instance")
 }
