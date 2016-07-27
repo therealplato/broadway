@@ -37,11 +37,11 @@ func auth(req *http.Request) *http.Request {
 }
 
 func TestServerNew(t *testing.T) {
-	testCfg := cfg.ServerCfgType{AuthBearerToken: testToken}
+	testCfg := cfg.ServerCfgType{SlackToken: testToken}
 	s := New(store.New(), testCommonCfg, testCfg)
 	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
 
-	noAuthCfg := cfg.ServerCfgType{AuthBearerToken: ""}
+	noAuthCfg := cfg.ServerCfgType{SlackToken: ""}
 	s = New(store.New(), testCommonCfg, noAuthCfg)
 	assert.Equal(t, "", s.slackToken, "Expected server.slackToken to be empty string")
 }
