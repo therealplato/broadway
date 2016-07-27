@@ -88,12 +88,7 @@ func comparePodSpecs(a, b v1.PodSpec) bool {
 	return compareI("pod spec image pull secrets", a.ImagePullSecrets, b.ImagePullSecrets)
 }
 
-func comparePods(a, b *v1.Pod) bool {
-	return compareS("pod object meta name", a.ObjectMeta.Name, b.ObjectMeta.Name) &&
-		compareI("pod object meta labels", a.ObjectMeta.Labels, b.ObjectMeta.Labels) &&
-		comparePodSpecs(a.Spec, b.Spec)
-}
-
+// compareRCs compares RC a to RC b. If a == b the return is true
 func compareRCs(a, b *v1.ReplicationController) bool {
 	if a.ObjectMeta.Name == "" {
 		return false
@@ -107,50 +102,18 @@ func compareRCs(a, b *v1.ReplicationController) bool {
 		comparePodSpecs(a.Spec.Template.Spec, b.Spec.Template.Spec)
 }
 
+func comparePods(a, b *v1.Pod) bool {
+	return compareS("pod object meta name", a.ObjectMeta.Name, b.ObjectMeta.Name) &&
+		compareI("pod object meta labels", a.ObjectMeta.Labels, b.ObjectMeta.Labels) &&
+		comparePodSpecs(a.Spec, b.Spec)
+}
+
 // Deploy executes the deployment of a step
 func (s *ManifestStep) Deploy() error {
 	oGVK := s.object.GetObjectKind().GroupVersionKind()
 	switch oGVK.Kind {
 	case "ReplicationController":
-		var o *v1.ReplicationController
-		switch s.object.(type) {
-		case *v1.ReplicationController:
-			o = s.object.(*v1.ReplicationController)
-		case *api.ReplicationController:
-			rr := s.object.(*api.ReplicationController)
-			if err := scheme.Convert(rr, o); err != nil {
-				glog.Error("API object conversion failed.")
-				return err
-			}
-		}
-		rc, err := client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
-		if err == nil && rc != nil {
-			if compareRCs(rc, o) {
-				glog.Info("Existing RC is identical, skipping deployment")
-				return nil
-			}
-
-			var i int32
-			rc.Spec.Replicas = &i
-			client.ReplicationControllers(namespace).Update(rc)
-			time.Sleep(1 * time.Second) // Wait for Kubernetes to delete pods
-
-			glog.Info("Deleting old replication controller: ", o.ObjectMeta.Name)
-			err = client.ReplicationControllers(namespace).Delete(o.ObjectMeta.Name, nil)
-
-			for k := 1; err == nil && k < 20; k++ {
-				time.Sleep(200 * time.Millisecond) // Wait for Kubernetes to delete the resource
-				_, err = client.ReplicationControllers(namespace).Get(o.ObjectMeta.Name)
-			}
-		}
-
-		glog.Info("Creating new replication controller: ", o.ObjectMeta.Name)
-		_, err = client.ReplicationControllers(namespace).Create(o)
-
-		if err != nil {
-			glog.Error("Create or Update failed: ", err)
-			return err
-		}
+		return deployRC(s)
 	case "Pod":
 		o := s.object.(*v1.Pod)
 		pod, err := client.Pods(namespace).Get(o.ObjectMeta.Name)
@@ -166,6 +129,9 @@ func (s *ManifestStep) Deploy() error {
 			for k := 1; err == nil && k < 20; k++ {
 				time.Sleep(200 * time.Millisecond) // Wait for Kubernetes to delete the resource
 				_, err = client.Pods(namespace).Get(o.ObjectMeta.Name)
+			}
+			if err != nil {
+				glog.Error("delete old pods: ", err)
 			}
 		}
 
@@ -208,64 +174,12 @@ func (s *ManifestStep) Destroy() error {
 	}
 	switch oGVK.Kind {
 	case "ReplicationController":
-		err = deleteRC(namespace, meta)
+		err = deleteRC(namespace, meta.Name)
 	case "Service":
 		err = client.Services(namespace).Delete(meta.Name, nil)
 	case "Pod":
 		err = client.Pods(namespace).Delete(meta.Name, nil)
 	}
-	return err
-}
 
-func deleteRC(namespace string, meta *api.ObjectMeta) error {
-	// SCALE RC DOWN TO 0
-	rc, err := client.ReplicationControllers(namespace).Get(meta.Name)
-	if err != nil {
-		return err
-	}
-	// The i variable needs to be declared as a int32 for the Replicas type
-	var i int32
-	rc.Spec.Replicas = &i // Replicas type is *int32 ... so this is *int32(0)
-	client.ReplicationControllers(namespace).Update(rc)
-	time.Sleep(10 * time.Second) // Wait for Kubernetes to delete pods
-	rc, err = client.ReplicationControllers(namespace).Get(meta.Name)
-	if err != nil {
-		return err
-	}
-	if rc.Status.Replicas != 0 {
-		return errors.New("deployment: RC deletion not successful")
-	}
-	// WATCH REPLICATION CONTROLLER
-	// selector := fields.Set{"metadata.name": meta.Name}.AsSelector()
-	// lo := api.ListOptions{Watch: true, FieldSelector: selector}
-	// watcher, err := client.ReplicationControllers(namespace).Watch(lo)
-	// defer watcher.Stop()
-	//
-	// var rc1 *v1.ReplicationController
-	// var attempt int
-	// for {
-	// 	var ok bool
-	// 	event := <-watcher.ResultChan()
-	// 	rc1, ok = event.Object.(*v1.ReplicationController)
-	// 	if !ok {
-	// 		rcv := v1.ReplicationController{}
-	// 		apirc := event.Object.(*api.ReplicationController)
-	// 		if err = api.Scheme.Convert(apirc, &rcv); err != nil {
-	// 			glog.Errorln("API Object conversion failed: ", err)
-	// 			return err
-	// 		}
-	// 		rc1 = &rcv
-	// 	}
-	//
-	// 	if rc1.Status.Replicas == 0 {
-	// 		break
-	// 	}
-	// 	if attempt > 20 {
-	// 		return errors.New("deployment: RC deletion timed out")
-	// 	}
-	// 	time.Sleep(200 * time.Millisecond)
-	// 	attempt++
-	// }
-	// DELETE RC
-	return client.ReplicationControllers(namespace).Delete(meta.Name, nil)
+	return err
 }
