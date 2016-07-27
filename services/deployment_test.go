@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
-	"github.com/namely/broadway/store"
 )
 
 func TestDeployment(t *testing.T) {
@@ -25,7 +25,7 @@ func TestDeployment(t *testing.T) {
 		panic(err)
 	}
 
-	service := NewDeploymentService(store.New(), playbooks, manifests)
+	service := NewDeploymentService(etcdstore.New(), playbooks, manifests)
 
 	cases := []struct {
 		Name     string
@@ -77,7 +77,7 @@ func TestCustomDeploymentNotification(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	service := NewDeploymentService(store.New(), playbooks, manifests)
+	service := NewDeploymentService(etcdstore.New(), playbooks, manifests)
 
 	i := &instance.Instance{
 		PlaybookID: "messagesplaybook",

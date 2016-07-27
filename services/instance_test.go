@@ -6,19 +6,18 @@ import (
 
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
-	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 )
 
 func cleanup() {
-	store.New().Delete(env.EtcdPath + "/instances")
+	etcdstore.New().Delete(env.EtcdPath + "/instances")
 }
 
 func TestCreateInstanceFromMissingPlaybook(t *testing.T) {
-	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "vanishing-pb", ID: "gone"}
@@ -32,7 +31,7 @@ func TestCreateInstanceWithIncorrectVars(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstanceWithIncorrectVars", Vars: map[string]string{"metal": "plutonium"}}
@@ -47,7 +46,7 @@ func TestCreateInstanceNotification(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstanceNotification"}
 	_, err := is.CreateOrUpdate(i)
@@ -63,7 +62,7 @@ func TestCreateInstanceCustomNotification(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 	i := &instance.Instance{PlaybookID: "messagesplaybook", ID: "TestCreateInstanceCustomNotification"}
 	_, err := is.CreateOrUpdate(i)
@@ -77,7 +76,7 @@ func TestCreateInstanceWithInvalidId(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "Test*Create_Instance"}
@@ -92,7 +91,7 @@ func TestCreateInstance(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstance"}
@@ -115,7 +114,7 @@ func TestUpdateInstance(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestUpdateInstance", Status: instance.StatusDeployed}
@@ -137,7 +136,7 @@ func TestShow(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestShow"}
@@ -148,7 +147,7 @@ func TestShow(t *testing.T) {
 }
 
 func TestShowMissingInstance(t *testing.T) {
-	store := store.New()
+	store := etcdstore.New()
 	is := NewInstanceService(store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "broken"}
@@ -161,7 +160,7 @@ func TestAllWithPlaybookID(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestAllWithPlaybookID"}
 	_, err := is.CreateOrUpdate(i)
@@ -179,7 +178,7 @@ func TestUpdate(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	instanceService := NewInstanceService(store.New())
+	instanceService := NewInstanceService(etcdstore.New())
 	testcases := []struct {
 		Scenario           string
 		Instance           *instance.Instance
@@ -217,7 +216,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "new"}
 
@@ -231,7 +230,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 
 func TestDeleteWhenNonExistantInstance(t *testing.T) {
 	cleanup()
-	is := NewInstanceService(store.New())
+	is := NewInstanceService(etcdstore.New())
 	i := &instance.Instance{PlaybookID: "random", ID: "bar"}
 
 	err := is.Delete(i)

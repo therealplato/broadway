@@ -11,6 +11,7 @@ import (
 	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -124,7 +125,7 @@ func (s *Server) createInstance(c *gin.Context) {
 		return
 	}
 
-	service := services.NewInstanceService(store.New())
+	service := services.NewInstanceService(etcdstore.New())
 	i, err := service.CreateOrUpdate(i)
 
 	if err != nil {
@@ -142,7 +143,7 @@ func (s *Server) getInstance(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case instance.NotFound:
+		case instance.NotFoundError:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -170,7 +171,7 @@ func (s *Server) getStatus(c *gin.Context) {
 
 	if err != nil {
 		switch err.(type) {
-		case instance.NotFound:
+		case instance.NotFoundError:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:
@@ -257,7 +258,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 	if err != nil {
 		glog.Error(err)
 		switch err.(type) {
-		case instance.NotFound:
+		case instance.NotFoundError:
 			c.JSON(http.StatusNotFound, NotFoundError)
 			return
 		default:

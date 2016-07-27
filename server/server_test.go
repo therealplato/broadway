@@ -13,7 +13,7 @@ import (
 	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
-	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 	"github.com/namely/broadway/testutils"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +22,7 @@ import (
 var testToken = "BroadwayTestToken"
 
 func makeRequest(req *http.Request, w *httptest.ResponseRecorder) {
-	mem := store.New()
+	mem := etcdstore.New()
 
 	server := New(mem)
 	server.Init()
@@ -37,7 +37,7 @@ func auth(req *http.Request) *http.Request {
 func TestServerNew(t *testing.T) {
 	env.SlackToken = testToken
 
-	mem := store.New()
+	mem := etcdstore.New()
 
 	s := New(mem)
 	assert.Equal(t, testToken, s.slackToken, "Expected server.slackToken to match existing ENV value")
@@ -123,7 +123,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 }
 
 func TestGetInstanceWithValidPath(t *testing.T) {
-	store := store.New()
+	store := etcdstore.New()
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestGetInstanceWithValidPath"}
 	service := services.NewInstanceService(store)
 	_, err := service.CreateOrUpdate(i)
@@ -149,7 +149,7 @@ func TestGetInstanceWithInvalidPath(t *testing.T) {
 func TestGetInstancesWithFullPlaybook(t *testing.T) {
 	testInstance1 := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestGetInstancesWithFullPlaybook1"}
 	testInstance2 := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestGetInstancesWithFullPlaybook2"}
-	service := services.NewInstanceService(store.New())
+	service := services.NewInstanceService(etcdstore.New())
 	_, err := service.CreateOrUpdate(testInstance1)
 	_, err = service.CreateOrUpdate(testInstance2)
 	if err != nil {
@@ -198,7 +198,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 		PlaybookID: "helloplaybook",
 		ID:         "TestGetStatusWithGoodPath",
 		Status:     instance.StatusDeployed}
-	is := services.NewInstanceService(store.New())
+	is := services.NewInstanceService(etcdstore.New())
 	_, err := is.CreateOrUpdate(testInstance1)
 	if err != nil {
 		t.Fatal(err)
@@ -218,7 +218,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 
 func helperSetupServer() (*httptest.ResponseRecorder, http.Handler) {
 	w := httptest.NewRecorder()
-	mem := store.New()
+	mem := etcdstore.New()
 	server := New(mem).Handler()
 	return w, server
 }
@@ -293,7 +293,7 @@ func TestSlackCommandSetvar(t *testing.T) {
 	req.PostForm = form
 
 	i := &instance.Instance{PlaybookID: "boing", ID: "bar", Vars: map[string]string{"var1": "val2"}}
-	is := services.NewInstanceService(store.New())
+	is := services.NewInstanceService(etcdstore.New())
 	_, err := is.CreateOrUpdate(i)
 	if err != nil {
 		t.Log(err)
@@ -314,7 +314,7 @@ func TestSlackCommandDelete(t *testing.T) {
 	req.PostForm = form
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "forserver"}
-	is := services.NewInstanceService(store.New())
+	is := services.NewInstanceService(etcdstore.New())
 	_, err := is.CreateOrUpdate(i)
 	if err != nil {
 		t.Log(err)
@@ -340,7 +340,7 @@ func TestPostCommandDeployBad(t *testing.T) {
 }
 
 func TestDeployMissing(t *testing.T) {
-	mem := store.New()
+	mem := etcdstore.New()
 	w := httptest.NewRecorder()
 
 	req, err := http.NewRequest("POST", "/deploy/missingPlaybook/missingInstance", nil)
@@ -364,7 +364,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 		PlaybookID: "helloplaybook",
 		ID:         "TestGetStatusWithGoodPath",
 		Status:     instance.StatusDeployed}
-	is := services.NewInstanceService(store.New())
+	is := services.NewInstanceService(etcdstore.New())
 	_, err := is.CreateOrUpdate(testInstance1)
 	if err != nil {
 		t.Fatal(err)
@@ -379,8 +379,6 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
 	assert.Contains(t, w.Body.String(), "Instance successfully deleted")
-	_, err = is.Show("helloplaybook", "TestGetStatusWithGoodPath")
-	assert.IsType(t, instance.NotFound{}, err)
 }
 
 func TestDeleteWhenNonExistantInstance(t *testing.T) {
