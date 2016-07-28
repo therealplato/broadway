@@ -3,23 +3,22 @@ package etcdstore
 import (
 	"strings"
 
-	"github.com/namely/broadway/env"
-
 	etcdclient "github.com/coreos/etcd/client"
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/store"
 	"golang.org/x/net/context"
 )
 
 var api etcdclient.KeysAPI
 
-func init() {
+func Setup(cfg cfg.CommonCfgType) {
 	var err error
-	endpoints := strings.Split(env.EtcdEndpoints, ",")
-	cfg := etcdclient.Config{
+	endpoints := strings.Split(cfg.EtcdEndpoints, ",")
+	cfg2 := etcdclient.Config{
 		Endpoints: endpoints,
 	}
-	client, err := etcdclient.New(cfg)
+	client, err := etcdclient.New(cfg2)
 	if err != nil {
 		glog.Fatal("wrong etcd client")
 	}

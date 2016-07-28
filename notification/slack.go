@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 )
 
 // Message represents a JSON payload sent to slack
@@ -15,12 +15,13 @@ type Message struct {
 	ResponseType string       `json:"response_type"`
 	Attachments  []Attachment `json:"attachments"`
 	Text         string       `json:"text"`
+	Cfg          cfg.ServerCfgType
 }
 
 // NewMessage crafts a new Slack message. If ephemeral is true, the message gets
 // delivered only to the Slack user who requested it, otherwise it goes to a
 // channel
-func NewMessage(ephemeral bool, msg string) *Message {
+func NewMessage(cfg cfg.ServerCfgType, ephemeral bool, msg string) *Message {
 	var rt string
 	if ephemeral {
 		rt = "ephemeral"
@@ -30,6 +31,7 @@ func NewMessage(ephemeral bool, msg string) *Message {
 	return &Message{
 		ResponseType: rt,
 		Text:         msg,
+		Cfg:          cfg,
 	}
 }
 
@@ -59,8 +61,8 @@ type Attachment struct {
 
 // Send sends the Slack notification
 func (message *Message) Send() error {
-	if env.SlackWebhook == "" {
-		glog.Warningf("SLACK_WEBHOOK env var is unset, not sending %s", message.Text)
+	if message.Cfg.SlackWebhook == "" {
+		glog.Warningf("SLACK_WEBHOOK cfg var is unset, not sending %s", message.Text)
 		return nil
 	}
 
@@ -68,8 +70,8 @@ func (message *Message) Send() error {
 	if err != nil {
 		return err
 	}
-	glog.Infof("Sending Slack message to %s", env.SlackWebhook)
-	resp, err := http.Post(env.SlackWebhook, "application/json", bytes.NewReader(value))
+	glog.Infof("Sending Slack message to %s", message.Cfg.SlackWebhook)
+	resp, err := http.Post(message.Cfg.SlackWebhook, "application/json", bytes.NewReader(value))
 	glog.Info("Slack returned: ", resp)
 	return err
 }

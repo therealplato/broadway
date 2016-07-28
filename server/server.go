@@ -229,7 +229,9 @@ func (s *Server) postCommand(c *gin.Context) {
 	}
 
 	is := services.NewInstanceService(s.store)
-	slackCommand := services.BuildSlackCommand(form.Text, is, s.playbooks)
+	ds := NewDeploymentService(s.CfgCommon, etcdstore.New(), s.playbooks, s.manifests)
+
+	slackCommand := services.BuildSlackCommand(form.Text, ds, is, s.playbooks)
 	glog.Infof("Running command: %s", form.Text)
 	msg, err := slackCommand.Execute()
 	if err != nil {
@@ -238,7 +240,7 @@ func (s *Server) postCommand(c *gin.Context) {
 	}
 
 	// Craft a Slack payload for an ephemeral message:
-	j := notification.NewMessage(false, msg)
+	j := notification.NewMessage(s.Cfg, false, msg)
 	c.JSON(http.StatusOK, j)
 	return
 }

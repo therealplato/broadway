@@ -13,6 +13,7 @@ import (
 var ServerCmd = func(c *cli.Context) error {
 	fmt.Printf("starting server with config...\n%+v", cfg.ServerCfg)
 	s := server.New(etcdstore.New(), cfg.CommonCfg, cfg.ServerCfg)
+	etcdstore.Setup(cfg.CommonCfg) // configure etcd before using
 	s.Init()
 	err := s.Run(cfg.ServerCfg.ServerHost)
 	if err != nil {

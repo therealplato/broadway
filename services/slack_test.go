@@ -4,14 +4,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 )
 
+var testCommonCfg = cfg.CommonCfgType{}
+var testPlaybooks = map[string]*deployment.Playbook{"helloplaybook": {ID: "helloplaybook"}},
+var testManifests = map[string]*deployment.Manifest{"helloplaybook": {ID: "helloplaybook"}},
+
 func TestDeployExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
+	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), playbooks, manifests)
 	defer nt.Close()
 	is := NewInstanceService(etcdstore.New())
 	testcases := []struct {
