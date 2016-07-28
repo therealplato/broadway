@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/namely/broadway/store"
@@ -166,5 +167,78 @@ func TestDelete(t *testing.T) {
 	for _, tc := range testcases {
 		err := Delete(tc.Store, tc.Path)
 		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
+	}
+}
+
+func TestLock(t *testing.T) {
+	testcases := []struct {
+		Scenario         string
+		Store            store.Store
+		Path             Path
+		ExpectedError    error
+		ExpectedInstance *Instance
+	}{
+		{
+			Scenario: "When an instance exist",
+			Store: &store.FakeStore{
+				MockValue: func(path string) string {
+					return `{"playbook_id":"test", "id": "id", "status": "deployed"}`
+				},
+				MockSetValue: func(string, string) error {
+					return nil
+				},
+			},
+			Path:             Path{"rootPath", "test", "id"},
+			ExpectedError:    nil,
+			ExpectedInstance: &Instance{PlaybookID: "test", ID: "id", Status: StatusLocked},
+		},
+		{
+			Scenario: "When an instance does not exist",
+			Store: &store.FakeStore{
+				MockValue: func(path string) string {
+					return ``
+				},
+				MockSetValue: func(string, string) error {
+					return nil
+				},
+			},
+			Path:             Path{"rootPath", "test", "id"},
+			ExpectedError:    NotFoundError("rootPath/instances/test/id"),
+			ExpectedInstance: nil,
+		},
+		{
+			Scenario: "When instance have malformed data saved",
+			Store: &store.FakeStore{
+				MockValue: func(path string) string {
+					return `{play}`
+				},
+				MockSetValue: func(string, string) error {
+					return nil
+				},
+			},
+			Path:             Path{"rootPath", "test", "id"},
+			ExpectedError:    ErrMalformedSaveData,
+			ExpectedInstance: nil,
+		},
+		{
+			Scenario: "When saving the instance with the new status failed",
+			Store: &store.FakeStore{
+				MockValue: func(path string) string {
+					return `{"playbook_id":"test", "id": "id", "status": "deployed"}`
+				},
+				MockSetValue: func(string, string) error {
+					return errors.New("Failed to save the instance")
+				},
+			},
+			Path:             Path{"rootPath", "test", "id"},
+			ExpectedError:    errors.New("Failed to save the instance"),
+			ExpectedInstance: nil,
+		},
+	}
+
+	for _, tc := range testcases {
+		instance, err := Lock(tc.Store, tc.Path)
+		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
+		assert.Equal(t, tc.ExpectedInstance, instance, tc.Scenario)
 	}
 }

@@ -30,6 +30,14 @@ func TestDeployExecute(t *testing.T) {
 			"Started deployment of helloplaybook/chickenman",
 			nil,
 		},
+		{
+			"When the instance is locked",
+			"deploy helloplaybook locked",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "locked", Status: instance.StatusLocked},
+			map[string]*deployment.Playbook{"helloplaybook": {ID: "helloplaybook"}},
+			"/broadwaytest/instances/helloplaybook/locked is currently locked",
+			nil,
+		},
 	}
 
 	for _, testcase := range testcases {
@@ -201,6 +209,13 @@ func TestDelete(t *testing.T) {
 			nil,
 		},
 		{
+			"When instance is locked",
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "lockme", Status: instance.StatusLocked},
+			"destroy helloplaybook lockme",
+			"/broadwaytest/instances/helloplaybook/lockme is currently locked",
+			nil,
+		},
+		{
 			"Fails when missing playbookid",
 			&instance.Instance{PlaybookID: "helloplaybook", ID: "randomid"},
 			"delete randomid",
@@ -316,6 +331,49 @@ Vars:
 		)
 		// CreateOrUpdate always resets instance.Created so we can't mock it:
 		time.Sleep(3 * time.Second)
+		msg, err := command.Execute()
+		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
+		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
+	}
+}
+
+func TestLockExecute(t *testing.T) {
+	testcases := []struct {
+		Scenario    string
+		Instance    *instance.Instance
+		Args        string
+		ExpectedMsg string
+		ExpectedErr error
+	}{
+		{
+			"When passing locking command to an instance",
+			&instance.Instance{
+
+				PlaybookID: "helloplaybook",
+				ID:         "locktest",
+				Status:     instance.StatusDeployed,
+				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
+			},
+			"lock helloplaybook locktest",
+			"/broadwaytest/instances/helloplaybook/locktest is currently locked",
+			nil,
+		},
+	}
+
+	is := NewInstanceService(etcdstore.New())
+	for _, testcase := range testcases {
+		_, err := is.CreateOrUpdate(testcase.Instance)
+		if err != nil {
+			t.Log(err)
+		}
+		command := BuildSlackCommand(
+			testcase.Args,
+			is,
+			map[string]*deployment.Playbook{
+				"helloplaybook": {ID: "showinfo"},
+			},
+		)
+		// CreateOrUpdate always resets instance.Created so we can't mock it:
 		msg, err := command.Execute()
 		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)

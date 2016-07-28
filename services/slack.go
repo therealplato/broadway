@@ -8,6 +8,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store/etcdstore"
 )
 
@@ -20,6 +21,20 @@ type deployCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+}
+
+type lockCommand struct {
+	pID string
+	ID  string
+}
+
+func (c *lockCommand) Execute() (string, error) {
+	path := instance.Path{env.EtcdPath, c.pID, c.ID}
+	i, err := instance.Lock(etcdstore.New(), path)
+	if err != nil {
+		return "", err
+	}
+	return i.String(), nil
 }
 
 func (c *deployCommand) Execute() (string, error) {
@@ -37,6 +52,10 @@ func (c *deployCommand) Execute() (string, error) {
 		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", c.pID, c.ID)
 		glog.Error(msg)
 		return msg, err
+	}
+
+	if i.Status == instance.StatusLocked {
+		return i.String(), nil
 	}
 
 	go func() {
@@ -162,6 +181,10 @@ func (c *deleteCommand) Execute() (string, error) {
 		return msg, err
 	}
 
+	if i.Status == instance.StatusLocked {
+		return i.String(), nil
+	}
+
 	go func() {
 		glog.Infof("Asynchronously deleting %s/%s...", i.PlaybookID, i.ID)
 
@@ -260,6 +283,11 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 			return &helpCommand{}
 		}
 		return &infoCommand{pID: terms[1], ID: terms[2], is: is}
+	case "lock":
+		if len(terms) < 3 {
+			return &helpCommand{}
+		}
+		return &lockCommand{pID: terms[1], ID: terms[2]}
 	default:
 		return &helpCommand{}
 	}
