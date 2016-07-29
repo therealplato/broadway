@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/namely/broadway/store/etcdstore"
@@ -19,6 +21,9 @@ func TestDeployment(t *testing.T) {
 		panic(err)
 	}
 
+	fmt.Println("***************")
+	dir, _ := os.Getwd()
+	fmt.Println(dir)
 	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
 	if err != nil {
 		panic(err)

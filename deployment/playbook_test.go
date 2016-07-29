@@ -73,8 +73,9 @@ var rootDir string
 var playbookDir string
 var mockPlaybookPath string
 var testCfg = cfg.Type{
-	PlaybooksPath: "../examples/playbooks",
-	ManifestsPath: "../examples/manifests",
+	PlaybooksPath:      "../examples/playbooks",
+	ManifestsPath:      "../examples/manifests",
+	ManifestsExtension: ".yml",
 }
 
 func SetupTestFixtures() {
