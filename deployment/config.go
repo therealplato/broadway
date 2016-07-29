@@ -12,7 +12,7 @@ import (
 
 // IsKubernetesEnv returns true if necessary Kubernetes environment variables
 // and files are available
-func IsKubernetesEnv(cfg cfg.CommonCfgType) bool {
+func IsKubernetesEnv(cfg cfg.Type) bool {
 	files := []string{
 		"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
 		"/var/run/secrets/kubernetes.io/serviceaccount/token",
@@ -42,7 +42,7 @@ func IsKubernetesEnv(cfg cfg.CommonCfgType) bool {
 }
 
 // Config returns a kubernetes configuration
-func Config(cfg cfg.CommonCfgType) (*restclient.Config, error) {
+func Config(cfg cfg.Type) (*restclient.Config, error) {
 	config := LocalConfig(cfg)
 	if IsKubernetesEnv(cfg) {
 		var err error
@@ -56,7 +56,7 @@ func Config(cfg cfg.CommonCfgType) (*restclient.Config, error) {
 }
 
 // KubernetesConfig returns Kubernetes configuration for native Kubernetes environment
-func KubernetesConfig(cfg cfg.CommonCfgType) (*restclient.Config, error) {
+func KubernetesConfig(cfg cfg.Type) (*restclient.Config, error) {
 	token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func KubernetesConfig(cfg cfg.CommonCfgType) (*restclient.Config, error) {
 }
 
 // LocalConfig returns a configuration for local development
-func LocalConfig(cfg cfg.CommonCfgType) *restclient.Config {
+func LocalConfig(cfg cfg.Type) *restclient.Config {
 	if cfg.K8sServiceHost != "" && cfg.K8sCertFile != "" &&
 		cfg.K8sKeyFile != "" && cfg.K8sCAFile != "" {
 

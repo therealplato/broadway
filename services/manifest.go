@@ -2,9 +2,11 @@ package services
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 )
 
@@ -13,6 +15,7 @@ import (
 type ManifestService struct {
 	rootFolder string
 	extension  string
+	Cfg        cfg.CommonCfgType
 }
 
 // NewManifestService instantiates a ManifestService with a default rootFolder
@@ -20,6 +23,7 @@ func NewManifestService(path string) *ManifestService {
 	return &ManifestService{
 		rootFolder: path,
 		extension:  ".yml",
+		Cfg:        cfg,
 	}
 }
 
@@ -94,4 +98,24 @@ func (ms *ManifestService) LoadManifestFolder() (map[string]*deployment.Manifest
 		mm[name] = m
 	}
 	return mm, nil
+}
+
+// ManifestsPresent iterates through the Manifests and PodManifest items on a
+// task, and checks that each represents a file on disk
+func (ms *ManifestService) ManifestsPresent(t Task, root string) error {
+	for _, name := range t.Manifests {
+		filename := name + ms.Cfg.ManifestExtension
+		path := filepath.Join(root, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	if len(t.PodManifest) > 0 {
+		filename := t.PodManifest + ms.Cfg.ManifestExtension
+		path := filepath.Join(root, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -15,13 +15,13 @@ type Message struct {
 	ResponseType string       `json:"response_type"`
 	Attachments  []Attachment `json:"attachments"`
 	Text         string       `json:"text"`
-	Cfg          cfg.ServerCfgType
+	Cfg          cfg.Type
 }
 
 // NewMessage crafts a new Slack message. If ephemeral is true, the message gets
 // delivered only to the Slack user who requested it, otherwise it goes to a
 // channel
-func NewMessage(cfg cfg.ServerCfgType, ephemeral bool, msg string) *Message {
+func NewMessage(cfg cfg.Type, ephemeral bool, msg string) *Message {
 	var rt string
 	if ephemeral {
 		rt = "ephemeral"

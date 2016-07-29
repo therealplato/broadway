@@ -39,7 +39,8 @@ type TaskStep struct {
 	step Step
 }
 
-func Setup(cfg cfg.CommonCfgType) {
+// Setup configures deployment with an injected configuration
+func Setup(cfg cfg.Type) {
 	scheme = runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)

@@ -12,7 +12,8 @@ import (
 
 var api etcdclient.KeysAPI
 
-func Setup(cfg cfg.CommonCfgType) {
+// Setup configures etcdstore with an injected configuration
+func Setup(cfg cfg.Type) {
 	var err error
 	endpoints := strings.Split(cfg.EtcdEndpoints, ",")
 	cfg2 := etcdclient.Config{
