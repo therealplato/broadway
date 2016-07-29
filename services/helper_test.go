@@ -17,7 +17,6 @@ type notificationTestHelper struct {
 }
 
 func newNotificationTestHelper() *notificationTestHelper {
-	var tmpCfg = testutils.TestCfg
 	n := &notificationTestHelper{
 		requestBody: "",
 	}
