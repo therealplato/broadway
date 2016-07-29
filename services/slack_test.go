@@ -8,19 +8,19 @@ import (
 	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
-	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store/etcdstore"
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
-var testCommonCfg = cfg.CommonCfgType{}
+var testCfg = cfg.Type{}
 var testPlaybooks map[string]*deployment.Playbook
 var testManifests map[string]*deployment.Manifest
 
 func init() {
-	ms := services.NewManifestService()
+	ms := NewManifestService(testutils.TestCfg)
 	var err error
-	testManifests, err = ms.LoadManifestFolder(testServerCfg.ManifestsPath)
+	testManifests, err = ms.LoadManifestFolder()
 	if err != nil {
 		glog.Fatal(err)
 	}
@@ -31,9 +31,9 @@ func init() {
 
 func TestDeployExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
-	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), testPlaybooks, testManifests)
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	defer nt.Close()
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	testcases := []struct {
 		Scenario    string
 		Arguments   string
@@ -69,8 +69,8 @@ func TestSetvarExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), testPlaybooks, testManifests)
-	is := NewInstanceService(etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	tPlaybooks := map[string]*deployment.Playbook{
 		"helloplaybook": {
 			ID:   "helloplaybook",
@@ -229,8 +229,8 @@ func TestDelete(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
-	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), testPlaybooks, testManifests)
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
@@ -273,8 +273,8 @@ func TestHelpExecute(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
-	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), testPlaybooks, testManifests)
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		command := BuildSlackCommand(testcase.Args, ds, is, nil)
 		msg, err := command.Execute()
@@ -325,8 +325,8 @@ Vars:
 			instance.NotFoundError("instances//"),
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
-	ds := NewDeploymentService(testCommonCfg, etcdstore.New(), testPlaybooks, testManifests)
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {

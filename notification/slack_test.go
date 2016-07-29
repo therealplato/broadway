@@ -29,7 +29,7 @@ func TestSend(t *testing.T) {
 		Attachments: []Attachment{{
 			Text: "successful",
 		}},
-		cfg: cfg.ServerCfgType{
+		Cfg: cfg.Type{
 			SlackWebhook: ts.URL,
 		},
 	}

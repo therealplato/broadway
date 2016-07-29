@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/deployment"
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,12 +38,12 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewManifestService(t *testing.T) {
-	ms := NewManifestService(env.ManifestsPath)
-	assert.Equal(t, env.ManifestsPath, ms.rootFolder)
+	ms := NewManifestService(testutils.TestCfg)
+	assert.Equal(t, testutils.TestCfg.ManifestsPath, ms.rootFolder)
 }
 
 func TestRead(t *testing.T) {
-	ms := NewManifestService(env.ManifestsPath)
+	ms := NewManifestService(testutils.TestCfg)
 	ms.rootFolder = tmpDir
 	assert.Equal(t, tmpDir, ms.rootFolder)
 	contents, err := ms.Read("test")
@@ -54,7 +55,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	ms := NewManifestService(env.ManifestsPath)
+	ms := NewManifestService(testutils.TestCfg)
 	ms.rootFolder = tmpDir
 	m, err := ms.Load("test")
 	assert.Nil(t, err)
@@ -65,7 +66,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadTask(t *testing.T) {
-	ms := NewManifestService(env.ManifestsPath)
+	ms := NewManifestService(testutils.TestCfg)
 	ms.rootFolder = tmpDir
 	tk := deployment.Task{
 		Name: "First step",
@@ -91,7 +92,7 @@ func TestLoadTask(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	ms := NewManifestService(env.ManifestsPath)
+	ms := NewManifestService(testutils.TestCfg)
 	ms.rootFolder = tmpDir
 
 	m, err := ms.New("testId", "testContent")

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 
@@ -12,26 +11,20 @@ import (
 	"github.com/namely/broadway/instance"
 )
 
-var testCommonCfg = cfg.CommonCfgType{}
-var testServerCfg = cfg.CommonCfgType{
-	ManifestsPath: "../examples/manifests",
-	PlaybooksPath: "../examples/playbooks",
-}
-
 func TestDeployment(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(testServerCfg.ManifestsPath).LoadManifestFolder()
+	manifests, err := NewManifestService(ServicesTestCfg.ManifestsPath).LoadManifestFolder()
 	if err != nil {
 		panic(err)
 	}
 
-	playbooks, err := deployment.LoadPlaybookFolder(testServerCfg.PlaybooksPath)
+	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
 	if err != nil {
 		panic(err)
 	}
 
-	service := NewDeploymentService(testCommonCfg, etcdstore.New(), playbooks, manifests)
+	service := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
 
 	cases := []struct {
 		Name     string
@@ -74,16 +67,16 @@ func TestDeployment(t *testing.T) {
 func TestCustomDeploymentNotification(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(env.ManifestsPath).LoadManifestFolder()
+	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
 	if err != nil {
 		panic(err)
 	}
 
-	playbooks, err := deployment.LoadPlaybookFolder(env.PlaybooksPath)
+	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
 	if err != nil {
 		panic(err)
 	}
-	service := NewDeploymentService(testCommonCfg, etcdstore.New(), playbooks, manifests)
+	service := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
 
 	i := &instance.Instance{
 		PlaybookID: "messagesplaybook",

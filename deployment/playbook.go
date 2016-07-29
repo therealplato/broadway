@@ -89,7 +89,7 @@ func (p *Playbook) ValidateTasks() error {
 		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
 			return errors.New("Task requires at least one manifest or a pod manifest")
 		}
-		if err := task.ManifestsPresent(manifestsPath); err != nil {
+		if err := task.ManifestsPresent(); err != nil {
 			return err
 		}
 	}
@@ -143,17 +143,17 @@ func LoadPlaybookFolder(dir string) (map[string]*Playbook, error) {
 
 // ManifestsPresent iterates through the Manifests and PodManifest items on a
 // task, and checks that each represents a file on disk
-func (t Task) ManifestsPresent(root string) error {
+func (t Task) ManifestsPresent() error {
 	for _, name := range t.Manifests {
 		filename := name + manifestsExtension
-		path := filepath.Join(root, filename)
+		path := filepath.Join(playbooksPath, filename)
 		if _, err := os.Stat(path); err != nil {
 			return err
 		}
 	}
 	if len(t.PodManifest) > 0 {
 		filename := t.PodManifest + manifestsExtension
-		path := filepath.Join(root, filename)
+		path := filepath.Join(playbooksPath, filename)
 		if _, err := os.Stat(path); err != nil {
 			return err
 		}
