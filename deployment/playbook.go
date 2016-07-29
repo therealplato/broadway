@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -42,9 +43,15 @@ type Playbook struct {
 
 // AllPlaybooks is a map of playbook id's to playbooks
 var AllPlaybooks map[string]*Playbook
+var playbooksPath string
+var manifestsPath string
+var manifestsExtension string
 
 // SetupPlaybook configures playbook with an injected configuration
 func SetupPlaybook(cfg cfg.Type) {
+	playbooksPath = cfg.PlaybooksPath
+	manifestsPath = cfg.ManifestsPath
+	manifestsExtension = cfg.ManifestsExtension
 	var err error
 	AllPlaybooks, err = LoadPlaybookFolder(cfg.PlaybooksPath)
 	if err != nil {
@@ -53,7 +60,7 @@ func SetupPlaybook(cfg cfg.Type) {
 }
 
 // Validate checks for ID, Name, and Tasks on a playbook
-func (p *Playbook) Validate(root string) error {
+func (p *Playbook) Validate() error {
 	if len(p.ID) == 0 {
 		return errors.New("Playbook missing required ID")
 	}
@@ -69,12 +76,12 @@ func (p *Playbook) Validate(root string) error {
 			return fmt.Errorf("Playbook had an invalid message template: \"%s\"", value)
 		}
 	}
-	return p.ValidateTasks(root)
+	return p.ValidateTasks()
 }
 
 // ValidateTasks checks a task for fields Name, and one or both of Manifests and
 // PodManifests
-func (p *Playbook) ValidateTasks(root string) error {
+func (p *Playbook) ValidateTasks() error {
 	for _, task := range p.Tasks {
 		if len(task.Name) == 0 {
 			return errors.New("Task missing required Name")
@@ -82,7 +89,7 @@ func (p *Playbook) ValidateTasks(root string) error {
 		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
 			return errors.New("Task requires at least one manifest or a pod manifest")
 		}
-		if err := task.ManifestsPresent(root); err != nil {
+		if err := task.ManifestsPresent(manifestsPath); err != nil {
 			return err
 		}
 	}
@@ -132,4 +139,24 @@ func LoadPlaybookFolder(dir string) (map[string]*Playbook, error) {
 		playbooks[parsed.ID] = parsed
 	}
 	return playbooks, nil
+}
+
+// ManifestsPresent iterates through the Manifests and PodManifest items on a
+// task, and checks that each represents a file on disk
+func (t Task) ManifestsPresent(root string) error {
+	for _, name := range t.Manifests {
+		filename := name + manifestsExtension
+		path := filepath.Join(root, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	if len(t.PodManifest) > 0 {
+		filename := t.PodManifest + manifestsExtension
+		path := filepath.Join(root, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	return nil
 }

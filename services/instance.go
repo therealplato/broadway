@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/store"
@@ -20,12 +20,16 @@ var validator = regexp.MustCompile(`^[a-zA-Z0-9\-]{1,253}$`)
 
 // InstanceService definition
 type InstanceService struct {
+	Cfg   cfg.Type
 	store store.Store
 }
 
 // NewInstanceService creates a new instance service
-func NewInstanceService(s store.Store) *InstanceService {
-	return &InstanceService{s}
+func NewInstanceService(cfg cfg.Type, s store.Store) *InstanceService {
+	return &InstanceService{
+		Cfg:   cfg,
+		store: s,
+	}
 }
 
 // PlaybookNotFound indicates a problem due to Broadway not knowing about a
@@ -75,7 +79,7 @@ func validateID(id string) error {
 
 // CreateOrUpdate a new instance
 func (is *InstanceService) CreateOrUpdate(i *instance.Instance) (*instance.Instance, error) {
-	path := instance.Path{env.EtcdPath, i.PlaybookID, i.ID}
+	path := instance.Path{is.Cfg.EtcdPath, i.PlaybookID, i.ID}
 	i.Path = path
 	if err := validateID(i.ID); err != nil {
 		return nil, err
@@ -140,7 +144,7 @@ func (is *InstanceService) CreateOrUpdate(i *instance.Instance) (*instance.Insta
 // Update an instance
 func (is *InstanceService) Update(i *instance.Instance) (*instance.Instance, error) {
 	glog.Info("Instance Service: Update")
-	path := instance.Path{env.EtcdPath, i.PlaybookID, i.ID}
+	path := instance.Path{is.Cfg.EtcdPath, i.PlaybookID, i.ID}
 	i.Path = path
 	err := instance.Save(is.store, i)
 	if err != nil {
@@ -152,7 +156,7 @@ func (is *InstanceService) Update(i *instance.Instance) (*instance.Instance, err
 // Show takes playbookID and instanceID and returns the matching Instance, if
 // any
 func (is *InstanceService) Show(playbookID, ID string) (*instance.Instance, error) {
-	path := instance.Path{env.EtcdPath, playbookID, ID}
+	path := instance.Path{is.Cfg.EtcdPath, playbookID, ID}
 	instance, err := instance.FindByPath(is.store, path)
 	if err != nil {
 		return instance, err
@@ -162,7 +166,7 @@ func (is *InstanceService) Show(playbookID, ID string) (*instance.Instance, erro
 
 // AllWithPlaybookID returns all the instances for an specified playbook id
 func (is *InstanceService) AllWithPlaybookID(playbookID string) ([]*instance.Instance, error) {
-	playbookPath := instance.PlaybookPath{env.EtcdPath, playbookID}
+	playbookPath := instance.PlaybookPath{is.Cfg.EtcdPath, playbookID}
 	return instance.FindByPlaybookID(is.store, playbookPath)
 }
 
@@ -173,7 +177,7 @@ func (is *InstanceService) Delete(i *instance.Instance) error {
 		return err
 	}
 
-	path := instance.Path{env.EtcdPath, i.PlaybookID, i.ID}
+	path := instance.Path{is.Cfg.EtcdPath, i.PlaybookID, i.ID}
 	return instance.Delete(is.store, path)
 }
 

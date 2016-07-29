@@ -59,6 +59,13 @@ var CommonFlags = []cli.Flag{
 		Destination: &cfg.GlobalCfg.EtcdPath,
 	},
 	cli.StringFlag{
+		Name:        "playbook-dir",
+		Usage:       "path to a folder containing broadway playbooks",
+		Value:       "./playbooks",
+		EnvVar:      "BROADWAY_PLAYBOOKS_PATH",
+		Destination: &cfg.GlobalCfg.PlaybooksPath,
+	},
+	cli.StringFlag{
 		Name:        "manifest-dir",
 		Usage:       "path to a folder containing broadway manifests",
 		Value:       "./manifests",
@@ -66,10 +73,10 @@ var CommonFlags = []cli.Flag{
 		Destination: &cfg.GlobalCfg.ManifestsPath,
 	},
 	cli.StringFlag{
-		Name:        "playbook-dir",
-		Usage:       "path to a folder containing broadway playbooks",
-		Value:       "./playbooks",
-		EnvVar:      "BROADWAY_PLAYBOOKS_PATH",
-		Destination: &cfg.GlobalCfg.PlaybooksPath,
+		Name:        "manifest-extension",
+		Usage:       "the extension used by manifest files",
+		Value:       ".yml",
+		EnvVar:      "BROADWAY_MANIFESTS_EXTENSION",
+		Destination: &cfg.GlobalCfg.ManifestsExtension,
 	},
 }

@@ -25,8 +25,7 @@ type Server struct {
 	manifests  map[string]*deployment.Manifest
 	deployer   deployment.Deployer
 	engine     *gin.Engine
-	Cfg        cfg.ServerCfgType
-	CfgCommon  cfg.CommonCfgType
+	Cfg        cfg.Type
 }
 
 const commandHint string = `/broadway help: This message
@@ -53,12 +52,11 @@ func CustomError(message string) ErrorResponse {
 
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
-func New(s store.Store, cfgC cfg.CommonCfgType, cfgS cfg.ServerCfgType) *Server {
+func New(s store.Store, cfg cfg.Type) *Server {
 	srvr := &Server{
-		CfgCommon:  cfgC,
-		Cfg:        cfgS,
+		Cfg:        cfg,
 		store:      s,
-		slackToken: cfgS.SlackToken,
+		slackToken: cfg.SlackToken,
 	}
 	srvr.setupHandlers()
 	return srvr
@@ -66,7 +64,7 @@ func New(s store.Store, cfgC cfg.CommonCfgType, cfgS cfg.ServerCfgType) *Server 
 
 // Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
-	ms := services.NewManifestService(s.Cfg.ManifestsPath)
+	ms := services.NewManifestService(s.Cfg)
 
 	var err error
 	s.manifests, err = ms.LoadManifestFolder()
@@ -131,7 +129,7 @@ func (s *Server) createInstance(c *gin.Context) {
 		return
 	}
 
-	service := services.NewInstanceService(etcdstore.New())
+	service := services.NewInstanceService(s.Cfg, etcdstore.New())
 	i, err := service.CreateOrUpdate(i)
 
 	if err != nil {
@@ -144,7 +142,7 @@ func (s *Server) createInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstance(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
@@ -161,7 +159,7 @@ func (s *Server) getInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstances(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	instances, err := service.AllWithPlaybookID(c.Param("playbookID"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
@@ -172,7 +170,7 @@ func (s *Server) getInstances(c *gin.Context) {
 }
 
 func (s *Server) getStatus(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
@@ -228,8 +226,8 @@ func (s *Server) postCommand(c *gin.Context) {
 		return
 	}
 
-	is := services.NewInstanceService(s.store)
-	ds := NewDeploymentService(s.CfgCommon, etcdstore.New(), s.playbooks, s.manifests)
+	is := services.NewInstanceService(s.Cfg, s.store)
+	ds := services.NewDeploymentService(s.Cfg, etcdstore.New(), s.playbooks, s.manifests)
 
 	slackCommand := services.BuildSlackCommand(form.Text, ds, is, s.playbooks)
 	glog.Infof("Running command: %s", form.Text)
@@ -246,13 +244,13 @@ func (s *Server) postCommand(c *gin.Context) {
 }
 
 func deploy(s *Server, pID string, ID string) (*instance.Instance, error) {
-	is := services.NewInstanceService(s.store)
+	is := services.NewInstanceService(s.Cfg, s.store)
 	i, err := is.Show(pID, ID)
 	if err != nil {
 		return nil, err
 	}
 
-	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
 
 	err = ds.DeployAndNotify(i)
 	if err != nil {
@@ -278,7 +276,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 }
 
 func (s *Server) deleteInstance(c *gin.Context) {
-	is := services.NewInstanceService(s.store)
+	is := services.NewInstanceService(s.Cfg, s.store)
 
 	i, err := is.Show(c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
@@ -287,7 +285,7 @@ func (s *Server) deleteInstance(c *gin.Context) {
 		return
 	}
 
-	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
 
 	if err := ds.DeleteAndNotify(i); err != nil {
 		glog.Errorf("Failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)

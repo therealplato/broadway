@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/store/etcdstore"
 )
 
 // SlackCommand represents a user command that came in from Slack
@@ -24,8 +23,8 @@ type deployCommand struct {
 
 func (c *deployCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.ds.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
@@ -146,8 +145,8 @@ type deleteCommand struct {
 
 func (c *deleteCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.ds.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
@@ -235,7 +234,6 @@ func fmtAge(d0 int64) string {
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
 func BuildSlackCommand(payload string, ds *DeploymentService, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
-	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 	switch terms[0] {
 	case "setvar", "setvars": // setvar foo bar var1=val1 var2=val2
 		return &setvarCommand{args: terms, is: is, playbooks: playbooks}
