@@ -8,13 +8,12 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/stretchr/testify/assert"
 )
 
 var tmpDir string
 
-func Setup() {
+func setup() {
 	var err error
 	tmpDir, err = ioutil.TempDir("", "manifest_test_")
 	if err != nil {
@@ -31,7 +30,7 @@ func Teardown() {
 }
 
 func TestMain(m *testing.M) {
-	Setup()
+	setup()
 	testresult := m.Run()
 	Teardown()
 	os.Exit(testresult)

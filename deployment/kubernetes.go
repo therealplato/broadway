@@ -39,21 +39,22 @@ type TaskStep struct {
 	step Step
 }
 
-// Setup configures deployment with an injected configuration
-func Setup(cfg cfg.Type) {
+// KubernetesDeployment represents a deployment of an instance
+type KubernetesDeployment struct {
+	Playbook  *Playbook
+	Variables map[string]string
+	Manifests map[string]*Manifest
+}
+
+// SetupKubernetes configures kubernetes with an injected configuration
+func SetupKubernetes(cfg cfg.Type) {
+	// kubernetes.go
 	scheme = runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)
 	deserializer = factory.UniversalDeserializer()
 
 	namespace = cfg.K8sNamespace
-}
-
-// KubernetesDeployment represents a deployment of an instance
-type KubernetesDeployment struct {
-	Playbook  *Playbook
-	Variables map[string]string
-	Manifests map[string]*Manifest
 }
 
 // NewKubernetesDeployment creates a new kuberentes deployment

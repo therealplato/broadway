@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 
 	"gopkg.in/yaml.v2"
 )
@@ -42,9 +43,10 @@ type Playbook struct {
 // AllPlaybooks is a map of playbook id's to playbooks
 var AllPlaybooks map[string]*Playbook
 
-func init() {
+// SetupPlaybook configures playbook with an injected configuration
+func SetupPlaybook(cfg cfg.Type) {
 	var err error
-	AllPlaybooks, err = LoadPlaybookFolder(env.PlaybooksPath)
+	AllPlaybooks, err = LoadPlaybookFolder(cfg.PlaybooksPath)
 	if err != nil {
 		glog.Fatal(err)
 	}
