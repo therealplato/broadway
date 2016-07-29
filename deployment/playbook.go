@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
 
 	"gopkg.in/yaml.v2"
 )
@@ -52,7 +51,7 @@ func init() {
 }
 
 // Validate checks for ID, Name, and Tasks on a playbook
-func (p *Playbook) Validate() error {
+func (p *Playbook) Validate(root string) error {
 	if len(p.ID) == 0 {
 		return errors.New("Playbook missing required ID")
 	}
@@ -68,12 +67,12 @@ func (p *Playbook) Validate() error {
 			return fmt.Errorf("Playbook had an invalid message template: \"%s\"", value)
 		}
 	}
-	return p.ValidateTasks()
+	return p.ValidateTasks(root)
 }
 
 // ValidateTasks checks a task for fields Name, and one or both of Manifests and
 // PodManifests
-func (p *Playbook) ValidateTasks() error {
+func (p *Playbook) ValidateTasks(root string) error {
 	for _, task := range p.Tasks {
 		if len(task.Name) == 0 {
 			return errors.New("Task missing required Name")
@@ -81,7 +80,7 @@ func (p *Playbook) ValidateTasks() error {
 		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
 			return errors.New("Task requires at least one manifest or a pod manifest")
 		}
-		if err := task.ManifestsPresent(); err != nil {
+		if err := task.ManifestsPresent(root); err != nil {
 			return err
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/namely/broadway/cfg"
+	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/server"
 	"github.com/namely/broadway/store/etcdstore"
 	"gopkg.in/urfave/cli.v1"
@@ -13,7 +14,8 @@ import (
 var ServerCmd = func(c *cli.Context) error {
 	fmt.Printf("starting server with config...\n%+v", cfg.ServerCfg)
 	s := server.New(etcdstore.New(), cfg.CommonCfg, cfg.ServerCfg)
-	etcdstore.Setup(cfg.CommonCfg) // configure etcd before using
+	etcdstore.Setup(cfg.CommonCfg)  // configure etcd before using
+	deployment.Setup(cfg.CommonCfg) // configure kubernetes deployments before using
 	s.Init()
 	err := s.Run(cfg.ServerCfg.ServerHost)
 	if err != nil {
