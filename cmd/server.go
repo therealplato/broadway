@@ -15,10 +15,9 @@ var ServerCmd = func(c *cli.Context) error {
 	etcdstore.Setup(cfg.GlobalCfg)  // configure etcd before using
 	deployment.Setup(cfg.GlobalCfg) // configure kubernetes deployments before using
 	fmt.Printf("starting server with config...\n%+v", cfg.GlobalCfg)
-	s := server.New(etcdstore.New(), cfg.GlobalCfg)
+	s := server.New(cfg.GlobalCfg, etcdstore.New())
 	s.Init()
-	err := s.Run(cfg.GlobalCfg.ServerHost)
-	if err != nil {
+	if err := s.Run(cfg.GlobalCfg.ServerHost); err != nil {
 		panic(err)
 	}
 	return nil

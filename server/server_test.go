@@ -28,8 +28,6 @@ var testCfg = cfg.Type{
 }
 
 func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
-	// mem := etcdstore.New()
-	// server := New(mem)
 	s.Init()
 	s.Handler().ServeHTTP(w, req)
 }
@@ -72,7 +70,7 @@ func TestInstanceCreateWithValidAttributes(t *testing.T) {
 	rbody := testutils.JSONFromMap(t, i)
 	req, w := testutils.PostRequest(t, "/instances", rbody)
 	req = auth(testCfg, req)
-	server := New(etcdstore.New(), testCfg)
+	server := New(testCfg, etcdstore.New())
 	makeRequest(server, req, w)
 	assert.Equal(t, http.StatusCreated, w.Code, "Response code should be 201")
 }
@@ -91,7 +89,7 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 		rbody := testutils.JSONFromMap(t, i)
 		req, w := testutils.PostRequest(t, "/instances", rbody)
 		req = auth(testCfg, req)
-		server := New(etcdstore.New(), testCfg)
+		server := New(testCfg, etcdstore.New())
 		makeRequest(server, req, w)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code, "Expected POST /instances with wrong attributes to be 400")
@@ -109,7 +107,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 
 	req, w := testutils.GetRequest(t, "/instance/helloplaybook/TestGetInstanceWithValidPath")
 	req = auth(testCfg, req)
-	server := New(store, testCfg)
+	server := New(testCfg, store)
 	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -118,7 +116,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 func TestGetInstanceWithInvalidPath(t *testing.T) {
 	req, w := testutils.GetRequest(t, "/instance/vanished/TestGetInstanceWithInvalidPath")
 	req = auth(testCfg, req)
-	server := New(etcdstore.New(), testCfg)
+	server := New(testCfg, etcdstore.New())
 	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
@@ -136,7 +134,7 @@ func TestGetInstancesWithFullPlaybook(t *testing.T) {
 
 	req, w := testutils.GetRequest(t, "/instances/helloplaybook")
 	req = auth(testCfg, req)
-	server := New(etcdstore.New(), testCfg)
+	server := New(testCfg, etcdstore.New())
 	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Response code should be 200 OK")
@@ -160,7 +158,7 @@ func TestGetStatusFailures(t *testing.T) {
 	for _, i := range invalidRequests {
 		req, w := testutils.GetRequest(t, i.path)
 		req = auth(testCfg, req)
-		server := New(etcdstore.New(), testCfg)
+		server := New(testCfg, etcdstore.New())
 		makeRequest(server, req, w)
 
 		assert.Equal(t, i.errCode, w.Code)
@@ -185,7 +183,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 	}
 	req, w := testutils.GetRequest(t, "/status/helloplaybook/TestGetStatusWithGoodPath")
 	req = auth(testCfg, req)
-	server := New(etcdstore.New(), testCfg)
+	server := New(testCfg, etcdstore.New())
 	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -200,7 +198,7 @@ func TestGetStatusWithGoodPath(t *testing.T) {
 func helperSetupServer(cfg cfg.Type) (*httptest.ResponseRecorder, *Server, http.Handler) {
 	w := httptest.NewRecorder()
 	mem := etcdstore.New()
-	s := New(mem, cfg)
+	s := New(cfg, mem)
 	return w, s, s.Handler()
 }
 
@@ -345,7 +343,7 @@ func TestDeleteExisting(t *testing.T) {
 	)
 
 	req = auth(testCfg, req)
-	e := New(ets, testCfg).Handler()
+	e := New(testCfg, ets).Handler()
 	// _, _, e := helperSetupServer(testCfg)
 	// makeRequest(s, req, w)
 	e.ServeHTTP(w, req)

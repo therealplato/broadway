@@ -52,7 +52,7 @@ func CustomError(message string) ErrorResponse {
 
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
-func New(s store.Store, cfg cfg.Type) *Server {
+func New(cfg cfg.Type, s store.Store) *Server {
 	srvr := &Server{
 		Cfg:        cfg,
 		store:      s,

@@ -10,6 +10,7 @@ import (
 	"github.com/namely/broadway/cfg"
 )
 
+// TestCfg contains sane defaults used by tests
 var TestCfg = cfg.Type{
 	EtcdPath:           "/broadwaytest",
 	ManifestsPath:      "../examples/manifests",

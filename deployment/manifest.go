@@ -2,7 +2,8 @@ package deployment
 
 import (
 	"bytes"
-	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -43,11 +44,30 @@ func NewManifest(id, content string) (*Manifest, error) {
 // Execute executes template with variables
 func (m *Manifest) Execute(vars map[string]string) string {
 	var b bytes.Buffer
-	fmt.Printf("pre-executing %s...", m.ID)
 	err := m.Template.Execute(&b, vars)
 	if err != nil {
 		glog.Errorf("%s template errored, ignoring: %s", m.ID, err.Error())
 		return ""
 	}
 	return b.String()
+}
+
+// ManifestsPresent iterates through the Manifests and PodManifest items on a
+// task, and checks that each represents a file on disk
+func (t Task) ManifestsPresent() error {
+	for _, name := range t.Manifests {
+		filename := name + manifestsExtension
+		path := filepath.Join(playbooksPath, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	if len(t.PodManifest) > 0 {
+		filename := t.PodManifest + manifestsExtension
+		path := filepath.Join(playbooksPath, filename)
+		if _, err := os.Stat(path); err != nil {
+			return err
+		}
+	}
+	return nil
 }

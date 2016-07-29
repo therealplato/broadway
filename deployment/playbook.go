@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"text/template"
 
@@ -139,24 +138,4 @@ func LoadPlaybookFolder(dir string) (map[string]*Playbook, error) {
 		playbooks[parsed.ID] = parsed
 	}
 	return playbooks, nil
-}
-
-// ManifestsPresent iterates through the Manifests and PodManifest items on a
-// task, and checks that each represents a file on disk
-func (t Task) ManifestsPresent() error {
-	for _, name := range t.Manifests {
-		filename := name + manifestsExtension
-		path := filepath.Join(playbooksPath, filename)
-		if _, err := os.Stat(path); err != nil {
-			return err
-		}
-	}
-	if len(t.PodManifest) > 0 {
-		filename := t.PodManifest + manifestsExtension
-		path := filepath.Join(playbooksPath, filename)
-		if _, err := os.Stat(path); err != nil {
-			return err
-		}
-	}
-	return nil
 }
