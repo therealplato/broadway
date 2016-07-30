@@ -5,16 +5,16 @@ import (
 
 	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/server"
-	"github.com/namely/broadway/store"
+	"github.com/namely/broadway/store/etcdstore"
 	"gopkg.in/urfave/cli.v1"
 )
 
 // ServerCmd is executed by cli on `broadway server`
 var ServerCmd = func(c *cli.Context) error {
 	fmt.Printf("starting server with config...\n%+v", cfg.ServerCfg)
-	s := server.New(store.New(), cfg.CommonCfg, cfg.ServerCfg)
+	etcdstore.Setup(cfg.CommonCfg) // configure etcd before using
+	s := server.New(etcdstore.New(), cfg.CommonCfg, cfg.ServerCfg)
 	s.Init()
-	// err := s.Run(env.ServerHost)
 	err := s.Run(cfg.ServerCfg.ServerHost)
 	if err != nil {
 		panic(err)

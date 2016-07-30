@@ -1,4 +1,4 @@
-package env
+package notenv
 
 import (
 	"os"
