@@ -2,7 +2,7 @@ package deployment
 
 import (
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -39,7 +39,9 @@ type TaskStep struct {
 	step Step
 }
 
-func init() {
+// SetupKubernetes configures kubernetes with an injected configuration
+func SetupKubernetes(cfg cfg.Type) {
+	// kubernetes.go
 	scheme = runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)
