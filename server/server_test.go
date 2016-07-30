@@ -327,24 +327,28 @@ func TestDeployMissing(t *testing.T) {
 	assert.Contains(t, errorResponse["error"], "Not Found")
 }
 
-func TestDeleteWhenExistentInstance(t *testing.T) {
+func TestDeleteExisting(t *testing.T) {
+	ets := etcdstore.New()
 	testInstance1 := &instance.Instance{
 		PlaybookID: "helloplaybook",
-		ID:         "TestGetStatusWithGoodPath",
+		ID:         "TestDeleteInstance",
 		Status:     instance.StatusDeployed}
-	is := services.NewInstanceService(etcdstore.New())
+	is := services.NewInstanceService(ets)
 	_, err := is.CreateOrUpdate(testInstance1)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	req, w := testutils.DeleteRequest(
 		t,
 		fmt.Sprintf("/instances/%s/%s", testInstance1.PlaybookID, testInstance1.ID),
 	)
 
 	req = auth(testServerCfg, req)
-	_, s, _ := helperSetupServer(testServerCfg)
-	makeRequest(s, req, w)
+	e := New(ets, testCommonCfg, testServerCfg).Handler()
+	// _, _, e := helperSetupServer(testServerCfg)
+	// makeRequest(s, req, w)
+	e.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
 	assert.Contains(t, w.Body.String(), "Instance successfully deleted")
