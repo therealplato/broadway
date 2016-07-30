@@ -6,7 +6,17 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/namely/broadway/cfg"
 )
+
+// TestCfg contains sane defaults used by tests
+var TestCfg = cfg.Type{
+	EtcdPath:           "/broadwaytest",
+	ManifestsPath:      "../examples/manifests",
+	ManifestsExtension: ".yml",
+	PlaybooksPath:      "../examples/playbooks",
+}
 
 // JSONFromMap creates a json representation from a map
 func JSONFromMap(t *testing.T, data map[string]interface{}) []byte {
