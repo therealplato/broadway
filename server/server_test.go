@@ -345,8 +345,6 @@ func TestDeleteExisting(t *testing.T) {
 
 	req = auth(testCfg, req)
 	e := New(testCfg, ets).Handler()
-	// _, _, e := helperSetupServer(testCfg)
-	// makeRequest(s, req, w)
 	e.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")

@@ -56,7 +56,7 @@ func New(cfg cfg.Type, s store.Store) *Server {
 	srvr := &Server{
 		Cfg:        cfg,
 		store:      s,
-		slackToken: cfg.SlackToken,
+		slackToken: cfg.SlackToken, // TODO: refactor out
 	}
 	srvr.setupHandlers()
 	return srvr
@@ -107,7 +107,7 @@ func (s *Server) genAuthMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		a := c.Request.Header.Get("Authorization")
 		a = strings.TrimPrefix(a, "Bearer ")
-		if len(a) == 0 || a != s.Cfg.AuthBearerToken {
+		if a != s.Cfg.AuthBearerToken {
 			glog.Infof("Auth failure for %s\nExpected: %s Actual: %s\n", c.Request.URL.Path, s.Cfg.AuthBearerToken, a)
 			c.String(http.StatusUnauthorized, "Wrong or Missing Authorization")
 			c.AbortWithStatus(http.StatusUnauthorized)
