@@ -8,24 +8,23 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 )
 
 func TestDeployment(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(env.ManifestsPath).LoadManifestFolder()
+	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
 	if err != nil {
 		panic(err)
 	}
 
-	playbooks, err := deployment.LoadPlaybookFolder(env.PlaybooksPath)
+	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
 	if err != nil {
 		panic(err)
 	}
 
-	service := NewDeploymentService(etcdstore.New(), playbooks, manifests)
+	service := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
 
 	cases := []struct {
 		Name     string
@@ -68,16 +67,16 @@ func TestDeployment(t *testing.T) {
 func TestCustomDeploymentNotification(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(env.ManifestsPath).LoadManifestFolder()
+	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
 	if err != nil {
 		panic(err)
 	}
 
-	playbooks, err := deployment.LoadPlaybookFolder(env.PlaybooksPath)
+	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
 	if err != nil {
 		panic(err)
 	}
-	service := NewDeploymentService(etcdstore.New(), playbooks, manifests)
+	service := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
 
 	i := &instance.Instance{
 		PlaybookID: "messagesplaybook",
