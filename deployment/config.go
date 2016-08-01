@@ -46,7 +46,7 @@ func Config(cfg cfg.Type) (*restclient.Config, error) {
 	config := LocalConfig(cfg)
 	if IsKubernetesEnv(cfg) {
 		var err error
-		config, err = KubernetesConfig()
+		config, err = KubernetesConfig(cfg)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,7 @@ func KubernetesConfig(cfg cfg.Type) (*restclient.Config, error) {
 		return nil, err
 	}
 	return &restclient.Config{
-		Host:        "https://" + env.K8sServiceHost + ":" + env.K8sServicePort,
+		Host:        "https://" + cfg.K8sServiceHost + ":" + cfg.K8sServicePort,
 		BearerToken: string(token),
 		TLSClientConfig: restclient.TLSClientConfig{
 			CAFile: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
@@ -76,11 +76,11 @@ func LocalConfig(cfg cfg.Type) *restclient.Config {
 		cfg.K8sKeyFile != "" && cfg.K8sCAFile != "" {
 
 		return &restclient.Config{
-			Host: env.K8sServiceHost,
+			Host: cfg.K8sServiceHost,
 			TLSClientConfig: restclient.TLSClientConfig{
-				CertFile: env.K8sCertFile,
-				KeyFile:  env.K8sKeyFile,
-				CAFile:   env.K8sCAFile,
+				CertFile: cfg.K8sCertFile,
+				KeyFile:  cfg.K8sKeyFile,
+				CAFile:   cfg.K8sCAFile,
 			},
 		}
 	}

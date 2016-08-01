@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/coreos/etcd/store"
 	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
@@ -98,9 +97,9 @@ func TestCreateInstanceWithInvalidAttributes(t *testing.T) {
 }
 
 func TestGetInstanceWithValidPath(t *testing.T) {
-	st := store.New()
+	st := etcdstore.New()
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestGetInstanceWithValidPath"}
-	service := services.NewInstanceService(testutils.TestCfg, store)
+	service := services.NewInstanceService(testutils.TestCfg, st)
 	_, err := service.CreateOrUpdate(i)
 	if err != nil {
 		t.Log(err.Error())
@@ -108,7 +107,7 @@ func TestGetInstanceWithValidPath(t *testing.T) {
 
 	req, w := testutils.GetRequest(t, "/instance/helloplaybook/TestGetInstanceWithValidPath")
 	req = auth(testCfg, req)
-	server := New(testCfg, store)
+	server := New(testCfg, st)
 	makeRequest(server, req, w)
 
 	assert.Equal(t, http.StatusOK, w.Code)

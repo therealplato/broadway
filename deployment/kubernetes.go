@@ -46,7 +46,7 @@ func SetupKubernetes(cfg cfg.Type) {
 	factory := serializer.NewCodecFactory(scheme)
 	deserializer = factory.UniversalDeserializer()
 
-	namespace = env.K8sNamespace
+	namespace = cfg.K8sNamespace
 }
 
 // KubernetesDeployment represents a deployment of an instance
