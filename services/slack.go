@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
+	"github.com/namely/broadway/instance"
+	"github.com/namely/broadway/store/etcdstore"
 )
 
 // SlackCommand represents a user command that came in from Slack
@@ -19,6 +22,21 @@ type deployCommand struct {
 	ID  string
 	is  *InstanceService
 	ds  *DeploymentService
+}
+
+type lockCommand struct {
+	pID string
+	ID  string
+	Cfg cfg.Type
+}
+
+func (c *lockCommand) Execute() (string, error) {
+	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
+	i, err := instance.Lock(etcdstore.New(), path)
+	if err != nil {
+		return "", err
+	}
+	return i.String(), nil
 }
 
 func (c *deployCommand) Execute() (string, error) {
@@ -34,6 +52,10 @@ func (c *deployCommand) Execute() (string, error) {
 		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", c.pID, c.ID)
 		glog.Error(msg)
 		return msg, err
+	}
+
+	if i.Status == instance.StatusLocked {
+		return i.String(), nil
 	}
 
 	go func() {
@@ -158,6 +180,10 @@ func (c *deleteCommand) Execute() (string, error) {
 		return msg, err
 	}
 
+	if i.Status == instance.StatusLocked {
+		return i.String(), nil
+	}
+
 	go func() {
 		glog.Infof("Asynchronously deleting %s/%s...", i.PlaybookID, i.ID)
 
@@ -232,7 +258,7 @@ func fmtAge(d0 int64) string {
 }
 
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
-func BuildSlackCommand(payload string, ds *DeploymentService, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
+func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
 	switch terms[0] {
 	case "setvar", "setvars": // setvar foo bar var1=val1 var2=val2
@@ -257,6 +283,11 @@ func BuildSlackCommand(payload string, ds *DeploymentService, is *InstanceServic
 			return &helpCommand{}
 		}
 		return &infoCommand{pID: terms[1], ID: terms[2], is: is}
+	case "lock":
+		if len(terms) < 3 {
+			return &helpCommand{}
+		}
+		return &lockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
 	default:
 		return &helpCommand{}
 	}

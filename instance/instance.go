@@ -49,6 +49,10 @@ type Instance struct {
 	Path
 }
 
+func (i *Instance) String() string {
+	return fmt.Sprintf("%s is currently %s", i.Path.String(), i.Status)
+}
+
 // Status for an instance
 type Status string
 
@@ -63,6 +67,8 @@ const (
 	StatusDeleting = "deleting"
 	// StatusError represents an instance that broke
 	StatusError = "error"
+	// StatusLocked represents an instance is locked
+	StatusLocked = "locked"
 )
 
 // JSON instance representation
@@ -115,6 +121,20 @@ func Save(store store.Store, instance *Instance) error {
 // Delete an instance from the store
 func Delete(store store.Store, path Path) error {
 	return store.Delete(path.String())
+}
+
+// Lock an instance
+func Lock(store store.Store, path Path) (*Instance, error) {
+	instance, err := FindByPath(store, path)
+	if err != nil {
+		return nil, err
+	}
+	instance.Status = StatusLocked
+	err = Save(store, instance)
+	if err != nil {
+		return nil, err
+	}
+	return instance, nil
 }
 
 func fromJSON(jsonData string) (*Instance, error) {

@@ -229,7 +229,7 @@ func (s *Server) postCommand(c *gin.Context) {
 	is := services.NewInstanceService(s.Cfg, s.store)
 	ds := services.NewDeploymentService(s.Cfg, etcdstore.New(), s.playbooks, s.manifests)
 
-	slackCommand := services.BuildSlackCommand(form.Text, ds, is, s.playbooks)
+	slackCommand := services.BuildSlackCommand(s.Cfg, form.Text, ds, is, s.playbooks)
 	glog.Infof("Running command: %s", form.Text)
 	msg, err := slackCommand.Execute()
 	if err != nil {
