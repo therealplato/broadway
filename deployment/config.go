@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
 // IsKubernetesEnv returns true if necessary Kubernetes environment variables
 // and files are available
-func IsKubernetesEnv() bool {
+func IsKubernetesEnv(cfg cfg.Type) bool {
 	files := []string{
 		"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
 		"/var/run/secrets/kubernetes.io/serviceaccount/token",
@@ -27,8 +27,8 @@ func IsKubernetesEnv() bool {
 	}
 
 	envs := []string{
-		env.K8sServicePort,
-		env.K8sServiceHost,
+		cfg.K8sServicePort,
+		cfg.K8sServiceHost,
 	}
 
 	for _, env := range envs {
@@ -42,9 +42,9 @@ func IsKubernetesEnv() bool {
 }
 
 // Config returns a kubernetes configuration
-func Config() (*restclient.Config, error) {
-	config := LocalConfig()
-	if IsKubernetesEnv() {
+func Config(cfg cfg.Type) (*restclient.Config, error) {
+	config := LocalConfig(cfg)
+	if IsKubernetesEnv(cfg) {
 		var err error
 		config, err = KubernetesConfig()
 		if err != nil {
@@ -56,7 +56,7 @@ func Config() (*restclient.Config, error) {
 }
 
 // KubernetesConfig returns Kubernetes configuration for native Kubernetes environment
-func KubernetesConfig() (*restclient.Config, error) {
+func KubernetesConfig(cfg cfg.Type) (*restclient.Config, error) {
 	token, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return nil, err
@@ -71,9 +71,9 @@ func KubernetesConfig() (*restclient.Config, error) {
 }
 
 // LocalConfig returns a configuration for local development
-func LocalConfig() *restclient.Config {
-	if env.K8sServiceHost != "" && env.K8sCertFile != "" &&
-		env.K8sKeyFile != "" && env.K8sCAFile != "" {
+func LocalConfig(cfg cfg.Type) *restclient.Config {
+	if cfg.K8sServiceHost != "" && cfg.K8sCertFile != "" &&
+		cfg.K8sKeyFile != "" && cfg.K8sCAFile != "" {
 
 		return &restclient.Config{
 			Host: env.K8sServiceHost,
