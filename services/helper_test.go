@@ -9,6 +9,7 @@ import (
 	"github.com/namely/broadway/testutils"
 )
 
+// ServicesTestCfg is a config created for services tests that can be safely modified
 var ServicesTestCfg = testutils.TestCfg
 
 type notificationTestHelper struct {
