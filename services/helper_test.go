@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/testutils"
 )
+
+var ServicesTestCfg = testutils.TestCfg
 
 type notificationTestHelper struct {
 	requestBody string
@@ -26,7 +28,7 @@ func newNotificationTestHelper() *notificationTestHelper {
 
 		n.requestBody = string(contents)
 	}))
-	env.SlackWebhook = n.ts.URL
+	ServicesTestCfg.SlackWebhook = n.ts.URL
 	return n
 }
 

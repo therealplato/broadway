@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/notification"
@@ -15,14 +16,16 @@ import (
 
 // DeploymentService implements the Broadway logic for deployments
 type DeploymentService struct {
+	Cfg       cfg.Type
 	store     store.Store
 	playbooks map[string]*deployment.Playbook
 	manifests map[string]*deployment.Manifest
 }
 
 // NewDeploymentService creates a new DeploymentService
-func NewDeploymentService(s store.Store, ps map[string]*deployment.Playbook, ms map[string]*deployment.Manifest) *DeploymentService {
+func NewDeploymentService(cfg cfg.Type, s store.Store, ps map[string]*deployment.Playbook, ms map[string]*deployment.Manifest) *DeploymentService {
 	return &DeploymentService{
+		Cfg:       cfg,
 		store:     s,
 		playbooks: ps,
 		manifests: ms,
@@ -49,33 +52,33 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Playbook missing", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
-	config, err := deployment.Config()
+	config, err := deployment.Config(d.Cfg)
 	if err != nil {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Internal error", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return err
 	}
 
 	deployer, err := deployment.NewKubernetesDeployment(config, playbook, varMap(i), d.manifests)
 	if err != nil {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Internal error", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return err
 	}
 
 	if i.Status == instance.StatusDeploying {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Instance is being deployed already.", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
 	if i.Status == instance.StatusDeleting {
 		msg := fmt.Sprintf("Can't deploy %s/%s: Instance is being deleted already.", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
@@ -98,7 +101,7 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 		// Report the problem:
 		msg := fmt.Sprintf("Deploying %s/%s failed: %s\n", i.PlaybookID, i.ID, errD.Error())
 		glog.Error(msg)
-		m := notification.NewMessage(false, msg)
+		m := notification.NewMessage(d.Cfg, false, msg)
 		err = m.Send()
 		if err != nil {
 			return err
@@ -108,7 +111,7 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 	}
 
 	// It worked, notify success:
-	err = sendDeploymentNotification(i)
+	err = sendDeploymentNotification(d.Cfg, i)
 	if err != nil {
 		glog.Error(err)
 	}
@@ -123,7 +126,7 @@ func (d *DeploymentService) DeployAndNotify(i *instance.Instance) error {
 	return nil
 }
 
-func sendDeploymentNotification(i *instance.Instance) error {
+func sendDeploymentNotification(cfg cfg.Type, i *instance.Instance) error {
 	pb, ok := deployment.AllPlaybooks[i.PlaybookID]
 	if !ok {
 		return fmt.Errorf("Failed to lookup playbook for instance %+v", *i)
@@ -149,6 +152,7 @@ func sendDeploymentNotification(i *instance.Instance) error {
 
 	m := &notification.Message{
 		Attachments: atts,
+		Cfg:         cfg,
 	}
 
 	return m.Send()
@@ -159,20 +163,20 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
 		msg := fmt.Sprintf("Can't delete %s/%s: Playbook missing", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
 	if i.Status == instance.StatusDeleting {
 		msg := fmt.Sprintf("Can't delete %s/%s: Instance is being deleted already.", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
-	config, err := deployment.Config()
+	config, err := deployment.Config(d.Cfg)
 	if err != nil {
 		msg := fmt.Sprintf("Can't delete %s/%s: Internal error", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return err
 	}
 
@@ -186,7 +190,7 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 	deployer, err := deployment.NewKubernetesDeployment(config, playbook, varMap(i), d.manifests)
 	if err != nil {
 		msg := fmt.Sprintf("Can't delete %s/%s: Internal error", i.PlaybookID, i.ID)
-		notify(i, msg)
+		notify(d.Cfg, i, msg)
 		return err
 	}
 
@@ -203,7 +207,7 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 		// Report the problem:
 		msg := fmt.Sprintf("Deploying %s/%s failed: %s\n", i.PlaybookID, i.ID, errD.Error())
 		glog.Error(msg)
-		m := notification.NewMessage(false, msg)
+		m := notification.NewMessage(d.Cfg, false, msg)
 		err = m.Send()
 		if err != nil {
 			return err
@@ -216,8 +220,8 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 
 }
 
-func notify(i *instance.Instance, msg string) {
-	m := notification.NewMessage(false, msg)
+func notify(cfg cfg.Type, i *instance.Instance, msg string) {
+	m := notification.NewMessage(cfg, false, msg)
 	err := m.Send()
 	if err != nil {
 		glog.Warningf("Failed to send notification from DeploymentService:\n%+v\n", m)

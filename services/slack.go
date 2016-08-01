@@ -7,8 +7,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
-	"github.com/namely/broadway/store/etcdstore"
 )
 
 // SlackCommand represents a user command that came in from Slack
@@ -20,17 +18,16 @@ type deployCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	ds  *DeploymentService
 }
 
 func (c *deployCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.ds.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
-
-	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
@@ -41,7 +38,7 @@ func (c *deployCommand) Execute() (string, error) {
 
 	go func() {
 		glog.Infof("Asynchronously deploying %s/%s...", i.PlaybookID, i.ID)
-		err := ds.DeployAndNotify(i)
+		err := c.ds.DeployAndNotify(i)
 		if err != nil {
 			glog.Errorf("Slack command failed to deploy instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
@@ -143,17 +140,16 @@ type deleteCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	ds  *DeploymentService
 }
 
 func (c *deleteCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.ds.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
-
-	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
@@ -165,7 +161,7 @@ func (c *deleteCommand) Execute() (string, error) {
 	go func() {
 		glog.Infof("Asynchronously deleting %s/%s...", i.PlaybookID, i.ID)
 
-		if err := ds.DeleteAndNotify(i); err != nil {
+		if err := c.ds.DeleteAndNotify(i); err != nil {
 			glog.Errorf("Slack command failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
 		}
@@ -236,7 +232,7 @@ func fmtAge(d0 int64) string {
 }
 
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
-func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
+func BuildSlackCommand(payload string, ds *DeploymentService, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
 	switch terms[0] {
 	case "setvar", "setvars": // setvar foo bar var1=val1 var2=val2
@@ -249,6 +245,7 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 			pID: terms[1],
 			ID:  terms[2],
 			is:  is,
+			ds:  ds,
 		}
 	case "delete", "destroy":
 		if len(terms) < 3 {
