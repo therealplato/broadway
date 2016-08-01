@@ -41,7 +41,6 @@ type TaskStep struct {
 
 // SetupKubernetes configures kubernetes with an injected configuration
 func SetupKubernetes(cfg cfg.Type) {
-	// kubernetes.go
 	scheme = runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)
