@@ -27,8 +27,8 @@ func IsKubernetesEnv(cfg cfg.Type) bool {
 	}
 
 	envs := []string{
-		env.K8sServicePort,
-		env.K8sServiceHost,
+		cfg.K8sServicePort,
+		cfg.K8sServiceHost,
 	}
 
 	for _, env := range envs {
