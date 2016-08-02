@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/namely/broadway/cfg"
+	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/services"
 	"github.com/namely/broadway/store/etcdstore"
@@ -21,13 +22,19 @@ import (
 
 var testToken = "BroadwayTestToken"
 var testCfg = cfg.Type{
-	AuthBearerToken: "testtoken",
-	SlackToken:      testToken,
-	ManifestsPath:   "../examples/manifests",
-	PlaybooksPath:   "../examples/playbooks",
+	AuthBearerToken:    "testtoken",
+	SlackToken:         testToken,
+	ManifestsPath:      "../examples/manifests",
+	ManifestsExtension: ".yml",
+	PlaybooksPath:      "../examples/playbooks",
+}
+
+func init() {
+	etcdstore.Setup(testCfg)
 }
 
 func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
+	deployment.Setup(testCfg)
 	s.Init()
 	s.Handler().ServeHTTP(w, req)
 }
