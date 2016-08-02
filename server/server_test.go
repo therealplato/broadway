@@ -27,14 +27,16 @@ var testCfg = cfg.Type{
 	ManifestsPath:      "../examples/manifests",
 	ManifestsExtension: ".yml",
 	PlaybooksPath:      "../examples/playbooks",
+	EtcdEndpoints:      "http://localhost:4001",
+	EtcdPath:           "/broadwaytest",
 }
 
 func init() {
+	deployment.Setup(testCfg)
 	etcdstore.Setup(testCfg)
 }
 
 func makeRequest(s *Server, req *http.Request, w *httptest.ResponseRecorder) {
-	deployment.Setup(testCfg)
 	s.Init()
 	s.Handler().ServeHTTP(w, req)
 }
@@ -294,11 +296,13 @@ func TestSlackCommandDelete(t *testing.T) {
 	req.PostForm = form
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "forserver"}
-	is := services.NewInstanceService(testutils.TestCfg, etcdstore.New())
+	is := services.NewInstanceService(testCfg, etcdstore.New())
 	_, err := is.CreateOrUpdate(i)
 	if err != nil {
 		t.Log(err)
 	}
+
+	fmt.Println("")
 	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected delete slack command to be 200")
 }

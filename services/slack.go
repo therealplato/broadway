@@ -167,6 +167,9 @@ type deleteCommand struct {
 
 func (c *deleteCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
+	fmt.Println(c)
+	fmt.Println(c.ds)
+	fmt.Println(c.ds.Cfg)
 	ms := NewManifestService(c.ds.Cfg)
 	_, err := ms.LoadManifestFolder()
 	if err != nil {
