@@ -54,7 +54,7 @@ func (c *deployCommand) Execute() (string, error) {
 		return msg, err
 	}
 
-	if i.Status == instance.StatusLocked {
+	if i.Lock {
 		return i.String(), nil
 	}
 
@@ -181,7 +181,7 @@ func (c *deleteCommand) Execute() (string, error) {
 		return msg, err
 	}
 
-	if i.Status == instance.StatusLocked {
+	if i.Lock {
 		return i.String(), nil
 	}
 

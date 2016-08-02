@@ -33,7 +33,7 @@ func TestDeployExecute(t *testing.T) {
 		{
 			"When the instance is locked",
 			"deploy helloplaybook locked",
-			&instance.Instance{PlaybookID: "helloplaybook", ID: "locked", Status: instance.StatusLocked},
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "locked", Status: instance.StatusDeployed, Lock: true},
 			map[string]*deployment.Playbook{"helloplaybook": {ID: "helloplaybook"}},
 			"/broadwaytest/instances/helloplaybook/locked is currently locked",
 			nil,
@@ -210,7 +210,7 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			"When instance is locked",
-			&instance.Instance{PlaybookID: "helloplaybook", ID: "lockme", Status: instance.StatusLocked},
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "lockme", Status: instance.StatusDeployed, Lock: true},
 			"destroy helloplaybook lockme",
 			"/broadwaytest/instances/helloplaybook/lockme is currently locked",
 			nil,
@@ -350,12 +350,12 @@ func TestLockExecute(t *testing.T) {
 			&instance.Instance{
 
 				PlaybookID: "helloplaybook",
-				ID:         "locktest",
+				ID:         "lockmetest",
 				Status:     instance.StatusDeployed,
 				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
 			},
-			"lock helloplaybook locktest",
-			"/broadwaytest/instances/helloplaybook/locktest is currently locked",
+			"lock helloplaybook lockmetest",
+			"/broadwaytest/instances/helloplaybook/lockmetest is currently locked",
 			nil,
 		},
 	}

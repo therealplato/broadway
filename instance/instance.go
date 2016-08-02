@@ -45,12 +45,17 @@ type Instance struct {
 	ID         string            `json:"id"`
 	Created    int64             `json:"created_time"`
 	Vars       map[string]string `json:"vars"`
+	Lock       bool              `json:"lock"`
 	Status     `json:"status"`
 	Path
 }
 
 func (i *Instance) String() string {
-	return fmt.Sprintf("%s is currently %s", i.Path.String(), i.Status)
+	locked := "unlocked"
+	if i.Lock {
+		locked = "locked"
+	}
+	return fmt.Sprintf("%s is currently %s", i.Path.String(), locked)
 }
 
 // Status for an instance
@@ -67,8 +72,6 @@ const (
 	StatusDeleting = "deleting"
 	// StatusError represents an instance that broke
 	StatusError = "error"
-	// StatusLocked represents an instance is locked
-	StatusLocked = "locked"
 )
 
 // JSON instance representation
@@ -129,7 +132,7 @@ func Lock(store store.Store, path Path) (*Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	instance.Status = StatusLocked
+	instance.Lock = true
 	err = Save(store, instance)
 	if err != nil {
 		return nil, err

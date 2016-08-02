@@ -182,7 +182,7 @@ func TestLock(t *testing.T) {
 			Scenario: "When an instance exist",
 			Store: &store.FakeStore{
 				MockValue: func(path string) string {
-					return `{"playbook_id":"test", "id": "id", "status": "deployed"}`
+					return `{"playbook_id":"test", "id": "id", "status": "deployed", "lock": false}`
 				},
 				MockSetValue: func(string, string) error {
 					return nil
@@ -190,7 +190,7 @@ func TestLock(t *testing.T) {
 			},
 			Path:             Path{"rootPath", "test", "id"},
 			ExpectedError:    nil,
-			ExpectedInstance: &Instance{PlaybookID: "test", ID: "id", Status: StatusLocked},
+			ExpectedInstance: &Instance{PlaybookID: "test", ID: "id", Status: StatusDeployed, Lock: true},
 		},
 		{
 			Scenario: "When an instance does not exist",
