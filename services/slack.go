@@ -17,11 +17,19 @@ type SlackCommand interface {
 	Execute() (string, error)
 }
 
-type deployCommand struct {
+type unlockCommand struct {
 	pID string
 	ID  string
-	is  *InstanceService
-	ds  *DeploymentService
+	Cfg cfg.Type
+}
+
+func (c *unlockCommand) Execute() (string, error) {
+	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
+	i, err := instance.Unlock(etcdstore.New(), path)
+	if err != nil {
+		return "", err
+	}
+	return i.String(), nil
 }
 
 type lockCommand struct {
@@ -39,6 +47,12 @@ func (c *lockCommand) Execute() (string, error) {
 	return i.String(), nil
 }
 
+type deployCommand struct {
+	pID string
+	ID  string
+	is  *InstanceService
+}
+
 func (c *deployCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
 	ms := NewManifestService(c.ds.Cfg)
@@ -54,7 +68,7 @@ func (c *deployCommand) Execute() (string, error) {
 		return msg, err
 	}
 
-	if i.Status == instance.StatusLocked {
+	if i.Lock {
 		return i.String(), nil
 	}
 
@@ -183,7 +197,7 @@ func (c *deleteCommand) Execute() (string, error) {
 		return msg, err
 	}
 
-	if i.Status == instance.StatusLocked {
+	if i.Lock {
 		return i.String(), nil
 	}
 
@@ -291,6 +305,11 @@ func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *
 			return &helpCommand{}
 		}
 		return &lockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
+	case "unlock":
+		if len(terms) < 3 {
+			return &helpCommand{}
+		}
+		return &unlockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
 	default:
 		return &helpCommand{}
 	}

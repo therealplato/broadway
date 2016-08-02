@@ -53,7 +53,7 @@ func TestDeployExecute(t *testing.T) {
 		{
 			"When the instance is locked",
 			"deploy helloplaybook locked",
-			&instance.Instance{PlaybookID: "helloplaybook", ID: "locked", Status: instance.StatusLocked},
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "locked", Status: instance.StatusDeployed, Lock: true},
 			map[string]*deployment.Playbook{"helloplaybook": {ID: "helloplaybook"}},
 			"/broadwaytest/instances/helloplaybook/locked is currently locked",
 			nil,
@@ -231,7 +231,7 @@ func TestDelete(t *testing.T) {
 		},
 		{
 			"When instance is locked",
-			&instance.Instance{PlaybookID: "helloplaybook", ID: "lockme", Status: instance.StatusLocked},
+			&instance.Instance{PlaybookID: "helloplaybook", ID: "lockme", Status: instance.StatusDeployed, Lock: true},
 			"destroy helloplaybook lockme",
 			"/broadwaytest/instances/helloplaybook/lockme is currently locked",
 			nil,
@@ -378,12 +378,57 @@ func TestLockExecute(t *testing.T) {
 			&instance.Instance{
 
 				PlaybookID: "helloplaybook",
-				ID:         "locktest",
+				ID:         "lockmetest",
 				Status:     instance.StatusDeployed,
+				Lock:       false,
 				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
 			},
-			"lock helloplaybook locktest",
-			"/broadwaytest/instances/helloplaybook/locktest is currently locked",
+			"lock helloplaybook lockmetest",
+			"/broadwaytest/instances/helloplaybook/lockmetest is currently locked",
+			nil,
+		},
+	}
+
+	is := NewInstanceService(etcdstore.New())
+	for _, testcase := range testcases {
+		_, err := is.CreateOrUpdate(testcase.Instance)
+		if err != nil {
+			t.Log(err)
+		}
+		command := BuildSlackCommand(
+			testcase.Args,
+			is,
+			map[string]*deployment.Playbook{
+				"helloplaybook": {ID: "showinfo"},
+			},
+		)
+		// CreateOrUpdate always resets instance.Created so we can't mock it:
+		msg, err := command.Execute()
+		assert.Equal(t, testcase.ExpectedErr, err, testcase.Scenario)
+		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
+	}
+}
+
+func TestUnLockExecute(t *testing.T) {
+	testcases := []struct {
+		Scenario    string
+		Instance    *instance.Instance
+		Args        string
+		ExpectedMsg string
+		ExpectedErr error
+	}{
+		{
+			"When passing unlock command to an instance",
+			&instance.Instance{
+
+				PlaybookID: "helloplaybook",
+				ID:         "locktest",
+				Status:     instance.StatusDeployed,
+				Lock:       true,
+				Vars:       map[string]string{"word": "phlegmatic", "bird": "albatross"},
+			},
+			"unlock helloplaybook locktest",
+			"/broadwaytest/instances/helloplaybook/locktest is currently unlocked",
 			nil,
 		},
 	}
@@ -405,7 +450,7 @@ func TestLockExecute(t *testing.T) {
 		)
 		// CreateOrUpdate always resets instance.Created so we can't mock it:
 		msg, err := command.Execute()
-		assert.IsType(t, testcase.ExpectedErr, err, testcase.Scenario)
+		assert.Equal(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
 	}
 }
