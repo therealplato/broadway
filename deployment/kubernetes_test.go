@@ -11,8 +11,7 @@ import (
 
 func init() {
 	client = &fake.FakeCore{&core.Fake{}}
-	SetupKubernetes(testutils.TestCfg)
-	SetupPlaybook(testutils.TestCfg)
+	Setup(testutils.TestCfg)
 }
 
 func TestDeploy(t *testing.T) {

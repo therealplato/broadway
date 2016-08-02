@@ -2,14 +2,22 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/namely/broadway/store/etcdstore"
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 )
+
+func init() {
+	fmt.Println("82481234891238429318491238492138498231984912384912384")
+	fmt.Printf("%+v\n", ServicesTestCfg)
+	deployment.Setup(testutils.TestCfg)
+}
 
 func TestDeployment(t *testing.T) {
 	nt := newNotificationTestHelper()
@@ -20,6 +28,7 @@ func TestDeployment(t *testing.T) {
 	}
 
 	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
+	fmt.Printf("%+v\n", playbooks)
 	if err != nil {
 		panic(err)
 	}

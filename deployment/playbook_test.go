@@ -79,7 +79,7 @@ var testCfg = cfg.Type{
 }
 
 func SetupTestFixtures() {
-	SetupPlaybook(testCfg)
+	Setup(testCfg)
 	// Find project root:
 	cwd, err := os.Getwd()
 	if err != nil {
