@@ -12,9 +12,12 @@ import (
 
 // TestCfg contains sane defaults used by tests
 var TestCfg = cfg.Type{
+	AuthBearerToken:    "testtoken",
+	SlackToken:         "BroadwayTestToken",
 	EtcdPath:           "/broadwaytest",
-	ManifestsPath:      "../examples/manifests",
+	EtcdEndpoints:      "http://localhost:4001",
 	ManifestsExtension: ".yml",
+	ManifestsPath:      "../examples/manifests",
 	PlaybooksPath:      "../examples/playbooks",
 }
 

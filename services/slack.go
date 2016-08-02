@@ -51,11 +51,13 @@ type deployCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	ds  *DeploymentService
+	Cfg cfg.Type
 }
 
 func (c *deployCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(c.ds.Cfg)
+	ms := NewManifestService(c.Cfg)
 	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
@@ -289,6 +291,7 @@ func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *
 			ID:  terms[2],
 			is:  is,
 			ds:  ds,
+			Cfg: cfg,
 		}
 	case "delete", "destroy":
 		if len(terms) < 3 {
