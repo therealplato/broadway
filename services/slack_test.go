@@ -388,7 +388,7 @@ func TestLockExecute(t *testing.T) {
 		},
 	}
 
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
@@ -397,6 +397,7 @@ func TestLockExecute(t *testing.T) {
 		command := BuildSlackCommand(
 			testutils.TestCfg,
 			testcase.Args,
+			nil,
 			is,
 			map[string]*deployment.Playbook{
 				"helloplaybook": {ID: "showinfo"},

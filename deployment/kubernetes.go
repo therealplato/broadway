@@ -1,6 +1,8 @@
 package deployment
 
 import (
+	"fmt"
+
 	"github.com/golang/glog"
 	"github.com/namely/broadway/cfg"
 
@@ -72,7 +74,9 @@ func NewKubernetesDeployment(config *restclient.Config, playbook *Playbook, vari
 
 // Deploy executes the deployment
 func (d *KubernetesDeployment) Deploy() error {
+	glog.Info("d.steps():")
 	tasksteps, err := d.steps()
+	glog.Info("d.steps() done")
 	if err != nil {
 		return err
 	}
@@ -111,21 +115,30 @@ func (d *KubernetesDeployment) Destroy() error {
 func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
 	var steps = []TaskStep{}
 	for _, task := range d.Playbook.Tasks {
+		fmt.Printf("task: %+v\n", task)
 		if task.PodManifest != "" {
 			m := d.Manifests[task.PodManifest]
+			fmt.Printf("steps manifest: %+v\n", m)
 			rendered := m.Execute(d.Variables)
+			fmt.Println("steps rendered:", rendered)
 			object, err := deserialize(rendered)
+			fmt.Println("deserialized")
 			if err != nil {
 				glog.Warningf("Failed to parse pod manifest %s - %s", task.Name, task.PodManifest)
 				return steps, err
 			}
 			step := NewPodManifestStep(object)
+			glog.Info("step created")
 			steps = append(steps, TaskStep{&task, step})
 		} else {
 			for _, name := range task.Manifests {
+				fmt.Println("name: ", name)
 				m := d.Manifests[name]
+				fmt.Printf("manifest: %+v", m)
 				rendered := m.Execute(d.Variables)
+				fmt.Printf("rendered: %+v", rendered)
 				object, err := deserialize(rendered)
+				fmt.Println("post-deserialize")
 				if err != nil {
 					glog.Warningf("Failed to parse manifest %s - %s", task.Name, name)
 					return steps, err
@@ -139,7 +152,9 @@ func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
 }
 
 func deserialize(manifest string) (runtime.Object, error) {
+	fmt.Println("decoding:", manifest)
 	object, _, err := deserializer.Decode([]byte(manifest), &groupVersionKind, nil)
+	fmt.Println("decoded")
 	if err != nil {
 		return nil, err
 	}
