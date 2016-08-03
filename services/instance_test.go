@@ -17,8 +17,7 @@ func cleanup() {
 func TestCreateInstanceFromMissingPlaybook(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := etcdstore.New()
-	is := NewInstanceService(testutils.TestCfg, store)
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "vanishing-pb", ID: "gone"}
 	_, err := is.CreateOrUpdate(i)
@@ -160,7 +159,7 @@ func TestAllWithPlaybookID(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestAllWithPlaybookID"}
 	_, err := is.CreateOrUpdate(i)
@@ -178,7 +177,7 @@ func TestUpdate(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	instanceService := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	instanceService := NewInstanceService(ServicesTestCfg, etcdstore.New())
 	testcases := []struct {
 		Scenario           string
 		Instance           *instance.Instance
@@ -216,7 +215,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "new"}
 

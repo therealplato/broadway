@@ -14,6 +14,7 @@ import (
 var TestCfg = cfg.Type{
 	AuthBearerToken:    "testtoken",
 	SlackToken:         "BroadwayTestToken",
+	SlackWebhook:       "",
 	EtcdPath:           "/broadwaytest",
 	EtcdEndpoints:      "http://localhost:4001",
 	K8sNamespace:       "broadway",

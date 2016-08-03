@@ -178,15 +178,13 @@ type deleteCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	Cfg cfg.Type
 	ds  *DeploymentService
 }
 
 func (c *deleteCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	fmt.Println(c)
-	fmt.Println(c.ds)
-	fmt.Println(c.ds.Cfg)
-	ms := NewManifestService(c.ds.Cfg)
+	ms := NewManifestService(c.Cfg)
 	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
@@ -297,7 +295,7 @@ func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
-		return &deleteCommand{pID: terms[1], ID: terms[2], is: is}
+		return &deleteCommand{pID: terms[1], ID: terms[2], is: is, ds: ds, Cfg: cfg}
 	case "info":
 		if len(terms) < 3 {
 			return &helpCommand{}

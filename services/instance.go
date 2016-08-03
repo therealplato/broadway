@@ -134,7 +134,7 @@ func (is *InstanceService) CreateOrUpdate(i *instance.Instance) (*instance.Insta
 		return nil, err
 	}
 
-	err = sendNotification(existing != nil, i)
+	err = sendNotification(is.Cfg, existing != nil, i)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func (is *InstanceService) Delete(i *instance.Instance) error {
 	return instance.Delete(is.store, path)
 }
 
-func sendNotification(update bool, i *instance.Instance) error {
+func sendNotification(cfg cfg.Type, update bool, i *instance.Instance) error {
 	pb, ok := deployment.AllPlaybooks[i.PlaybookID]
 	if !ok {
 		return fmt.Errorf("Failed to lookup playbook for instance %+v", *i)
@@ -215,6 +215,7 @@ func sendNotification(update bool, i *instance.Instance) error {
 
 	m := &notification.Message{
 		Attachments: atts,
+		Cfg:         cfg,
 	}
 
 	return m.Send()
