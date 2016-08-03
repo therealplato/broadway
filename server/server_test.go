@@ -353,8 +353,13 @@ func TestDeleteExisting(t *testing.T) {
 		fmt.Sprintf("/instances/%s/%s", testInstance1.PlaybookID, testInstance1.ID),
 	)
 
-	req = auth(testCfg, req)
-	e := New(testCfg, ets).Handler()
+	fmt.Println("hola")
+	fmt.Printf("%+v\n", deployment.AllPlaybooks)
+
+	req = auth(testutils.TestCfg, req)
+	s := New(testutils.TestCfg, ets)
+	s.Init()
+	e := s.Handler()
 	e.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code, "Expected DELETE /instances to return 200")
