@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/namely/broadway/store/etcdstore"
@@ -14,8 +13,6 @@ import (
 )
 
 func init() {
-	fmt.Println("82481234891238429318491238492138498231984912384912384")
-	fmt.Printf("%+v\n", ServicesTestCfg)
 	etcdstore.Setup(testutils.TestCfg)
 	deployment.Setup(testutils.TestCfg)
 }
@@ -29,7 +26,6 @@ func TestDeployment(t *testing.T) {
 	}
 
 	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
-	fmt.Printf("%+v\n", playbooks)
 	if err != nil {
 		panic(err)
 	}

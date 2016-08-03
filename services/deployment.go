@@ -160,9 +160,6 @@ func sendDeploymentNotification(cfg cfg.Type, i *instance.Instance) error {
 
 // DeleteAndNotify deletes resources created by deployment
 func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
-	fmt.Println("dobrey den")
-	fmt.Printf("%+v\n", deployment.AllPlaybooks)
-	fmt.Printf("%+v\n", d.playbooks)
 	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
 		msg := fmt.Sprintf("Can't delete %s/%s: Playbook missing", i.PlaybookID, i.ID)

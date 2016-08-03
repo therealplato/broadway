@@ -302,7 +302,6 @@ func TestSlackCommandDelete(t *testing.T) {
 		t.Log(err)
 	}
 
-	fmt.Println("")
 	e.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code, "Expected delete slack command to be 200")
 }
@@ -352,9 +351,6 @@ func TestDeleteExisting(t *testing.T) {
 		t,
 		fmt.Sprintf("/instances/%s/%s", testInstance1.PlaybookID, testInstance1.ID),
 	)
-
-	fmt.Println("hola")
-	fmt.Printf("%+v\n", deployment.AllPlaybooks)
 
 	req = auth(testutils.TestCfg, req)
 	s := New(testutils.TestCfg, ets)

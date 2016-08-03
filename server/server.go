@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -214,7 +213,6 @@ type SlackCommand struct {
 }
 
 func (s *Server) postCommand(c *gin.Context) {
-	fmt.Printf("postCommand cfg: %+v", s.Cfg)
 	var form SlackCommand
 	if err := c.BindWith(&form, binding.Form); err != nil {
 		glog.Error(err)
