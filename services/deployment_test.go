@@ -16,6 +16,7 @@ import (
 func init() {
 	fmt.Println("82481234891238429318491238492138498231984912384912384")
 	fmt.Printf("%+v\n", ServicesTestCfg)
+	etcdstore.Setup(testutils.TestCfg)
 	deployment.Setup(testutils.TestCfg)
 }
 
@@ -33,7 +34,7 @@ func TestDeployment(t *testing.T) {
 		panic(err)
 	}
 
-	service := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
+	ds := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
 
 	cases := []struct {
 		Name     string
@@ -67,7 +68,7 @@ func TestDeployment(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		err = service.DeployAndNotify(c.Instance)
+		err = ds.DeployAndNotify(c.Instance)
 		assert.Equal(t, c.Error, err)
 		assert.EqualValues(t, c.Expected, c.Instance.Status)
 	}

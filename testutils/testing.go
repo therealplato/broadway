@@ -16,6 +16,7 @@ var TestCfg = cfg.Type{
 	SlackToken:         "BroadwayTestToken",
 	EtcdPath:           "/broadwaytest",
 	EtcdEndpoints:      "http://localhost:4001",
+	K8sNamespace:       "broadway",
 	ManifestsExtension: ".yml",
 	ManifestsPath:      "../examples/manifests",
 	PlaybooksPath:      "../examples/playbooks",
