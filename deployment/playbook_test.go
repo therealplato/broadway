@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 )
 
 const MockPlaybookContents string = `---
@@ -72,8 +72,14 @@ var MockBadTemplatePlaybookBytes = []byte(MockPlaybookContentsBadTemplate)
 var rootDir string
 var playbookDir string
 var mockPlaybookPath string
+var testCfg = cfg.Type{
+	PlaybooksPath:      "../examples/playbooks",
+	ManifestsPath:      "../examples/manifests",
+	ManifestsExtension: ".yml",
+}
 
 func SetupTestFixtures() {
+	Setup(testCfg)
 	// Find project root:
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -83,7 +89,7 @@ func SetupTestFixtures() {
 
 	// Set path variables:
 	playbookDir = filepath.Join(rootDir, "playbooks")
-	mockPlaybookPath = filepath.Join(env.PlaybooksPath, MockPlaybookFilename)
+	mockPlaybookPath = filepath.Join(testCfg.PlaybooksPath, MockPlaybookFilename)
 
 	// Create folders:
 	err = os.MkdirAll(playbookDir, os.ModePerm)
@@ -273,7 +279,7 @@ func TestValidatePlaybookFailures(t *testing.T) {
 }
 
 func TestLoadPlaybookFolder(t *testing.T) {
-	pbs, err := LoadPlaybookFolder(env.PlaybooksPath)
+	pbs, err := LoadPlaybookFolder(testCfg.PlaybooksPath)
 	if err != nil {
 		t.Errorf("LoadPlaybookFolder failed to load playbooks: %s\n", err)
 	}

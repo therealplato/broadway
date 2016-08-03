@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store/etcdstore"
 )
@@ -20,10 +20,11 @@ type SlackCommand interface {
 type unlockCommand struct {
 	pID string
 	ID  string
+	Cfg cfg.Type
 }
 
 func (c *unlockCommand) Execute() (string, error) {
-	path := instance.Path{env.EtcdPath, c.pID, c.ID}
+	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
 	i, err := instance.Unlock(etcdstore.New(), path)
 	if err != nil {
 		return "", err
@@ -34,10 +35,11 @@ func (c *unlockCommand) Execute() (string, error) {
 type lockCommand struct {
 	pID string
 	ID  string
+	Cfg cfg.Type
 }
 
 func (c *lockCommand) Execute() (string, error) {
-	path := instance.Path{env.EtcdPath, c.pID, c.ID}
+	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
 	i, err := instance.Lock(etcdstore.New(), path)
 	if err != nil {
 		return "", err
@@ -49,17 +51,17 @@ type deployCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	ds  *DeploymentService
+	Cfg cfg.Type
 }
 
 func (c *deployCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
-
-	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
@@ -74,7 +76,7 @@ func (c *deployCommand) Execute() (string, error) {
 
 	go func() {
 		glog.Infof("Asynchronously deploying %s/%s...", i.PlaybookID, i.ID)
-		err := ds.DeployAndNotify(i)
+		err := c.ds.DeployAndNotify(i)
 		if err != nil {
 			glog.Errorf("Slack command failed to deploy instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
@@ -176,17 +178,17 @@ type deleteCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
+	Cfg cfg.Type
+	ds  *DeploymentService
 }
 
 func (c *deleteCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(env.ManifestsPath)
-	AllManifests, err := ms.LoadManifestFolder()
+	ms := NewManifestService(c.Cfg)
+	_, err := ms.LoadManifestFolder()
 	if err != nil {
 		glog.Error(err)
 	}
-
-	ds := NewDeploymentService(etcdstore.New(), deployment.AllPlaybooks, AllManifests)
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
@@ -202,7 +204,7 @@ func (c *deleteCommand) Execute() (string, error) {
 	go func() {
 		glog.Infof("Asynchronously deleting %s/%s...", i.PlaybookID, i.ID)
 
-		if err := ds.DeleteAndNotify(i); err != nil {
+		if err := c.ds.DeleteAndNotify(i); err != nil {
 			glog.Errorf("Slack command failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
 		}
@@ -273,7 +275,7 @@ func fmtAge(d0 int64) string {
 }
 
 // BuildSlackCommand takes a string and some context and creates a SlackCommand
-func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
+func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *InstanceService, playbooks map[string]*deployment.Playbook) SlackCommand {
 	terms := strings.Split(payload, " ")
 	switch terms[0] {
 	case "setvar", "setvars": // setvar foo bar var1=val1 var2=val2
@@ -286,12 +288,14 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 			pID: terms[1],
 			ID:  terms[2],
 			is:  is,
+			ds:  ds,
+			Cfg: cfg,
 		}
 	case "delete", "destroy":
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
-		return &deleteCommand{pID: terms[1], ID: terms[2], is: is}
+		return &deleteCommand{pID: terms[1], ID: terms[2], is: is, ds: ds, Cfg: cfg}
 	case "info":
 		if len(terms) < 3 {
 			return &helpCommand{}
@@ -301,12 +305,12 @@ func BuildSlackCommand(payload string, is *InstanceService, playbooks map[string
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
-		return &lockCommand{pID: terms[1], ID: terms[2]}
+		return &lockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
 	case "unlock":
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
-		return &unlockCommand{pID: terms[1], ID: terms[2]}
+		return &unlockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
 	default:
 		return &helpCommand{}
 	}

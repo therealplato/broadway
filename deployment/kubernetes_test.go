@@ -3,6 +3,7 @@ package deployment
 import (
 	"testing"
 
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/kubernetes/pkg/client/testing/core"
 	"k8s.io/kubernetes/pkg/client/typed/generated/core/v1/fake"
@@ -10,9 +11,11 @@ import (
 
 func init() {
 	client = &fake.FakeCore{&core.Fake{}}
+	Setup(testutils.TestCfg)
 }
 
 func TestDeploy(t *testing.T) {
+	// TODO sideways dependency injection?  make it stop
 	cases := []struct {
 		Name     string
 		Tasks    []Task

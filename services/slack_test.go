@@ -4,16 +4,36 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store/etcdstore"
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 )
 
+var testCfg = cfg.Type{}
+var testPlaybooks map[string]*deployment.Playbook
+var testManifests map[string]*deployment.Manifest
+
+func init() {
+	ms := NewManifestService(testutils.TestCfg)
+	var err error
+	testManifests, err = ms.LoadManifestFolder()
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	testPlaybooks = deployment.AllPlaybooks
+	glog.Infof("Slack Test Playbooks: %+v", testPlaybooks)
+}
+
 func TestDeployExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	defer nt.Close()
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	testcases := []struct {
 		Scenario    string
 		Arguments   string
@@ -45,7 +65,7 @@ func TestDeployExecute(t *testing.T) {
 		if err != nil {
 			t.Log(err)
 		}
-		command := BuildSlackCommand(testcase.Arguments, is, testcase.Playbooks)
+		command := BuildSlackCommand(testutils.TestCfg, testcase.Arguments, ds, is, testcase.Playbooks)
 
 		msg, err := command.Execute()
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
@@ -57,7 +77,8 @@ func TestSetvarExecute(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 
-	is := NewInstanceService(etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	tPlaybooks := map[string]*deployment.Playbook{
 		"helloplaybook": {
 			ID:   "helloplaybook",
@@ -171,7 +192,7 @@ func TestSetvarExecute(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		command := BuildSlackCommand(testcase.Arguments, is, testcase.Playbooks)
+		command := BuildSlackCommand(testutils.TestCfg, testcase.Arguments, ds, is, testcase.Playbooks)
 
 		msg, err := command.Execute()
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
@@ -223,14 +244,17 @@ func TestDelete(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
 			t.Log(err)
 		}
 		command := BuildSlackCommand(
+			testutils.TestCfg,
 			testcase.Args,
+			ds,
 			is,
 			map[string]*deployment.Playbook{
 				"helloplaybook": {ID: "randomapp"},
@@ -265,9 +289,10 @@ func TestHelpExecute(t *testing.T) {
 			nil,
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
-		command := BuildSlackCommand(testcase.Args, is, nil)
+		command := BuildSlackCommand(testutils.TestCfg, testcase.Args, ds, is, nil)
 		msg, err := command.Execute()
 		assert.Equal(t, testcase.ExpectedErr, err, testcase.Scenario)
 		assert.Equal(t, testcase.ExpectedMsg, msg, testcase.Scenario)
@@ -316,14 +341,17 @@ Vars:
 			instance.NotFoundError("instances//"),
 		},
 	}
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
 			t.Log(err)
 		}
 		command := BuildSlackCommand(
+			testutils.TestCfg,
 			testcase.Args,
+			ds,
 			is,
 			map[string]*deployment.Playbook{
 				"helloplaybook": {ID: "showinfo"},
@@ -361,14 +389,17 @@ func TestLockExecute(t *testing.T) {
 		},
 	}
 
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
+	ds := NewDeploymentService(testutils.TestCfg, etcdstore.New(), testPlaybooks, testManifests)
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
 			t.Log(err)
 		}
 		command := BuildSlackCommand(
+			testutils.TestCfg,
 			testcase.Args,
+			ds,
 			is,
 			map[string]*deployment.Playbook{
 				"helloplaybook": {ID: "showinfo"},
@@ -405,14 +436,16 @@ func TestUnLockExecute(t *testing.T) {
 		},
 	}
 
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(testutils.TestCfg, etcdstore.New())
 	for _, testcase := range testcases {
 		_, err := is.CreateOrUpdate(testcase.Instance)
 		if err != nil {
 			t.Log(err)
 		}
 		command := BuildSlackCommand(
+			testutils.TestCfg,
 			testcase.Args,
+			nil,
 			is,
 			map[string]*deployment.Playbook{
 				"helloplaybook": {ID: "showinfo"},

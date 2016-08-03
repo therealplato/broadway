@@ -2,7 +2,7 @@ package deployment
 
 import (
 	"github.com/golang/glog"
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -39,13 +39,14 @@ type TaskStep struct {
 	step Step
 }
 
-func init() {
+// SetupKubernetes configures kubernetes with an injected configuration
+func SetupKubernetes(cfg cfg.Type) {
 	scheme = runtime.NewScheme()
 	v1.AddToScheme(scheme)
 	factory := serializer.NewCodecFactory(scheme)
 	deserializer = factory.UniversalDeserializer()
 
-	namespace = env.K8sNamespace
+	namespace = cfg.K8sNamespace
 }
 
 // KubernetesDeployment represents a deployment of an instance
@@ -77,13 +78,11 @@ func (d *KubernetesDeployment) Deploy() error {
 	}
 
 	for i, taskstep := range tasksteps {
-		glog.Infof("%d. Deploying Task %s...", i, taskstep.task.Name)
 		err := taskstep.step.Deploy()
 		if err != nil {
 			glog.Warning("%d. step failed: %s", i, err.Error())
 			return err
 		}
-		glog.Infof("Done.")
 	}
 
 	return nil

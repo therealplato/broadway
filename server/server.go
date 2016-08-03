@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/notification"
 	"github.com/namely/broadway/services"
@@ -25,6 +25,7 @@ type Server struct {
 	manifests  map[string]*deployment.Manifest
 	deployer   deployment.Deployer
 	engine     *gin.Engine
+	Cfg        cfg.Type
 }
 
 const commandHint string = `/broadway help: This message
@@ -51,10 +52,11 @@ func CustomError(message string) ErrorResponse {
 
 // New instantiates a new Server and binds its handlers. The Server will look
 // for playbooks and instances in store `s`
-func New(s store.Store) *Server {
+func New(cfg cfg.Type, s store.Store) *Server {
 	srvr := &Server{
+		Cfg:        cfg,
 		store:      s,
-		slackToken: env.SlackToken,
+		slackToken: cfg.SlackToken, // TODO: refactor out
 	}
 	srvr.setupHandlers()
 	return srvr
@@ -62,7 +64,7 @@ func New(s store.Store) *Server {
 
 // Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
-	ms := services.NewManifestService(env.ManifestsPath)
+	ms := services.NewManifestService(s.Cfg)
 
 	var err error
 	s.manifests, err = ms.LoadManifestFolder()
@@ -81,7 +83,7 @@ func (s *Server) setupHandlers() {
 	s.engine.POST("/command", s.postCommand)
 	s.engine.GET("/command", s.getCommand)
 	// Protect subsequent routes with middleware:
-	s.engine.Use(authMiddleware)
+	s.engine.Use(s.genAuthMiddleware())
 	s.engine.GET("/", s.home)
 	s.engine.POST("/instances", s.createInstance)
 	s.engine.GET("/instance/:playbookID/:instanceID", s.getInstance)
@@ -101,16 +103,18 @@ func (s *Server) Run(addr ...string) error {
 	return s.engine.Run(addr...)
 }
 
-func authMiddleware(c *gin.Context) {
-	a := c.Request.Header.Get("Authorization")
-	a = strings.TrimPrefix(a, "Bearer ")
-	if len(a) == 0 || a != env.AuthBearerToken {
-		glog.Infof("Auth failure for %s\nExpected: %s Actual: %s\n", c.Request.URL.Path, env.AuthBearerToken, a)
-		c.String(http.StatusUnauthorized, "Wrong or Missing Authorization")
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
+func (s *Server) genAuthMiddleware() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		a := c.Request.Header.Get("Authorization")
+		a = strings.TrimPrefix(a, "Bearer ")
+		if a != s.Cfg.AuthBearerToken {
+			glog.Infof("Auth failure for %s\nExpected: %s Actual: %s\n", c.Request.URL.Path, s.Cfg.AuthBearerToken, a)
+			c.String(http.StatusUnauthorized, "Wrong or Missing Authorization")
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		c.Next()
 	}
-	c.Next()
 }
 
 func (s *Server) home(c *gin.Context) {
@@ -125,7 +129,7 @@ func (s *Server) createInstance(c *gin.Context) {
 		return
 	}
 
-	service := services.NewInstanceService(etcdstore.New())
+	service := services.NewInstanceService(s.Cfg, etcdstore.New())
 	i, err := service.CreateOrUpdate(i)
 
 	if err != nil {
@@ -138,7 +142,7 @@ func (s *Server) createInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstance(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
@@ -155,7 +159,7 @@ func (s *Server) getInstance(c *gin.Context) {
 }
 
 func (s *Server) getInstances(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	instances, err := service.AllWithPlaybookID(c.Param("playbookID"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InternalError)
@@ -166,7 +170,7 @@ func (s *Server) getInstances(c *gin.Context) {
 }
 
 func (s *Server) getStatus(c *gin.Context) {
-	service := services.NewInstanceService(s.store)
+	service := services.NewInstanceService(s.Cfg, s.store)
 	i, err := service.Show(c.Param("playbookID"), c.Param("instanceID"))
 
 	if err != nil {
@@ -222,8 +226,10 @@ func (s *Server) postCommand(c *gin.Context) {
 		return
 	}
 
-	is := services.NewInstanceService(s.store)
-	slackCommand := services.BuildSlackCommand(form.Text, is, s.playbooks)
+	is := services.NewInstanceService(s.Cfg, s.store)
+	ds := services.NewDeploymentService(s.Cfg, etcdstore.New(), s.playbooks, s.manifests)
+
+	slackCommand := services.BuildSlackCommand(s.Cfg, form.Text, ds, is, s.playbooks)
 	glog.Infof("Running command: %s", form.Text)
 	msg, err := slackCommand.Execute()
 	if err != nil {
@@ -232,19 +238,19 @@ func (s *Server) postCommand(c *gin.Context) {
 	}
 
 	// Craft a Slack payload for an ephemeral message:
-	j := notification.NewMessage(false, msg)
+	j := notification.NewMessage(s.Cfg, false, msg)
 	c.JSON(http.StatusOK, j)
 	return
 }
 
 func deploy(s *Server, pID string, ID string) (*instance.Instance, error) {
-	is := services.NewInstanceService(s.store)
+	is := services.NewInstanceService(s.Cfg, s.store)
 	i, err := is.Show(pID, ID)
 	if err != nil {
 		return nil, err
 	}
 
-	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
 
 	err = ds.DeployAndNotify(i)
 	if err != nil {
@@ -270,7 +276,7 @@ func (s *Server) deployInstance(c *gin.Context) {
 }
 
 func (s *Server) deleteInstance(c *gin.Context) {
-	is := services.NewInstanceService(s.store)
+	is := services.NewInstanceService(s.Cfg, s.store)
 
 	i, err := is.Show(c.Param("playbookID"), c.Param("instanceID"))
 	if err != nil {
@@ -279,7 +285,7 @@ func (s *Server) deleteInstance(c *gin.Context) {
 		return
 	}
 
-	ds := services.NewDeploymentService(s.store, s.playbooks, s.manifests)
+	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
 
 	if err := ds.DeleteAndNotify(i); err != nil {
 		glog.Errorf("Failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)

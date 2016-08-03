@@ -3,8 +3,13 @@ package etcdstore
 import (
 	"testing"
 
+	"github.com/namely/broadway/testutils"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	Setup(testutils.TestCfg)
+}
 
 func TestValue(t *testing.T) {
 	s := New()

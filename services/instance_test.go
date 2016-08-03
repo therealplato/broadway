@@ -4,21 +4,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/namely/broadway/env"
 	"github.com/namely/broadway/instance"
 	"github.com/namely/broadway/store/etcdstore"
 	"github.com/stretchr/testify/assert"
 )
 
 func cleanup() {
-	etcdstore.New().Delete(env.EtcdPath + "/instances")
+	etcdstore.New().Delete(ServicesTestCfg.EtcdPath + "/instances")
 }
 
 func TestCreateInstanceFromMissingPlaybook(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "vanishing-pb", ID: "gone"}
 	_, err := is.CreateOrUpdate(i)
@@ -32,7 +30,7 @@ func TestCreateInstanceWithIncorrectVars(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstanceWithIncorrectVars", Vars: map[string]string{"metal": "plutonium"}}
 	ii, err := is.CreateOrUpdate(i)
@@ -47,7 +45,7 @@ func TestCreateInstanceNotification(t *testing.T) {
 	defer nt.Close()
 
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstanceNotification"}
 	_, err := is.CreateOrUpdate(i)
 	assert.Nil(t, err)
@@ -63,7 +61,7 @@ func TestCreateInstanceCustomNotification(t *testing.T) {
 	defer nt.Close()
 
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 	i := &instance.Instance{PlaybookID: "messagesplaybook", ID: "TestCreateInstanceCustomNotification"}
 	_, err := is.CreateOrUpdate(i)
 	assert.Nil(t, err)
@@ -77,7 +75,7 @@ func TestCreateInstanceWithInvalidId(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "Test*Create_Instance"}
 	ii, err := is.CreateOrUpdate(i)
@@ -92,7 +90,7 @@ func TestCreateInstance(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstance"}
 	ii, err := is.CreateOrUpdate(i)
@@ -115,7 +113,7 @@ func TestUpdateInstance(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestUpdateInstance", Status: instance.StatusDeployed}
 	ii, err := is.CreateOrUpdate(i)
@@ -137,7 +135,7 @@ func TestShow(t *testing.T) {
 	defer nt.Close()
 
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestShow"}
 	ii, err := is.CreateOrUpdate(i)
@@ -148,7 +146,7 @@ func TestShow(t *testing.T) {
 
 func TestShowMissingInstance(t *testing.T) {
 	store := etcdstore.New()
-	is := NewInstanceService(store)
+	is := NewInstanceService(ServicesTestCfg, store)
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "broken"}
 	i, err := is.Show(i.PlaybookID, i.ID)
@@ -160,7 +158,7 @@ func TestAllWithPlaybookID(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestAllWithPlaybookID"}
 	_, err := is.CreateOrUpdate(i)
@@ -178,7 +176,7 @@ func TestUpdate(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	instanceService := NewInstanceService(etcdstore.New())
+	instanceService := NewInstanceService(ServicesTestCfg, etcdstore.New())
 	testcases := []struct {
 		Scenario           string
 		Instance           *instance.Instance
@@ -216,7 +214,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 
 	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "new"}
 
@@ -230,7 +228,7 @@ func TestDeleteWhenExistentInstance(t *testing.T) {
 
 func TestDeleteWhenNonExistantInstance(t *testing.T) {
 	cleanup()
-	is := NewInstanceService(etcdstore.New())
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
 	i := &instance.Instance{PlaybookID: "random", ID: "bar"}
 
 	err := is.Delete(i)

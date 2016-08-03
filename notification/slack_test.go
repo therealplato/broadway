@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/namely/broadway/env"
+	"github.com/namely/broadway/cfg"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,11 +25,13 @@ func TestSend(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	env.SlackWebhook = ts.URL
 	message := &Message{
 		Attachments: []Attachment{{
 			Text: "successful",
 		}},
+		Cfg: cfg.Type{
+			SlackWebhook: ts.URL,
+		},
 	}
 	err := message.Send()
 	assert.Nil(t, err)

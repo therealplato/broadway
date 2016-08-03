@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/namely/broadway/cfg"
 	"github.com/namely/broadway/deployment"
 )
 
@@ -13,13 +14,15 @@ import (
 type ManifestService struct {
 	rootFolder string
 	extension  string
+	Cfg        cfg.Type
 }
 
 // NewManifestService instantiates a ManifestService with a default rootFolder
-func NewManifestService(path string) *ManifestService {
+func NewManifestService(cfg cfg.Type) *ManifestService {
 	return &ManifestService{
-		rootFolder: path,
-		extension:  ".yml",
+		rootFolder: cfg.ManifestsPath,
+		extension:  cfg.ManifestsExtension,
+		Cfg:        cfg,
 	}
 }
 
