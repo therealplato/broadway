@@ -3,10 +3,40 @@ package instance
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/namely/broadway/store"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestNewExpiredAt(t *testing.T) {
+	testcases := []struct {
+		Scenario     string
+		DaysToExpire int
+		CurrentTime  time.Time
+		ExpectedTime time.Time
+	}{
+		{
+			Scenario:     "NewExpiredAt: Build a new expired at type",
+			DaysToExpire: 5,
+			CurrentTime:  time.Date(2016, 8, 5, 00, 00, 00, 651387237, time.UTC),
+			ExpectedTime: time.Date(2016, 8, 10, 00, 00, 00, 651387237, time.UTC),
+		},
+		{
+			Scenario:     "NewExpiredAt: When day is 29",
+			DaysToExpire: 5,
+			CurrentTime:  time.Date(2016, 8, 29, 00, 00, 00, 651387237, time.UTC),
+			ExpectedTime: time.Date(2016, 9, 3, 00, 00, 00, 651387237, time.UTC),
+		},
+	}
+
+	for _, tc := range testcases {
+		expiredAt := NewExpiredAt(tc.DaysToExpire, tc.CurrentTime)
+		assert.Equal(t, tc.ExpectedTime.Year(), expiredAt.Year(), tc.Scenario)
+		assert.Equal(t, tc.ExpectedTime.Month(), expiredAt.Month(), tc.Scenario)
+		assert.Equal(t, tc.ExpectedTime.Day(), expiredAt.Day(), tc.Scenario)
+	}
+}
 
 func TestFindByPath(t *testing.T) {
 	testcases := []struct {
@@ -113,7 +143,7 @@ func TestFindByPlaybookID(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		instances, err := FindByPlaybookID(tc.Store, tc.PlaybookPath)
+		instances, err := FindByPlaybookPath(tc.Store, tc.PlaybookPath)
 		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
 		if err == nil {
 			assert.Equal(t, tc.ExpectedInstances, instances, tc.Scenario)
@@ -129,13 +159,23 @@ func TestSave(t *testing.T) {
 		ExpectedError error
 	}{
 		{
-			Scenario: "When successfully save in store",
+			Scenario: "Save: When successfully save in store",
 			Store: &store.FakeStore{
 				MockSetValue: func(string, string) error {
 					return nil
 				},
 			},
 			Instance:      &Instance{PlaybookID: "playbookID", ID: "id"},
+			ExpectedError: nil,
+		},
+		{
+			Scenario: "Save: When successfully with ExpiredAt set save in store",
+			Store: &store.FakeStore{
+				MockSetValue: func(string, string) error {
+					return nil
+				},
+			},
+			Instance:      &Instance{PlaybookID: "playbookID", ID: "id", ExpiredAt: time.Now().Unix()},
 			ExpectedError: nil,
 		},
 	}
@@ -327,5 +367,55 @@ func TestUnlock(t *testing.T) {
 		instance, err := Unlock(tc.Store, tc.Path)
 		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
 		assert.Equal(t, tc.ExpectedInstance, instance, tc.Scenario)
+	}
+}
+
+func TestAllDeployedAndExpired(t *testing.T) {
+	testcases := []struct {
+		Scenario          string
+		Path              string
+		Store             store.Store
+		ExpirationDate    time.Time
+		ExpectedInstances []*Instance
+		ExpectedError     error
+	}{
+		{
+			Scenario:       "AllDeployedAndExpired: When instance was deployed and expired",
+			Path:           "broadwaytest/instances",
+			ExpirationDate: time.Date(2016, 8, 5, 00, 00, 00, 651387237, time.UTC),
+			Store: &store.FakeStore{
+				MockValues: func(path string) map[string]string {
+					return map[string]string{
+						"etcdPath/instances": `{"playbook_id":"test", "id": "id", "status": "deployed", "expired_at": 10}`,
+					}
+				},
+			},
+			ExpectedInstances: []*Instance{
+				&Instance{PlaybookID: "test", ID: "id", Status: StatusDeployed, ExpiredAt: 10},
+			},
+			ExpectedError: nil,
+		},
+		{
+			Scenario:       "AllDeployedAndExpired: When instance was deployed and expired today",
+			Path:           "broadwaytest/instances",
+			ExpirationDate: time.Date(2016, 8, 5, 00, 00, 00, 651387237, time.UTC),
+			Store: &store.FakeStore{
+				MockValues: func(path string) map[string]string {
+					return map[string]string{
+						"etcdPath/instances": `{"playbook_id":"test", "id": "id", "status": "deployed", "expired_at": 1470355200}`,
+					}
+				},
+			},
+			ExpectedInstances: []*Instance{
+				&Instance{PlaybookID: "test", ID: "id", Status: StatusDeployed, ExpiredAt: 1470355200},
+			},
+			ExpectedError: nil,
+		},
+	}
+
+	for _, tc := range testcases {
+		instances, err := AllDeployedAndExpired(tc.Store, tc.Path, tc.ExpirationDate)
+		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
+		assert.Equal(t, tc.ExpectedInstances, instances, tc.Scenario)
 	}
 }

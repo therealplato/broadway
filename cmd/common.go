@@ -79,4 +79,18 @@ var CommonFlags = []cli.Flag{
 		EnvVar:      "BROADWAY_MANIFESTS_EXTENSION",
 		Destination: &cfg.GlobalCfg.ManifestsExtension,
 	},
+	cli.IntFlag{
+		Name:        "instance-expiration-days",
+		Usage:       "the days in which an instance will expire",
+		Value:       5,
+		EnvVar:      "INSTANCE_EXPIRATION_DAYS",
+		Destination: &cfg.GlobalCfg.InstanceExpirationDays,
+	},
+	cli.IntFlag{
+		Name:        "instance-cleanup-time",
+		Usage:       "the amount of time in seconds to do the instances cleanup",
+		Value:       15,
+		EnvVar:      "INSTANCE_CLEANUP",
+		Destination: &cfg.GlobalCfg.InstanceCleanup,
+	},
 }

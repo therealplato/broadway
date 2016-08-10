@@ -4,9 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/namely/broadway/store"
 )
+
+// NewExpiredAt builds a new ExpiredAt
+func NewExpiredAt(daysToExpire int, from time.Time) time.Time {
+	expiredAt := from.AddDate(0, 0, daysToExpire)
+	return expiredAt
+}
 
 // NotLockedStatusError instance is not locked
 type NotLockedStatusError string
@@ -51,6 +58,7 @@ type Instance struct {
 	PlaybookID string            `json:"playbook_id" binding:"required"`
 	ID         string            `json:"id"`
 	Created    int64             `json:"created_time"`
+	ExpiredAt  int64             `json:"expired_at"`
 	Vars       map[string]string `json:"vars"`
 	Lock       bool              `json:"lock"`
 	Status     `json:"status"`
@@ -72,23 +80,14 @@ const (
 	// StatusNew represents a newly created instance
 	StatusNew Status = ""
 	// StatusDeploying represents an instance that has begun deployment
-	StatusDeploying = "deploying"
+	StatusDeploying Status = "deploying"
 	// StatusDeployed represents an instance that has been deployed successfully
-	StatusDeployed = "deployed"
+	StatusDeployed Status = "deployed"
 	// StatusDeleting represents an instance that has begun deltion
-	StatusDeleting = "deleting"
+	StatusDeleting Status = "deleting"
 	// StatusError represents an instance that broke
-	StatusError = "error"
+	StatusError Status = "error"
 )
-
-// JSON instance representation
-func (i *Instance) JSON() (string, error) {
-	encoded, err := json.Marshal(i)
-	if err != nil {
-		return "", err
-	}
-	return string(encoded), nil
-}
 
 // FindByPath find an instance based on it's path
 func FindByPath(store store.Store, path Path) (*Instance, error) {
@@ -103,19 +102,26 @@ func FindByPath(store store.Store, path Path) (*Instance, error) {
 	return instance, nil
 }
 
-// FindByPlaybookID find all the instances for an specified playbook path
-func FindByPlaybookID(store store.Store, playbookPath PlaybookPath) ([]*Instance, error) {
-	data := store.Values(playbookPath.String())
-	instances := []*Instance{}
-	for _, value := range data {
-		instance, err := fromJSON(value)
-		if err != nil {
-			return nil, err
-		}
-		instances = append(instances, instance)
-	}
+// FindByPlaybookPath find all the instances for an specified playbook path
+func FindByPlaybookPath(store store.Store, playbookPath PlaybookPath) ([]*Instance, error) {
+	return retrieveInstancesByKey(store, playbookPath.String())
+}
 
-	return instances, nil
+// AllDeployedAndExpired find all instances from in the store
+func AllDeployedAndExpired(store store.Store, path string, expirationDate time.Time) ([]*Instance, error) {
+	var expiredInstances []*Instance
+	instances, err := retrieveInstancesByKey(store, path)
+	if err != nil {
+		return nil, err
+	}
+	for _, i := range instances {
+		if i.Status == StatusDeployed {
+			if i.ExpiredAt <= expirationDate.Unix() {
+				expiredInstances = append(expiredInstances, i)
+			}
+		}
+	}
+	return expiredInstances, nil
 }
 
 // Save an instance into the Store
@@ -176,4 +182,18 @@ func toJSON(instance *Instance) (string, error) {
 		return "", err
 	}
 	return string(encoded), nil
+}
+
+func retrieveInstancesByKey(store store.Store, key string) ([]*Instance, error) {
+	data := store.Values(key)
+	instances := []*Instance{}
+	for _, value := range data {
+		instance, err := fromJSON(value)
+		if err != nil {
+			return nil, err
+		}
+		instances = append(instances, instance)
+	}
+
+	return instances, nil
 }

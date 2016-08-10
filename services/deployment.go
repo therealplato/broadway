@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"text/template"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/cfg"
@@ -218,6 +219,24 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 
 	return nil
 
+}
+
+// RemoveExpiredInstances remove expired instances from the deployment
+func (d *DeploymentService) RemoveExpiredInstances(expirationDate time.Time) error {
+	glog.Info("Starting expired instances cleanup")
+	globalPath := fmt.Sprintf("%s/instances", d.Cfg.EtcdPath)
+	instances, err := instance.AllDeployedAndExpired(d.store, globalPath, expirationDate)
+	if err != nil {
+		return err
+	}
+	glog.Infof("Removing %d instances from kubernetes", len(instances))
+	for _, i := range instances {
+		if err = d.DeleteAndNotify(i); err != nil {
+			glog.Error(err)
+		}
+	}
+
+	return nil
 }
 
 func notify(cfg cfg.Type, i *instance.Instance, msg string) {

@@ -25,6 +25,18 @@ func TestCreateInstanceFromMissingPlaybook(t *testing.T) {
 	assert.Contains(t, err.Error(), "playbook vanishing-pb is missing")
 }
 
+func TestCreateInstanceWithoutExpiredAt(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	is := NewInstanceService(ServicesTestCfg, etcdstore.New())
+
+	i := &instance.Instance{PlaybookID: "helloplaybook", ID: "TestCreateInstancegone"}
+	ii, err := is.CreateOrUpdate(i)
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, ii.ExpiredAt)
+}
+
 func TestCreateInstanceWithIncorrectVars(t *testing.T) {
 	cleanup()
 	nt := newNotificationTestHelper()
@@ -101,6 +113,7 @@ func TestCreateInstance(t *testing.T) {
 
 	// Check the timestamp was made within the past minute:
 	assert.NotEmpty(t, ii.Created)
+	assert.NotEmpty(t, ii.ExpiredAt)
 	time0 := time.Unix(ii.Created, 0).UTC()
 	time1 := time.Now().UTC()
 	assert.True(t, time1.After(time0), "instance timestamp is after now")

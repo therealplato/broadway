@@ -61,13 +61,21 @@ func (*etcdStore) Values(path string) (values map[string]string) {
 		return values
 	}
 	if resp.Node != nil && len(resp.Node.Nodes) > 0 {
-		for _, node := range resp.Node.Nodes {
-			values[lastKeyItem(node.Key)] = node.Value
-		}
+		valueFromNode(resp.Node.Nodes, values)
 	} else {
 		glog.Error("No values found here: " + path)
 	}
 	return values
+}
+
+func valueFromNode(nodes []*etcdclient.Node, values map[string]string) {
+	for _, node := range nodes {
+		if node.Dir == false {
+			values[lastKeyItem(node.Key)] = node.Value
+		} else {
+			valueFromNode(node.Nodes, values)
+		}
+	}
 }
 
 // Delete removes the specified key and its value from the store

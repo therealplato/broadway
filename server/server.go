@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/namely/broadway/cfg"
@@ -27,9 +28,6 @@ type Server struct {
 	engine     *gin.Engine
 	Cfg        cfg.Type
 }
-
-const commandHint string = `/broadway help: This message
-/broadway deploy myPlaybookID myInstanceID: Deploy a new instance`
 
 // ErrorResponse represents a JSON response to be returned in failure cases
 type ErrorResponse map[string]string
@@ -74,6 +72,15 @@ func (s *Server) Init() {
 
 	s.playbooks = deployment.AllPlaybooks
 	glog.Infof("Server Playbooks: %+v", s.playbooks)
+
+	glog.Info("Initialize deployed instances cleanup worker")
+	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
+	go func() {
+		for {
+			time.Sleep(time.Second * time.Duration(s.Cfg.InstanceCleanup))
+			ds.RemoveExpiredInstances(time.Now())
+		}
+	}()
 }
 
 func (s *Server) setupHandlers() {

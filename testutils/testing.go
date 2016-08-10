@@ -12,15 +12,16 @@ import (
 
 // TestCfg contains sane defaults used by tests
 var TestCfg = cfg.Type{
-	AuthBearerToken:    "testtoken",
-	SlackToken:         "BroadwayTestToken",
-	SlackWebhook:       "",
-	EtcdPath:           "/broadwaytest",
-	EtcdEndpoints:      "http://localhost:4001",
-	K8sNamespace:       "broadway",
-	ManifestsExtension: ".yml",
-	ManifestsPath:      "../examples/manifests",
-	PlaybooksPath:      "../examples/playbooks",
+	AuthBearerToken:        "testtoken",
+	SlackToken:             "BroadwayTestToken",
+	SlackWebhook:           "",
+	EtcdPath:               "/broadwaytest",
+	EtcdEndpoints:          "http://localhost:4001",
+	K8sNamespace:           "broadway",
+	ManifestsExtension:     ".yml",
+	ManifestsPath:          "../examples/manifests",
+	PlaybooksPath:          "../examples/playbooks",
+	InstanceExpirationDays: 5,
 }
 
 // JSONFromMap creates a json representation from a map

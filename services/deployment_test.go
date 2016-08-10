@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/namely/broadway/store/etcdstore"
 	"github.com/namely/broadway/testutils"
@@ -15,6 +16,62 @@ import (
 func init() {
 	etcdstore.Setup(testutils.TestCfg)
 	deployment.Setup(testutils.TestCfg)
+}
+
+func TestRemoveExpiredInstancest(t *testing.T) {
+	nt := newNotificationTestHelper()
+	defer nt.Close()
+	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
+	if err != nil {
+		panic(err)
+	}
+
+	playbooks, err := deployment.LoadPlaybookFolder(ServicesTestCfg.PlaybooksPath)
+	if err != nil {
+		panic(err)
+	}
+
+	ds := NewDeploymentService(ServicesTestCfg, etcdstore.New(), playbooks, manifests)
+
+	cases := []struct {
+		Scenario       string
+		Instance       *instance.Instance
+		CurrentDate    time.Time
+		ExpirationDate time.Time
+		Error          error
+	}{
+		{
+			Scenario:       "RemoveExpiredInstances: When an instance just expired",
+			CurrentDate:    time.Date(2016, 8, 05, 0, 00, 00, 651387237, time.UTC),
+			ExpirationDate: time.Date(2016, 8, 10, 0, 00, 00, 651387237, time.UTC),
+			Instance: &instance.Instance{
+				PlaybookID: "hello",
+				ID:         "anothertest",
+				Path: instance.Path{
+					RootPath:   ServicesTestCfg.EtcdPath,
+					PlaybookID: "hello",
+					ID:         "anothertest",
+				},
+			},
+			Error: nil,
+		},
+	}
+
+	s := etcdstore.New()
+	for _, c := range cases {
+		c.Instance.ExpiredAt = instance.NewExpiredAt(ServicesTestCfg.InstanceExpirationDays, c.CurrentDate).Unix()
+		err := instance.Save(s, c.Instance)
+		assert.Nil(t, err, c.Scenario)
+
+		err = ds.DeployAndNotify(c.Instance)
+		assert.Nil(t, err, c.Scenario)
+
+		err = ds.RemoveExpiredInstances(c.ExpirationDate)
+
+		ii, err := instance.FindByPath(s, c.Instance.Path)
+		assert.Equal(t, c.Error, err, c.Scenario)
+		assert.Equal(t, instance.StatusDeleting, ii.Status, c.Scenario)
+	}
 }
 
 func TestDeployment(t *testing.T) {

@@ -79,7 +79,7 @@ func validateID(id string) error {
 
 // CreateOrUpdate a new instance
 func (is *InstanceService) CreateOrUpdate(i *instance.Instance) (*instance.Instance, error) {
-	path := instance.Path{is.Cfg.EtcdPath, i.PlaybookID, i.ID}
+	path := instance.Path{RootPath: is.Cfg.EtcdPath, PlaybookID: i.PlaybookID, ID: i.ID}
 	i.Path = path
 	if err := validateID(i.ID); err != nil {
 		return nil, err
@@ -90,7 +90,12 @@ func (is *InstanceService) CreateOrUpdate(i *instance.Instance) (*instance.Insta
 		if err == instance.ErrMalformedSaveData {
 			return nil, err
 		}
-		i.Created = time.Now().Unix()
+		now := time.Now()
+		i.Created = now.Unix()
+		if i.ExpiredAt == 0 {
+			expiredAt := instance.NewExpiredAt(is.Cfg.InstanceExpirationDays, now)
+			i.ExpiredAt = expiredAt.Unix()
+		}
 	} else {
 		i.Status = existing.Status
 	}
@@ -167,7 +172,7 @@ func (is *InstanceService) Show(playbookID, ID string) (*instance.Instance, erro
 // AllWithPlaybookID returns all the instances for an specified playbook id
 func (is *InstanceService) AllWithPlaybookID(playbookID string) ([]*instance.Instance, error) {
 	playbookPath := instance.PlaybookPath{is.Cfg.EtcdPath, playbookID}
-	return instance.FindByPlaybookID(is.store, playbookPath)
+	return instance.FindByPlaybookPath(is.store, playbookPath)
 }
 
 // Delete removes an instance
