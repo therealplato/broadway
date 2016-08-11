@@ -5,10 +5,12 @@ services:
     build: .
     volumes:
       - .:/go/src/github.com/namely/broadway
-    command: go run main.go server
+    command: go run cmd/broadway/server.go server
     environment:
+      BROADWAY_AUTH_TOKEN: AA
       BROADWAY_PLAYBOOKS_PATH: "/go/src/github.com/namely/broadway/examples/playbooks"
       BROADWAY_MANIFESTS_PATH: "/go/src/github.com/namely/broadway/examples/manifests"
+      SLACK_VERIFICATION_TOKEN: AA
       SLACK_WEBHOOK: ""
       ETCD_ENDPOINTS: "http://localhost:4001"
       ETCD_PATH: "/broadway"

@@ -1,7 +1,7 @@
 # registry.namely.tech/namely/broadway-dev:v5
 # If you change this file, or any of the dependencies, build a new image and
 # increase the version number.
-FROM golang:1.6.0
+FROM golang:1.7
 RUN apt-get update && \
     apt-get install --assume-yes git build-essential && \
     apt-get clean && \
