@@ -5,8 +5,8 @@ import (
 
 	"github.com/namely/broadway/pkg/testutils"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/kubernetes/pkg/client/clientset_generated/release_1_3/typed/core/v1/fake"
 	"k8s.io/kubernetes/pkg/client/testing/core"
-	"k8s.io/kubernetes/pkg/client/typed/generated/core/v1/fake"
 )
 
 func init() {

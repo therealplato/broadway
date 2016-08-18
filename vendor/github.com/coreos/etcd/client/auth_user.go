@@ -21,7 +21,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/coreos/etcd/Godeps/_workspace/src/golang.org/x/net/context"
+	"golang.org/x/net/context"
 )
 
 var (
@@ -39,10 +39,6 @@ type User struct {
 type UserRoles struct {
 	User  string `json:"user"`
 	Roles []Role `json:"roles"`
-}
-
-type userName struct {
-	User string `json:"user"`
 }
 
 func v2AuthURL(ep url.URL, action string, name string) *url.URL {

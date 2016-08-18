@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/runtime"
 )
@@ -168,18 +168,17 @@ func (s *ManifestStep) Deploy() error {
 func (s *ManifestStep) Destroy() error {
 	var err error
 	oGVK := s.object.GetObjectKind().GroupVersionKind()
-	meta, err := api.ObjectMetaFor(s.object)
+	meta, err := meta.Accessor(s.object)
 	if err != nil {
 		return err
 	}
 	switch oGVK.Kind {
 	case "ReplicationController":
-		err = deleteRC(namespace, meta.Name)
+		err = deleteRC(namespace, meta.GetName())
 	case "Service":
-		err = client.Services(namespace).Delete(meta.Name, nil)
+		err = client.Services(namespace).Delete(meta.GetName(), nil)
 	case "Pod":
-		err = client.Pods(namespace).Delete(meta.Name, nil)
+		err = client.Pods(namespace).Delete(meta.GetName(), nil)
 	}
-
 	return err
 }

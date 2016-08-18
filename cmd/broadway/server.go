@@ -1,4 +1,4 @@
-package broadway
+package main
 
 import (
 	"fmt"

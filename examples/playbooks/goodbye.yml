@@ -8,5 +8,3 @@ tasks:
   - name: Deploy Hello World
     manifests:
       - hello
-  - name: Deploy Goodbye World Setup Pod
-    pod_manifest: goodbye-pod

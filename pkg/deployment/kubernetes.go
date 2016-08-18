@@ -7,8 +7,8 @@ import (
 	"k8s.io/kubernetes/pkg/api/meta"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/api/v1"
+	coreclient "k8s.io/kubernetes/pkg/client/clientset_generated/release_1_3/typed/core/v1"
 	"k8s.io/kubernetes/pkg/client/restclient"
-	coreclient "k8s.io/kubernetes/pkg/client/typed/generated/core/v1"
 	"k8s.io/kubernetes/pkg/runtime"
 	"k8s.io/kubernetes/pkg/runtime/serializer"
 
@@ -110,15 +110,6 @@ func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
 	var steps = []TaskStep{}
 	for _, task := range d.Playbook.Tasks {
 		if task.PodManifest != "" {
-			m := d.Manifests[task.PodManifest]
-			rendered := m.Execute(d.Variables)
-			object, err := deserialize(rendered)
-			if err != nil {
-				glog.Warningf("Failed to parse pod manifest %s - %s", task.Name, task.PodManifest)
-				return steps, err
-			}
-			step := NewPodManifestStep(object)
-			steps = append(steps, TaskStep{&task, step})
 		} else {
 			for _, name := range task.Manifests {
 				m := d.Manifests[name]

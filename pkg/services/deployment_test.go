@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -106,17 +105,6 @@ func TestDeployment(t *testing.T) {
 			},
 			Error:    nil,
 			Expected: instance.StatusDeployed,
-		}, {
-			Name: "Playbook con Mal Pod",
-			Instance: &instance.Instance{
-				PlaybookID: "goodbye",
-				ID:         "another",
-				Vars: map[string]string{
-					"version": "another",
-				},
-			},
-			Error:    errors.New("Setup pod failed!"),
-			Expected: instance.StatusError,
 		},
 	}
 
