@@ -4,7 +4,5 @@ meta:
   team: hello team
 vars:
   - version
-tasks:
-  - name: Deploy Hello World
-    manifests:
-      - hello
+manifests:
+  - hello

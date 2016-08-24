@@ -2,8 +2,6 @@ package deployment
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -50,24 +48,4 @@ func (m *Manifest) Execute(vars map[string]string) string {
 		return ""
 	}
 	return b.String()
-}
-
-// ManifestsPresent iterates through the Manifests and PodManifest items on a
-// task, and checks that each represents a file on disk
-func (t Task) ManifestsPresent() error {
-	for _, name := range t.Manifests {
-		filename := name + manifestsExtension
-		path := filepath.Join(manifestsPath, filename)
-		if _, err := os.Stat(path); err != nil {
-			return err
-		}
-	}
-	if len(t.PodManifest) > 0 {
-		filename := t.PodManifest + manifestsExtension
-		path := filepath.Join(manifestsPath, filename)
-		if _, err := os.Stat(path); err != nil {
-			return err
-		}
-	}
-	return nil
 }

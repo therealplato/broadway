@@ -33,12 +33,6 @@ type Step interface {
 	Destroy() error
 }
 
-// TaskStep combines a task and a step
-type TaskStep struct {
-	task *Task
-	step Step
-}
-
 // SetupKubernetes configures kubernetes with an injected configuration
 func SetupKubernetes(cfg cfg.Type) {
 	scheme = runtime.NewScheme()
@@ -72,13 +66,13 @@ func NewKubernetesDeployment(config *restclient.Config, playbook *Playbook, vari
 
 // Deploy executes the deployment
 func (d *KubernetesDeployment) Deploy() error {
-	tasksteps, err := d.steps()
+	steps, err := d.steps()
 	if err != nil {
 		return err
 	}
 
-	for i, taskstep := range tasksteps {
-		err := taskstep.step.Deploy()
+	for i, step := range steps {
+		err := step.Deploy()
 		if err != nil {
 			glog.Warning("%d. step failed: %s", i, err.Error())
 			return err
@@ -90,14 +84,14 @@ func (d *KubernetesDeployment) Deploy() error {
 
 // Destroy deletes Kubernetes resourses
 func (d *KubernetesDeployment) Destroy() error {
-	tasksteps, err := d.steps()
+	steps, err := d.steps()
 	if err != nil {
 		return err
 	}
 
-	for i, taskstep := range tasksteps {
-		glog.Infof("%d. Destroying Task Resources %s...", i, taskstep.task.Name)
-		err := taskstep.step.Destroy()
+	for i, step := range steps {
+		glog.Infof("%d. Destroying Resources.", i)
+		err := step.Destroy()
 		if err != nil {
 			glog.Warning("%d. step failed: %s", i, err.Error())
 			return err
@@ -106,23 +100,17 @@ func (d *KubernetesDeployment) Destroy() error {
 	return nil
 }
 
-func (d *KubernetesDeployment) steps() ([]TaskStep, error) {
-	var steps = []TaskStep{}
-	for _, task := range d.Playbook.Tasks {
-		if task.PodManifest != "" {
-		} else {
-			for _, name := range task.Manifests {
-				m := d.Manifests[name]
-				rendered := m.Execute(d.Variables)
-				object, err := deserialize(rendered)
-				if err != nil {
-					glog.Warningf("Failed to parse manifest %s - %s", task.Name, name)
-					return steps, err
-				}
-				step := NewManifestStep(object)
-				steps = append(steps, TaskStep{&task, step})
-			}
+func (d *KubernetesDeployment) steps() ([]Step, error) {
+	var steps = []Step{}
+	for _, name := range d.Playbook.Manifests {
+		m := d.Manifests[name]
+		rendered := m.Execute(d.Variables)
+		object, err := deserialize(rendered)
+		if err != nil {
+			glog.Warningf("Failed to parse manifest %s", name)
+			return steps, err
 		}
+		steps = append(steps, NewManifestStep(object))
 	}
 	return steps, nil
 }

@@ -38,28 +38,6 @@ func (ms *ManifestService) Read(name string) (string, error) {
 	return string(bytes), nil
 }
 
-// LoadTask iterates through the podManifest and Manifests of a Task and returns
-// Manifest objects
-func (ms *ManifestService) LoadTask(t deployment.Task) (*deployment.Manifest, []deployment.Manifest, error) {
-	pm := &deployment.Manifest{}
-	var mm []deployment.Manifest
-	if len(t.PodManifest) != 0 {
-		var err error
-		pm, err = ms.Load(t.PodManifest)
-		if err != nil {
-			return pm, mm, err
-		}
-	}
-	for _, name := range t.Manifests {
-		m, err := ms.Load(name)
-		if err != nil {
-			return pm, mm, err
-		}
-		mm = append(mm, *m)
-	}
-	return pm, mm, nil
-}
-
 // Load takes a filename, reads the file and generates a Manifest object
 func (ms *ManifestService) Load(name string) (*deployment.Manifest, error) {
 	mString, err := ms.Read(name)

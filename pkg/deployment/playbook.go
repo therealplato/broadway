@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -20,24 +21,14 @@ type Meta struct {
 	Slack string `yaml:"slack"`
 }
 
-// Task represents a step in the playbook, for example, running migrations
-// or deploying services.
-type Task struct {
-	Name        string   `yaml:"name"`
-	Manifests   []string `yaml:"manifests,omitempty"`
-	PodManifest string   `yaml:"pod_manifest,omitempty"`
-	WaitFor     []string `yaml:"wait_for,omitempty"`
-	When        string   `yaml:"when,omitempty"`
-}
-
 // Playbook configures a set of tasks to be automated
 type Playbook struct {
-	ID       string            `yaml:"id"`
-	Name     string            `yaml:"name"`
-	Meta     Meta              `yaml:"meta"`
-	Vars     []string          `yaml:"vars"`
-	Tasks    []Task            `yaml:"tasks"`
-	Messages map[string]string `yaml:"messages"`
+	ID        string            `yaml:"id"`
+	Name      string            `yaml:"name"`
+	Meta      Meta              `yaml:"meta"`
+	Vars      []string          `yaml:"vars"`
+	Manifests []string          `yaml:"manifests"`
+	Messages  map[string]string `yaml:"messages"`
 }
 
 // AllPlaybooks is a map of playbook id's to playbooks
@@ -66,8 +57,8 @@ func (p *Playbook) Validate() error {
 	if len(p.Name) == 0 {
 		return errors.New("Playbook missing required Name")
 	}
-	if len(p.Tasks) == 0 {
-		return errors.New("Playbook requires at least 1 task")
+	if len(p.Manifests) == 0 {
+		return errors.New("Playbook requires at least 1 manifest")
 	}
 	for key, value := range p.Messages {
 		_, err := template.New(key).Parse(value)
@@ -75,20 +66,15 @@ func (p *Playbook) Validate() error {
 			return fmt.Errorf("Playbook had an invalid message template: \"%s\"", value)
 		}
 	}
-	return p.ValidateTasks()
+	return p.ValidateManifests()
 }
 
-// ValidateTasks checks a task for fields Name, and one or both of Manifests and
-// PodManifests
-func (p *Playbook) ValidateTasks() error {
-	for _, task := range p.Tasks {
-		if len(task.Name) == 0 {
-			return errors.New("Task missing required Name")
-		}
-		if len(task.Manifests) == 0 && len(task.PodManifest) == 0 {
-			return errors.New("Task requires at least one manifest or a pod manifest")
-		}
-		if err := task.ManifestsPresent(); err != nil {
+// ValidateManifests checks manifests
+func (p *Playbook) ValidateManifests() error {
+	for _, name := range p.Manifests {
+		filename := name + manifestsExtension
+		path := filepath.Join(manifestsPath, filename)
+		if _, err := os.Stat(path); err != nil {
 			return err
 		}
 	}

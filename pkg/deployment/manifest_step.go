@@ -174,11 +174,11 @@ func (s *ManifestStep) Destroy() error {
 	}
 	switch oGVK.Kind {
 	case "ReplicationController":
-		err = deleteRC(namespace, meta.GetName())
+		deleteRC(namespace, meta.GetName())
 	case "Service":
-		err = client.Services(namespace).Delete(meta.GetName(), nil)
+		client.Services(namespace).Delete(meta.GetName(), nil)
 	case "Pod":
-		err = client.Pods(namespace).Delete(meta.GetName(), nil)
+		client.Pods(namespace).Delete(meta.GetName(), nil)
 	}
 	return err
 }

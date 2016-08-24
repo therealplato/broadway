@@ -12,10 +12,7 @@ Kubernetes and allowing users to interact with it through various interfaces
 ## Playbook
 A Broadway Playbook is a YAML file for defining a project's deployment tasks.
 
-`id`, `name`, and at least one item in `tasks` are mandatory fields.
-
-Each task item must have one or more of: a `manifests` array, a `pod_manifest`
-item.
+`id`, `name`, and at least one item in `manifests` are mandatory fields.
 
 These manifest items must match .yml files in the `manifests` directory, e.g.
 the "Deploy Postgres" task below expects files `manifests/postgres-rc.yml` and
@@ -33,24 +30,14 @@ vars:
   - version
   - assets_version
   - owner
-tasks:
-  - name: Deploy Postgres
-    manifests:
-      - postgres-rc
-      - postgres-service
-  - name: Deploy Redis
-    manifests:
-      - redis-rc
-      - redis-service
-  - name: Database Migration
-    pod_manifest: migration-pod
-    wait_for:
-      - success
-  - name: Deploy Web
-    manifests:
-      - web-rc
-      - web-service
-      - worker-rc
+manifests:
+  - postgres-rc
+  - postgres-service
+  - redis-rc
+  - redis-service
+  - web-rc
+  - web-service
+  - worker-rc
 ```
 
 ## Setup

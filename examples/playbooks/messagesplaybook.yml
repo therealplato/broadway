@@ -1,11 +1,10 @@
 id: messagesplaybook
 name: Hello Word Playbook
-vars: 
+vars:
   - word
   - bird
-tasks:
-  - name: Deployment Task
-    pod_manifest: hello-pod
+manifests:
+  - hello
 messages:
   created: "custom created {{.playbook_id}}/{{.id}}"
   deployed: "custom deployed {{.playbook_id}}/{{.id}}"

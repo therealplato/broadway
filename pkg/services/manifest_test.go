@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/namely/broadway/pkg/deployment"
 	"github.com/namely/broadway/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 )
@@ -63,32 +62,6 @@ func TestLoad(t *testing.T) {
 
 	m, err = ms.Load("missing")
 	assert.NotNil(t, err)
-}
-
-func TestLoadTask(t *testing.T) {
-	ms := NewManifestService(testutils.TestCfg)
-	ms.rootFolder = tmpDir
-	tk := deployment.Task{
-		Name: "First step",
-		Manifests: []string{
-			"test",
-		},
-	}
-
-	// Load from task with manifests
-	pod, mm, err := ms.LoadTask(tk)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(mm))
-	assert.Equal(t, mm[0].ID, "test")
-
-	// Load from task with pod manifest
-	tk.Manifests = []string{}
-	tk.PodManifest = "test"
-	pod, mm, err = ms.LoadTask(tk)
-	assert.Nil(t, err)
-	assert.Equal(t, 0, len(mm))
-	assert.Equal(t, "test", pod.ID)
-
 }
 
 func TestNew(t *testing.T) {

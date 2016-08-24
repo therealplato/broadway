@@ -17,32 +17,22 @@ func init() {
 func TestDeploy(t *testing.T) {
 	// TODO sideways dependency injection?  make it stop
 	cases := []struct {
-		Name     string
-		Tasks    []Task
-		Expected int
+		Name      string
+		Manifests []string
+		Expected  int
 	}{
 		{
 			Name: "Step with one manifest file",
-			Tasks: []Task{
-				{
-					Name: "First step",
-					Manifests: []string{
-						"test",
-					},
-				},
+			Manifests: []string{
+				"test",
 			},
 			Expected: 2,
 		}, {
 			Name: "Step with 3 manifest files",
-			Tasks: []Task{
-				{
-					Name: "First step",
-					Manifests: []string{
-						"test",
-						"test2",
-						"test2",
-					},
-				},
+			Manifests: []string{
+				"test",
+				"test2",
+				"test2",
 			},
 			Expected: 6,
 		},
@@ -62,11 +52,11 @@ func TestDeploy(t *testing.T) {
 		client.(*fake.FakeCore).Fake.ClearActions()
 
 		p := &Playbook{
-			ID:    "test",
-			Name:  "Test deployment",
-			Meta:  Meta{},
-			Vars:  []string{"test"},
-			Tasks: c.Tasks,
+			ID:        "test",
+			Name:      "Test deployment",
+			Meta:      Meta{},
+			Vars:      []string{"test"},
+			Manifests: c.Manifests,
 		}
 
 		d := &KubernetesDeployment{
@@ -82,32 +72,22 @@ func TestDeploy(t *testing.T) {
 
 func TestDestroy(t *testing.T) {
 	cases := []struct {
-		Name     string
-		Tasks    []Task
-		Expected int
+		Name      string
+		Manifests []string
+		Expected  int
 	}{
 		{
 			Name: "Step with one manifest file",
-			Tasks: []Task{
-				{
-					Name: "First step",
-					Manifests: []string{
-						"test",
-					},
-				},
+			Manifests: []string{
+				"test",
 			},
 			Expected: 1 * 4,
 		}, {
 			Name: "Step with 3 manifest files",
-			Tasks: []Task{
-				{
-					Name: "First step",
-					Manifests: []string{
-						"test",
-						"test2",
-						"test2",
-					},
-				},
+			Manifests: []string{
+				"test",
+				"test2",
+				"test2",
 			},
 			Expected: 3 * 4,
 		},
@@ -127,11 +107,11 @@ func TestDestroy(t *testing.T) {
 		client.(*fake.FakeCore).Fake.ClearActions()
 
 		p := &Playbook{
-			ID:    "test",
-			Name:  "Test deployment",
-			Meta:  Meta{},
-			Vars:  []string{"test"},
-			Tasks: c.Tasks,
+			ID:        "test",
+			Name:      "Test deployment",
+			Meta:      Meta{},
+			Vars:      []string{"test"},
+			Manifests: c.Manifests,
 		}
 
 		d := &KubernetesDeployment{

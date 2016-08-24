@@ -22,6 +22,7 @@ import (
 
 var testToken = "BroadwayTestToken"
 var testCfg = cfg.Type{
+	K8sNamespace:       "broadway",
 	AuthBearerToken:    "testtoken",
 	SlackToken:         testToken,
 	ManifestsPath:      "../../examples/manifests",
@@ -29,6 +30,7 @@ var testCfg = cfg.Type{
 	PlaybooksPath:      "../../examples/playbooks",
 	EtcdEndpoints:      "http://localhost:4001",
 	EtcdPath:           "/broadwaytest",
+	InstanceCleanup:    15,
 }
 
 func init() {
