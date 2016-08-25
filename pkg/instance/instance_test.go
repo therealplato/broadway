@@ -94,7 +94,7 @@ func TestFindByPlaybookID(t *testing.T) {
 		Scenario          string
 		Store             store.Store
 		PlaybookPath      PlaybookPath
-		ExpectedInstances []Instance
+		ExpectedInstances map[string]Instance
 		ExpectedError     error
 	}{
 		{
@@ -108,9 +108,9 @@ func TestFindByPlaybookID(t *testing.T) {
 				},
 			},
 			PlaybookPath: PlaybookPath{"rootPath", "test"},
-			ExpectedInstances: []Instance{
-				Instance{PlaybookID: "test", ID: "id", Status: StatusDeployed},
-				Instance{PlaybookID: "test1", ID: "id", Status: StatusDeployed},
+			ExpectedInstances: map[string]Instance{
+				"test/id":  Instance{PlaybookID: "test", ID: "id", Status: StatusDeployed},
+				"test1/id": Instance{PlaybookID: "test1", ID: "id", Status: StatusDeployed},
 			},
 			ExpectedError: nil,
 		},
@@ -122,7 +122,7 @@ func TestFindByPlaybookID(t *testing.T) {
 				},
 			},
 			PlaybookPath:      PlaybookPath{"rootPath", "test"},
-			ExpectedInstances: []Instance{},
+			ExpectedInstances: map[string]Instance{},
 			ExpectedError:     nil,
 		},
 		{
@@ -145,9 +145,9 @@ func TestFindByPlaybookID(t *testing.T) {
 		instances, err := FindByPlaybookPath(tc.Store, tc.PlaybookPath)
 		assert.Equal(t, tc.ExpectedError, err, tc.Scenario)
 		if err == nil {
-			actual := []Instance{}
+			actual := map[string]Instance{}
 			for _, i := range instances {
-				actual = append(actual, *i)
+				actual[i.PlaybookID+"/"+i.ID] = *i
 			}
 			assert.Equal(t, tc.ExpectedInstances, actual, tc.Scenario)
 		}

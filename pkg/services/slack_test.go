@@ -18,9 +18,8 @@ var testPlaybooks map[string]*deployment.Playbook
 var testManifests map[string]*deployment.Manifest
 
 func init() {
-	ms := NewManifestService(testutils.TestCfg)
 	var err error
-	testManifests, err = ms.LoadManifestFolder()
+	testManifests, err = deployment.LoadManifestFolder(testutils.TestCfg.ManifestsPath, testutils.TestCfg.ManifestsExtension)
 	if err != nil {
 		glog.Fatal(err)
 	}

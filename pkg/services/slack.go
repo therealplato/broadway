@@ -25,13 +25,6 @@ type deployCommand struct {
 }
 
 func (c *deployCommand) Execute() (string, error) {
-	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(c.Cfg)
-	_, err := ms.LoadManifestFolder()
-	if err != nil {
-		glog.Error(err)
-	}
-
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", c.pID, c.ID)
@@ -148,13 +141,6 @@ type stopCommand struct {
 }
 
 func (c *stopCommand) Execute() (string, error) {
-	// todo: Load these from deployment package like playbooks
-	ms := NewManifestService(c.Cfg)
-	_, err := ms.LoadManifestFolder()
-	if err != nil {
-		glog.Error(err)
-	}
-
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
 		msg := fmt.Sprintf("Failed to stop instance %s/%s: Instance not found", c.pID, c.ID)

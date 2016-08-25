@@ -20,7 +20,7 @@ func init() {
 func TestRemoveExpiredInstancest(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
+	manifests, err := deployment.LoadManifestFolder(ServicesTestCfg.ManifestsPath, ServicesTestCfg.ManifestsExtension)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func TestRemoveExpiredInstancest(t *testing.T) {
 func TestDeployment(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
+	manifests, err := deployment.LoadManifestFolder(ServicesTestCfg.ManifestsPath, ServicesTestCfg.ManifestsExtension)
 	if err != nil {
 		panic(err)
 	}
@@ -118,7 +118,7 @@ func TestDeployment(t *testing.T) {
 func TestCustomDeploymentNotification(t *testing.T) {
 	nt := newNotificationTestHelper()
 	defer nt.Close()
-	manifests, err := NewManifestService(ServicesTestCfg).LoadManifestFolder()
+	manifests, err := deployment.LoadManifestFolder(ServicesTestCfg.ManifestsPath, ServicesTestCfg.ManifestsExtension)
 	if err != nil {
 		panic(err)
 	}

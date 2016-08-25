@@ -62,10 +62,8 @@ func New(cfg cfg.Type, s store.Store) *Server {
 
 // Init initializes manifests and playbooks for the server.
 func (s *Server) Init() {
-	ms := services.NewManifestService(s.Cfg)
-
 	var err error
-	s.manifests, err = ms.LoadManifestFolder()
+	s.manifests, err = deployment.LoadManifestFolder(s.Cfg.ManifestsPath, s.Cfg.ManifestsExtension)
 	if err != nil {
 		glog.Fatal(err)
 	}
