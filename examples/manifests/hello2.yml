@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: hello2
+spec:
+  restartPolicy: Never
+  replicas: 1
+  selector:
+    name: hello2
+  template:
+    metadata:
+      labels:
+        name: hello2
+    spec:
+      containers:
+      - name: hello2
+        image: hello-world:latest

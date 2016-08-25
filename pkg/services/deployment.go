@@ -159,24 +159,24 @@ func sendDeploymentNotification(cfg cfg.Type, i *instance.Instance) error {
 	return m.Send()
 }
 
-// DeleteAndNotify deletes resources created by deployment
-func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
+// StopAndNotify deletes resources created by deployment
+func (d *DeploymentService) StopAndNotify(i *instance.Instance) error {
 	playbook, ok := d.playbooks[i.PlaybookID]
 	if !ok {
-		msg := fmt.Sprintf("Can't delete %s/%s: Playbook missing", i.PlaybookID, i.ID)
+		msg := fmt.Sprintf("Can't stop %s/%s: Playbook missing", i.PlaybookID, i.ID)
 		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
 	if i.Status == instance.StatusDeleting {
-		msg := fmt.Sprintf("Can't delete %s/%s: Instance is being deleted already.", i.PlaybookID, i.ID)
+		msg := fmt.Sprintf("Can't stop %s/%s: Instance is being stopped already.", i.PlaybookID, i.ID)
 		notify(d.Cfg, i, msg)
 		return errors.New(msg)
 	}
 
 	config, err := deployment.Config(d.Cfg)
 	if err != nil {
-		msg := fmt.Sprintf("Can't delete %s/%s: Internal error", i.PlaybookID, i.ID)
+		msg := fmt.Sprintf("Can't stop %s/%s: Internal error", i.PlaybookID, i.ID)
 		notify(d.Cfg, i, msg)
 		return err
 	}
@@ -184,13 +184,13 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 	i.Status = instance.StatusDeleting
 	err = instance.Save(d.store, i)
 	if err != nil {
-		glog.Errorf("Failed to save instance status Deleting for %s/%s. Error: %s\n", i.PlaybookID, i.ID, err.Error())
+		glog.Errorf("Failed to save instance status for %s/%s. Error: %s\n", i.PlaybookID, i.ID, err.Error())
 		return err
 	}
 
 	deployer, err := deployment.NewKubernetesDeployment(config, playbook, varMap(i), d.manifests)
 	if err != nil {
-		msg := fmt.Sprintf("Can't delete %s/%s: Internal error", i.PlaybookID, i.ID)
+		msg := fmt.Sprintf("Can't stop %s/%s: Internal error", i.PlaybookID, i.ID)
 		notify(d.Cfg, i, msg)
 		return err
 	}
@@ -206,7 +206,7 @@ func (d *DeploymentService) DeleteAndNotify(i *instance.Instance) error {
 		}
 
 		// Report the problem:
-		msg := fmt.Sprintf("Deploying %s/%s failed: %s\n", i.PlaybookID, i.ID, errD.Error())
+		msg := fmt.Sprintf("Stopping %s/%s failed: %s\n", i.PlaybookID, i.ID, errD.Error())
 		glog.Error(msg)
 		m := notification.NewMessage(d.Cfg, false, msg)
 		err = m.Send()
@@ -231,7 +231,7 @@ func (d *DeploymentService) RemoveExpiredInstances(expirationDate time.Time) err
 	}
 	glog.Infof("Removing %d instances from kubernetes", len(instances))
 	for _, i := range instances {
-		if err = d.DeleteAndNotify(i); err != nil {
+		if err = d.StopAndNotify(i); err != nil {
 			glog.Error(err)
 		}
 	}

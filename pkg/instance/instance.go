@@ -15,13 +15,6 @@ func NewExpiredAt(daysToExpire int, from time.Time) time.Time {
 	return expiredAt
 }
 
-// NotLockedStatusError instance is not locked
-type NotLockedStatusError string
-
-func (e NotLockedStatusError) Error() string {
-	return fmt.Sprintf("broadway/instance: %s is not locked", string(e))
-}
-
 // NotFoundError instance not found error
 type NotFoundError string
 
@@ -60,17 +53,12 @@ type Instance struct {
 	Created    int64             `json:"created_time"`
 	ExpiredAt  int64             `json:"expired_at"`
 	Vars       map[string]string `json:"vars"`
-	Lock       bool              `json:"lock"`
 	Status     `json:"status"`
 	Path
 }
 
 func (i *Instance) String() string {
-	locked := "unlocked"
-	if i.Lock {
-		locked = "locked"
-	}
-	return fmt.Sprintf("%s is currently %s", i.Path.String(), locked)
+	return fmt.Sprintf("%s (%s)", i.Path.String(), i.Status)
 }
 
 // Status for an instance
@@ -116,7 +104,7 @@ func AllDeployedAndExpired(store store.Store, path string, expirationDate time.T
 	}
 	for _, i := range instances {
 		if i.Status == StatusDeployed {
-			if i.ExpiredAt <= expirationDate.Unix() {
+			if i.ExpiredAt != 0 && i.ExpiredAt <= expirationDate.Unix() {
 				expiredInstances = append(expiredInstances, i)
 			}
 		}
@@ -138,37 +126,8 @@ func Delete(store store.Store, path Path) error {
 	return store.Delete(path.String())
 }
 
-// Lock an instance
-func Lock(store store.Store, path Path) (*Instance, error) {
-	instance, err := FindByPath(store, path)
-	if err != nil {
-		return nil, err
-	}
-	instance.Lock = true
-	if err = Save(store, instance); err != nil {
-		return nil, err
-	}
-	return instance, nil
-}
-
-// Unlock an instance
-func Unlock(store store.Store, path Path) (*Instance, error) {
-	instance, err := FindByPath(store, path)
-	if err != nil {
-		return nil, err
-	}
-	if !instance.Lock {
-		return nil, NotLockedStatusError(path.String())
-	}
-	instance.Lock = false
-	if err = Save(store, instance); err != nil {
-		return nil, err
-	}
-	return instance, nil
-}
-
 func fromJSON(jsonData string) (*Instance, error) {
-	var instance Instance
+	instance := Instance{}
 	err := json.Unmarshal([]byte(jsonData), &instance)
 	if err != nil {
 		return nil, ErrMalformedSaveData

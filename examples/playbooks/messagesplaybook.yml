@@ -4,7 +4,7 @@ vars:
   - word
   - bird
 manifests:
-  - hello
+  - hello2
 messages:
   created: "custom created {{.playbook_id}}/{{.id}}"
   deployed: "custom deployed {{.playbook_id}}/{{.id}}"

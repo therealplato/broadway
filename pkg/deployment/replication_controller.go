@@ -55,7 +55,7 @@ func deleteRC(namespace, metaName string) error {
 	var i int32
 	rc.Spec.Replicas = &i // Replicas type is *int32 ... so this is *int32(0)
 	client.ReplicationControllers(namespace).Update(rc)
-	time.Sleep(10 * time.Second) // Wait for Kubernetes to delete pods
+	time.Sleep(15 * time.Second) // Wait for Kubernetes to delete pods
 	rc, err = client.ReplicationControllers(namespace).Get(metaName)
 	if err != nil {
 		return err

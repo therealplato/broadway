@@ -9,42 +9,11 @@ import (
 	"github.com/namely/broadway/pkg/cfg"
 	"github.com/namely/broadway/pkg/deployment"
 	"github.com/namely/broadway/pkg/instance"
-	"github.com/namely/broadway/pkg/store/etcdstore"
 )
 
 // SlackCommand represents a user command that came in from Slack
 type SlackCommand interface {
 	Execute() (string, error)
-}
-
-type unlockCommand struct {
-	pID string
-	ID  string
-	Cfg cfg.Type
-}
-
-func (c *unlockCommand) Execute() (string, error) {
-	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
-	i, err := instance.Unlock(etcdstore.New(), path)
-	if err != nil {
-		return "", err
-	}
-	return i.String(), nil
-}
-
-type lockCommand struct {
-	pID string
-	ID  string
-	Cfg cfg.Type
-}
-
-func (c *lockCommand) Execute() (string, error) {
-	path := instance.Path{c.Cfg.EtcdPath, c.pID, c.ID}
-	i, err := instance.Lock(etcdstore.New(), path)
-	if err != nil {
-		return "", err
-	}
-	return i.String(), nil
 }
 
 type deployCommand struct {
@@ -68,10 +37,6 @@ func (c *deployCommand) Execute() (string, error) {
 		msg := fmt.Sprintf("Failed to deploy instance %s/%s: Instance not found", c.pID, c.ID)
 		glog.Error(msg)
 		return msg, err
-	}
-
-	if i.Lock {
-		return i.String(), nil
 	}
 
 	go func() {
@@ -155,7 +120,7 @@ func (c *setvarCommand) playbookContainsVar(playbookID, name string) bool {
 const commandHints = `
 */bw deploy myPlaybookID myInstanceID*: Deploy an instance
 */bw info myPlaybookID myInstanceID*: Display the age and playbook variables of an instance
-*/bw &lt;delete|destroy&gt; myPlaybookID myInstanceID*: Stop and remove an instance
+*/bw stop myPlaybookID myInstanceID*: Stop an instance
 */bw &lt;setvar|setvars&gt; myPlaybookID myInstanceID var1=val1 ...* : Set one or more playbook variables for an instance
 `
 
@@ -173,8 +138,8 @@ func (e *InvalidDelete) Error() string {
 	return ""
 }
 
-// Delete slack command
-type deleteCommand struct {
+// Stop slack command
+type stopCommand struct {
 	pID string
 	ID  string
 	is  *InstanceService
@@ -182,7 +147,7 @@ type deleteCommand struct {
 	ds  *DeploymentService
 }
 
-func (c *deleteCommand) Execute() (string, error) {
+func (c *stopCommand) Execute() (string, error) {
 	// todo: Load these from deployment package like playbooks
 	ms := NewManifestService(c.Cfg)
 	_, err := ms.LoadManifestFolder()
@@ -192,33 +157,30 @@ func (c *deleteCommand) Execute() (string, error) {
 
 	i, err := c.is.Show(c.pID, c.ID)
 	if err != nil {
-		msg := fmt.Sprintf("Failed to delete instance %s/%s: Instance not found", c.pID, c.ID)
+		msg := fmt.Sprintf("Failed to stop instance %s/%s: Instance not found", c.pID, c.ID)
 		glog.Error(msg)
 		return msg, err
 	}
 
-	if i.Lock {
-		return i.String(), nil
-	}
-
 	go func() {
-		glog.Infof("Asynchronously deleting %s/%s...", i.PlaybookID, i.ID)
+		glog.Infof("Asynchronously stopping %s/%s...", i.PlaybookID, i.ID)
 
-		if err := c.ds.DeleteAndNotify(i); err != nil {
-			glog.Errorf("Slack command failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
+		if err := c.ds.StopAndNotify(i); err != nil {
+			glog.Errorf("Slack command failed to stop instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
 		}
 
-		if err := c.is.Delete(i); err != nil {
-			glog.Errorf("Slack command failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
+		i.Status = instance.StatusNew
+		if _, err := c.is.Update(i); err != nil {
+			glog.Errorf("Slack command failed to stop instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 			return
 		}
 
-		glog.Infof("Slack command successfully deleted instance %s/%s", i.PlaybookID, i.ID)
+		glog.Infof("Slack command successfully stopped instance %s/%s", i.PlaybookID, i.ID)
 		return
 	}()
 
-	return fmt.Sprintf("Started deletion of %s/%s", i.PlaybookID, i.ID), nil
+	return fmt.Sprintf("Stopping instance: %s/%s", i.PlaybookID, i.ID), nil
 }
 
 // Info slack command returns info about the instance
@@ -291,26 +253,16 @@ func BuildSlackCommand(cfg cfg.Type, payload string, ds *DeploymentService, is *
 			ds:  ds,
 			Cfg: cfg,
 		}
-	case "delete", "destroy":
+	case "stop":
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
-		return &deleteCommand{pID: terms[1], ID: terms[2], is: is, ds: ds, Cfg: cfg}
+		return &stopCommand{pID: terms[1], ID: terms[2], is: is, ds: ds, Cfg: cfg}
 	case "info":
 		if len(terms) < 3 {
 			return &helpCommand{}
 		}
 		return &infoCommand{pID: terms[1], ID: terms[2], is: is}
-	case "lock":
-		if len(terms) < 3 {
-			return &helpCommand{}
-		}
-		return &lockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
-	case "unlock":
-		if len(terms) < 3 {
-			return &helpCommand{}
-		}
-		return &unlockCommand{pID: terms[1], ID: terms[2], Cfg: cfg}
 	default:
 		return &helpCommand{}
 	}

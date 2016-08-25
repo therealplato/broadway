@@ -294,7 +294,7 @@ func (s *Server) deleteInstance(c *gin.Context) {
 
 	ds := services.NewDeploymentService(s.Cfg, s.store, s.playbooks, s.manifests)
 
-	if err := ds.DeleteAndNotify(i); err != nil {
+	if err := ds.StopAndNotify(i); err != nil {
 		glog.Errorf("Failed to delete instance %s/%s:\n%s\n", i.PlaybookID, i.ID, err)
 		c.JSON(http.StatusInternalServerError, InternalError)
 		return
