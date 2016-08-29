@@ -53,21 +53,22 @@ type KubernetesDeployment struct {
 // NewKubernetesDeployment creates a new kuberentes deployment
 func NewKubernetesDeployment(config *restclient.Config, playbook *Playbook, variables map[string]string, manifests map[string]*Manifest) (*KubernetesDeployment, error) {
 	var err error
-	vars := map[string]string{}
 	client, err = coreclient.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
+
+	// Default all missing playbook variables to empty string
 	for _, v := range playbook.Vars {
-		var ok bool
-		vars[v], ok = variables[v]
+		_, ok := variables[v]
 		if !ok {
-			vars[v] = ""
+			variables[v] = ""
 		}
 	}
+
 	return &KubernetesDeployment{
 		Playbook:  playbook,
-		Variables: vars,
+		Variables: variables,
 		Manifests: manifests,
 	}, nil
 }
